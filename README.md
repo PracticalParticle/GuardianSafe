@@ -1,4 +1,8 @@
-﻿# Particle Guardian Account Abstraction Contracts
+﻿> ⚠️ **WARNING: EXPERIMENTAL SOFTWARE** ⚠️
+> 
+> This repository contains experimental, untested smart contract code. It is not ready for production use and may contain security vulnerabilities. Use at your own risk. Do not use with real assets or in production environments.
+
+# Particle Guardian Account Abstraction Contracts
 
 A secure smart contract framework implementing advanced account abstraction with multi-phase security operations, powered by Particle Crypto Security's innovative approach.
 
