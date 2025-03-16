@@ -10,8 +10,8 @@ const path = require('path');
 const contractsToProcess = ['MultiPhaseSecureOperation', 'SecureOwnable'];
 
 // Define the source and destination folders
-const sourceFolder = path.join(__dirname, 'build', 'contracts');
-const destinationFolder = path.join(__dirname, 'abi');
+const sourceFolder = path.join(__dirname, '..', 'build', 'contracts');
+const destinationFolder = path.join(__dirname, '..', 'abi');
 
 // Create the destination folder if it doesn't exist
 if (!fs.existsSync(destinationFolder)) {
