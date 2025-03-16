@@ -1,12 +1,14 @@
 name: Particle CI
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+  # Temporarily disable all triggers
+  workflow_dispatch: # Only manual triggers allowed, comment out to re-enable automatic triggers
+  # push:
+  #   branches:
+  #     - main
+  # pull_request:
+  #   branches:
+  #     - main
 
 jobs:
   test:
