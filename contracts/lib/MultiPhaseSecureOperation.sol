@@ -12,7 +12,7 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
  * multiple phases of approval before execution. It supports:
  * 
  * - Time-locked operations that can only be executed after a waiting period
- * - Meta-transactions for gasless approvals
+ * - Meta-transactions for delegated approvals
  * - Role-based access control for different operation types
  * - Multiple execution types (standard function calls or raw transaction data)
  * - Payment handling for both native tokens and ERC20 tokens

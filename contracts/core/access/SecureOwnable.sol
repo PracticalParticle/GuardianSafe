@@ -14,7 +14,7 @@ import "../../lib/MultiPhaseSecureOperation.sol";
  * SecureOwnable extends the standard ownership model with advanced security mechanisms:
  * - Time-locked operations that require a waiting period before execution
  * - Multi-role security model with Owner, Broadcaster, and Recovery roles
- * - Meta-transaction support for gasless operations
+ * - Meta-transaction support for delegated operations
  * - Secure multi-phase operations for critical administrative functions
  *
  * The contract implements four primary secure operation types:

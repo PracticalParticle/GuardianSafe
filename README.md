@@ -33,7 +33,7 @@ The implementation centers around three core components:
 - Asset-Authority Decoupling: Smart contracts hold funds while user wallets retain signing authority
 - Time-Locked Security Operations: Mandatory waiting periods for critical actions
 - Role-Based Access Control: Distinct owner, broadcaster, and recovery roles with specific permissions
-- Meta-Transaction Support: Gasless transactions with full security guarantees
+- Meta-Transaction Support: delegated transactions with full security guarantees
 - Recovery Mechanisms: Dedicated recovery features with secure role-based processes
 - Flexible Approval Methods: Multiple workflows balancing security and convenience
 
@@ -88,7 +88,7 @@ truffle migrate --network development
 - Base implementation for account abstraction with enhanced security features
 - Time-locked ownership management with multi-phase transfers
 - Role-based access control with owner, broadcaster, and recovery roles
-- Meta-transaction support for gasless operations
+- Meta-transaction support for delegated operations
 - Comprehensive event emission for monitoring and auditing
 
 #### MultiPhaseSecureOperation Library
@@ -117,7 +117,7 @@ The project includes a comprehensive TypeScript SDK that provides:
 
 ### 1. Role Management
 - Owner: Primary control of the contract, can approve operations after timelock, cannot bypass security measures
-- Broadcaster: Handles meta-transactions, enables gasless operations, verifies signatures before execution
+- Broadcaster: Handles meta-transactions, enables delegated operations, verifies signatures before execution
 - Recovery: Backup access for emergencies, can initiate ownership transfers, subject to same timelock constraints
 
 ### 2. Time-Lock Security
@@ -206,14 +206,14 @@ await secureOwnable.transferOwnershipApprovalWithMetaTx(
 - Defense-in-depth approach to securing digital assets
 
 ### Improved User Experience
-- Gasless transactions through meta-transaction support
+- delegated transactions through meta-transaction support
 - Transaction status monitoring and comprehensive history
 - Flexible workflows balancing security and convenience
 - Robust recovery options for account access
 
 ### Common Use Cases
 1. **Smart Contract Wallets**: Secure multi-party asset management with recovery options
-2. **DApp Integration**: Enhanced security layer for critical operations with gasless transactions
+2. **DApp Integration**: Enhanced security layer for critical operations with delegated transactions
 3. **Enterprise Solutions**: Multi-party approval workflows with comprehensive audit trails
 4. **Custody Solutions**: Institutional-grade security with proper access controls
 
