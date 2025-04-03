@@ -151,6 +151,11 @@
                 "type": "tuple"
               },
               {
+                "internalType": "bytes32",
+                "name": "message",
+                "type": "bytes32"
+              },
+              {
                 "internalType": "bytes",
                 "name": "result",
                 "type": "bytes"
