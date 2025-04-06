@@ -54,9 +54,9 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
     bytes4 private constant UPDATE_TIMELOCK_SELECTOR = bytes4(keccak256("executeTimeLockUpdate(uint256)"));
 
     // Meta-transaction function selectors
-    bytes4 private constant TRANSFER_OWNERSHIP_META_SELECTOR = bytes4(keccak256("transferOwnershipApprovalWithMetaTx((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes32,bytes,(address,uint256,address,uint256),(uint256,uint256,address,bytes4,uint256,uint256,address),bytes,bytes))"));
+    bytes4 private constant TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR = bytes4(keccak256("transferOwnershipApprovalWithMetaTx((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes32,bytes,(address,uint256,address,uint256),(uint256,uint256,address,bytes4,uint256,uint256,address),bytes,bytes))"));
     bytes4 private constant TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR = bytes4(keccak256("transferOwnershipCancellationWithMetaTx((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes32,bytes,(address,uint256,address,uint256),(uint256,uint256,address,bytes4,uint256,uint256,address),bytes,bytes))"));
-    bytes4 private constant UPDATE_BROADCASTER_META_SELECTOR = bytes4(keccak256("updateBroadcasterApprovalWithMetaTx((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes32,bytes,(address,uint256,address,uint256),(uint256,uint256,address,bytes4,uint256,uint256,address),bytes,bytes))"));
+    bytes4 private constant UPDATE_BROADCASTER_APPROVE_META_SELECTOR = bytes4(keccak256("updateBroadcasterApprovalWithMetaTx((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes32,bytes,(address,uint256,address,uint256),(uint256,uint256,address,bytes4,uint256,uint256,address),bytes,bytes))"));
     bytes4 private constant UPDATE_BROADCASTER_CANCEL_META_SELECTOR = bytes4(keccak256("updateBroadcasterCancellationWithMetaTx((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes32,bytes,(address,uint256,address,uint256),(uint256,uint256,address,bytes4,uint256,uint256,address),bytes,bytes))"));
     bytes4 private constant UPDATE_RECOVERY_META_SELECTOR = bytes4(keccak256("updateRecoveryRequestAndApprove((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes32,bytes,(address,uint256,address,uint256),(uint256,uint256,address,bytes4,uint256,uint256,address),bytes,bytes))"));
     bytes4 private constant UPDATE_TIMELOCK_META_SELECTOR = bytes4(keccak256("updateTimeLockRequestAndApprove((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes32,bytes,(address,uint256,address,uint256),(uint256,uint256,address,bytes4,uint256,uint256,address),bytes,bytes))"));
@@ -132,9 +132,9 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
         _transferOwnership(initialOwner);
 
         // Add meta-transaction function selector permissions for broadcaster
-        _secureState.addRoleForFunction(TRANSFER_OWNERSHIP_META_SELECTOR, MultiPhaseSecureOperation.BROADCASTER_ROLE);
+        _secureState.addRoleForFunction(TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR, MultiPhaseSecureOperation.BROADCASTER_ROLE);
         _secureState.addRoleForFunction(TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR, MultiPhaseSecureOperation.BROADCASTER_ROLE);
-        _secureState.addRoleForFunction(UPDATE_BROADCASTER_META_SELECTOR, MultiPhaseSecureOperation.BROADCASTER_ROLE);
+        _secureState.addRoleForFunction(UPDATE_BROADCASTER_APPROVE_META_SELECTOR, MultiPhaseSecureOperation.BROADCASTER_ROLE);
         _secureState.addRoleForFunction(UPDATE_BROADCASTER_CANCEL_META_SELECTOR, MultiPhaseSecureOperation.BROADCASTER_ROLE);
         _secureState.addRoleForFunction(UPDATE_RECOVERY_META_SELECTOR, MultiPhaseSecureOperation.BROADCASTER_ROLE);
         _secureState.addRoleForFunction(UPDATE_TIMELOCK_META_SELECTOR, MultiPhaseSecureOperation.BROADCASTER_ROLE);
@@ -187,8 +187,8 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
      * @return The updated transaction record
      */
     function transferOwnershipApprovalWithMetaTx(MultiPhaseSecureOperation.MetaTransaction memory metaTx) public onlyBroadcaster returns (MultiPhaseSecureOperation.TxRecord memory) {
-        _secureState.checkPermission(TRANSFER_OWNERSHIP_META_SELECTOR);
-        require(metaTx.params.handlerSelector == TRANSFER_OWNERSHIP_META_SELECTOR, "Invalid handler selector");
+        _secureState.checkPermission(TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR);
+        require(metaTx.params.handlerSelector == TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR, "Invalid handler selector");
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txApprovalWithMetaTx(metaTx);
         _validateOperationType(updatedRecord.params.operationType, OWNERSHIP_TRANSFER);
         _hasOpenOwnershipRequest = false;
@@ -280,8 +280,8 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
      * @return The updated transaction record
      */
     function updateBroadcasterApprovalWithMetaTx(MultiPhaseSecureOperation.MetaTransaction memory metaTx) public onlyBroadcaster returns (MultiPhaseSecureOperation.TxRecord memory) {
-        _secureState.checkPermission(UPDATE_BROADCASTER_META_SELECTOR);
-        require(metaTx.params.handlerSelector == UPDATE_BROADCASTER_META_SELECTOR, "Invalid handler selector");
+        _secureState.checkPermission(UPDATE_BROADCASTER_APPROVE_META_SELECTOR);
+        require(metaTx.params.handlerSelector == UPDATE_BROADCASTER_APPROVE_META_SELECTOR, "Invalid handler selector");
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txApprovalWithMetaTx(metaTx);
         _validateOperationType(updatedRecord.params.operationType, BROADCASTER_UPDATE);
         _hasOpenBroadcasterRequest = false;
