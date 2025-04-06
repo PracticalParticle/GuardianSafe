@@ -36,9 +36,9 @@ export const FUNCTION_SELECTORS = {
   TX_REQUEST: keccak256("txRequest(address,address,uint256,uint256,bytes32,uint8,bytes)").slice(0, 10),
   TX_DELAYED_APPROVAL: keccak256("txDelayedApproval(uint256)").slice(0, 10),
   TX_CANCELLATION: keccak256("txCancellation(uint256)").slice(0, 10),
-  META_TX_APPROVAL: keccak256("txApprovalWithMetaTx((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes,(address,uint256,address,uint256)),(uint256,address,bytes4,uint256,uint256,uint256,address),bytes,bytes)").slice(0, 10),
-  META_TX_CANCELLATION: keccak256("txCancellationWithMetaTx((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes,(address,uint256,address,uint256)),(uint256,address,bytes4,uint256,uint256,uint256,address),bytes,bytes)").slice(0, 10),
-  META_TX_REQUEST_AND_APPROVE: keccak256("requestAndApprove((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes,(address,uint256,address,uint256)),(uint256,address,bytes4,uint256,uint256,uint256,address),bytes,bytes)").slice(0, 10)
+  META_TX_APPROVAL: keccak256("txApprovalWithMetaTx((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes32,bytes,(address,uint256,address,uint256)),(uint256,address,bytes4,uint256,uint256,uint256,address),bytes,bytes)").slice(0, 10),
+  META_TX_CANCELLATION: keccak256("txCancellationWithMetaTx((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes32,bytes,(address,uint256,address,uint256)),(uint256,address,bytes4,uint256,uint256,uint256,address),bytes,bytes)").slice(0, 10),
+  META_TX_REQUEST_AND_APPROVE: keccak256("requestAndApprove((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes32,bytes,(address,uint256,address,uint256)),(uint256,address,bytes4,uint256,uint256,uint256,address),bytes,bytes)").slice(0, 10)
 } as const;
 
 export type FunctionSelector = typeof FUNCTION_SELECTORS[keyof typeof FUNCTION_SELECTORS];
