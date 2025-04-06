@@ -202,9 +202,6 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
      * @return The updated transaction record
      */
     function transferOwnershipCancellation(uint256 txId) public onlyRecovery returns (MultiPhaseSecureOperation.TxRecord memory) {
-        MultiPhaseSecureOperation.TxRecord memory txRecord = _secureState.getTxRecord(txId);
-        require(block.timestamp >= txRecord.releaseTime - (_timeLockPeriodInMinutes * 1 minutes) + 1 hours, "Cannot cancel within first hour");
-        
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txCancellation(txId);
         _validateOperationType(updatedRecord.params.operationType, OWNERSHIP_TRANSFER);
         _hasOpenOwnershipRequest = false;
@@ -295,9 +292,6 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
      * @return The updated transaction record
      */
     function updateBroadcasterCancellation(uint256 txId) public onlyOwner returns (MultiPhaseSecureOperation.TxRecord memory) {
-        MultiPhaseSecureOperation.TxRecord memory txRecord = _secureState.getTxRecord(txId);
-        require(block.timestamp >= txRecord.releaseTime - (_timeLockPeriodInMinutes * 1 minutes) + 1 hours, "Cannot cancel within first hour");
-        
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txCancellation(txId);
         _validateOperationType(updatedRecord.params.operationType, BROADCASTER_UPDATE);
         _hasOpenBroadcasterRequest = false;
