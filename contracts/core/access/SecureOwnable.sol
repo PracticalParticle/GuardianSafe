@@ -3,9 +3,12 @@ pragma solidity ^0.8.0;
 
 // OpenZeppelin imports
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 // Contracts imports
 import "../../lib/MultiPhaseSecureOperation.sol";
+import "./ISecureOwnable.sol";
 
 /**
  * @title SecureOwnable
@@ -29,7 +32,7 @@ import "../../lib/MultiPhaseSecureOperation.sol";
  * This contract is designed for high-security systems where immediate administrative
  * changes would pose security risks.
  */
-abstract contract SecureOwnable is Ownable {
+abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
     using MultiPhaseSecureOperation for MultiPhaseSecureOperation.SecureOperationState;
 
     // Define operation type constants
@@ -386,7 +389,7 @@ abstract contract SecureOwnable is Ownable {
      * @dev Gets the complete operation history with no filters
      * @return The complete operation history
      */
-    function getOperationHistory() public view returns (MultiPhaseSecureOperation.TxRecord[] memory) {
+    function getOperationHistory() public view override returns (MultiPhaseSecureOperation.TxRecord[] memory) {
         uint256 totalTransactions = _secureState.getCurrentTxId();
         MultiPhaseSecureOperation.TxRecord[] memory history = new MultiPhaseSecureOperation.TxRecord[](totalTransactions);
         
@@ -402,7 +405,7 @@ abstract contract SecureOwnable is Ownable {
      * @param txId The transaction ID
      * @return The operation
      */
-    function getOperation(uint256 txId) public view returns (MultiPhaseSecureOperation.TxRecord memory) {
+    function getOperation(uint256 txId) public view override returns (MultiPhaseSecureOperation.TxRecord memory) {
         return _secureState.getTxRecord(txId);
     }
 
@@ -497,7 +500,7 @@ abstract contract SecureOwnable is Ownable {
      * @dev Returns the broadcaster address
      * @return The broadcaster address
      */
-    function getBroadcaster() public virtual view returns (address) {
+    function getBroadcaster() public view virtual override returns (address) {
         return _broadcaster;
     }
 
@@ -505,7 +508,7 @@ abstract contract SecureOwnable is Ownable {
      * @dev Returns the recovery address
      * @return The recovery address
      */
-    function getRecoveryAddress() public virtual view returns (address) {
+    function getRecoveryAddress() public view virtual override returns (address) {
         return _recoveryAddress;
     }
 
@@ -513,7 +516,7 @@ abstract contract SecureOwnable is Ownable {
      * @dev Returns the time lock period
      * @return The time lock period in minutes
      */
-    function getTimeLockPeriodInMinutes() public virtual view returns (uint256) {
+    function getTimeLockPeriodInMinutes() public view virtual override returns (uint256) {
         return _timeLockPeriodInMinutes;
     }
 
@@ -521,7 +524,7 @@ abstract contract SecureOwnable is Ownable {
      * @dev Returns the supported operation types
      * @return The supported operation types
      */
-    function getSupportedOperationTypes() public view returns (MultiPhaseSecureOperation.ReadableOperationType[] memory) {
+    function getSupportedOperationTypes() public view override returns (MultiPhaseSecureOperation.ReadableOperationType[] memory) {
         return _secureState.getSupportedOperationTypes();
     }
 
@@ -530,7 +533,7 @@ abstract contract SecureOwnable is Ownable {
      * @param operationType The operation type to check
      * @return bool True if the operation type is supported
      */
-    function isOperationTypeSupported(bytes32 operationType) public view returns (bool) {
+    function isOperationTypeSupported(bytes32 operationType) public view override returns (bool) {
         return _secureState.isOperationTypeSupported(operationType);
     }
 
@@ -590,7 +593,7 @@ abstract contract SecureOwnable is Ownable {
      * @dev Returns the owner of the contract
      * @return The owner of the contract
      */
-    function owner() public view virtual override(Ownable) returns (address) {
+    function owner() public view virtual override(Ownable, ISecureOwnable) returns (address) {
         return super.owner();
     }
 
@@ -694,4 +697,12 @@ abstract contract SecureOwnable is Ownable {
         require(actualType == expectedType, "Invalid operation type");
     }
 
+    /**
+     * @dev See {IERC165-supportsInterface}.
+     */
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
+        return
+            interfaceId == type(ISecureOwnable).interfaceId ||
+            super.supportsInterface(interfaceId);
+    }
 }
