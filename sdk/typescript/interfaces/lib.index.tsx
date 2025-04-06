@@ -48,6 +48,7 @@ export interface TxRecord {
   releaseTime: bigint;
   status: TxStatus;
   params: TxParams;
+  message: Hex;
   result: Hex;
   payment: PaymentDetails;
 }

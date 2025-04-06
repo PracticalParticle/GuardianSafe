@@ -274,6 +274,11 @@
             "type": "tuple"
           },
           {
+            "internalType": "bytes32",
+            "name": "message",
+            "type": "bytes32"
+          },
+          {
             "internalType": "bytes",
             "name": "result",
             "type": "bytes"
@@ -384,6 +389,11 @@
             "type": "tuple"
           },
           {
+            "internalType": "bytes32",
+            "name": "message",
+            "type": "bytes32"
+          },
+          {
             "internalType": "bytes",
             "name": "result",
             "type": "bytes"
@@ -486,6 +496,11 @@
                 "internalType": "struct MultiPhaseSecureOperation.TxParams",
                 "name": "params",
                 "type": "tuple"
+              },
+              {
+                "internalType": "bytes32",
+                "name": "message",
+                "type": "bytes32"
               },
               {
                 "internalType": "bytes",
@@ -649,6 +664,11 @@
             "type": "tuple"
           },
           {
+            "internalType": "bytes32",
+            "name": "message",
+            "type": "bytes32"
+          },
+          {
             "internalType": "bytes",
             "name": "result",
             "type": "bytes"
@@ -759,6 +779,11 @@
             "type": "tuple"
           },
           {
+            "internalType": "bytes32",
+            "name": "message",
+            "type": "bytes32"
+          },
+          {
             "internalType": "bytes",
             "name": "result",
             "type": "bytes"
@@ -861,6 +886,11 @@
                 "internalType": "struct MultiPhaseSecureOperation.TxParams",
                 "name": "params",
                 "type": "tuple"
+              },
+              {
+                "internalType": "bytes32",
+                "name": "message",
+                "type": "bytes32"
               },
               {
                 "internalType": "bytes",
@@ -1024,6 +1054,11 @@
             "type": "tuple"
           },
           {
+            "internalType": "bytes32",
+            "name": "message",
+            "type": "bytes32"
+          },
+          {
             "internalType": "bytes",
             "name": "result",
             "type": "bytes"
@@ -1132,6 +1167,11 @@
             "internalType": "struct MultiPhaseSecureOperation.TxParams",
             "name": "params",
             "type": "tuple"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "message",
+            "type": "bytes32"
           },
           {
             "internalType": "bytes",
@@ -1244,6 +1284,11 @@
             "type": "tuple"
           },
           {
+            "internalType": "bytes32",
+            "name": "message",
+            "type": "bytes32"
+          },
+          {
             "internalType": "bytes",
             "name": "result",
             "type": "bytes"
@@ -1346,6 +1391,11 @@
                 "internalType": "struct MultiPhaseSecureOperation.TxParams",
                 "name": "params",
                 "type": "tuple"
+              },
+              {
+                "internalType": "bytes32",
+                "name": "message",
+                "type": "bytes32"
               },
               {
                 "internalType": "bytes",
@@ -1509,6 +1559,11 @@
             "type": "tuple"
           },
           {
+            "internalType": "bytes32",
+            "name": "message",
+            "type": "bytes32"
+          },
+          {
             "internalType": "bytes",
             "name": "result",
             "type": "bytes"
@@ -1619,6 +1674,11 @@
             "type": "tuple"
           },
           {
+            "internalType": "bytes32",
+            "name": "message",
+            "type": "bytes32"
+          },
+          {
             "internalType": "bytes",
             "name": "result",
             "type": "bytes"
@@ -1721,6 +1781,11 @@
                 "internalType": "struct MultiPhaseSecureOperation.TxParams",
                 "name": "params",
                 "type": "tuple"
+              },
+              {
+                "internalType": "bytes32",
+                "name": "message",
+                "type": "bytes32"
               },
               {
                 "internalType": "bytes",
@@ -1884,6 +1949,11 @@
             "type": "tuple"
           },
           {
+            "internalType": "bytes32",
+            "name": "message",
+            "type": "bytes32"
+          },
+          {
             "internalType": "bytes",
             "name": "result",
             "type": "bytes"
@@ -2005,6 +2075,11 @@
                 "internalType": "struct MultiPhaseSecureOperation.TxParams",
                 "name": "params",
                 "type": "tuple"
+              },
+              {
+                "internalType": "bytes32",
+                "name": "message",
+                "type": "bytes32"
               },
               {
                 "internalType": "bytes",
@@ -2168,6 +2243,11 @@
             "type": "tuple"
           },
           {
+            "internalType": "bytes32",
+            "name": "message",
+            "type": "bytes32"
+          },
+          {
             "internalType": "bytes",
             "name": "result",
             "type": "bytes"
@@ -2289,6 +2369,11 @@
                 "internalType": "struct MultiPhaseSecureOperation.TxParams",
                 "name": "params",
                 "type": "tuple"
+              },
+              {
+                "internalType": "bytes32",
+                "name": "message",
+                "type": "bytes32"
               },
               {
                 "internalType": "bytes",
@@ -2452,6 +2537,11 @@
             "type": "tuple"
           },
           {
+            "internalType": "bytes32",
+            "name": "message",
+            "type": "bytes32"
+          },
+          {
             "internalType": "bytes",
             "name": "result",
             "type": "bytes"
@@ -2554,6 +2644,11 @@
             "internalType": "struct MultiPhaseSecureOperation.TxParams",
             "name": "params",
             "type": "tuple"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "message",
+            "type": "bytes32"
           },
           {
             "internalType": "bytes",
@@ -2664,6 +2759,11 @@
             "internalType": "struct MultiPhaseSecureOperation.TxParams",
             "name": "params",
             "type": "tuple"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "message",
+            "type": "bytes32"
           },
           {
             "internalType": "bytes",
@@ -2926,6 +3026,11 @@
                 "type": "tuple"
               },
               {
+                "internalType": "bytes32",
+                "name": "message",
+                "type": "bytes32"
+              },
+              {
                 "internalType": "bytes",
                 "name": "result",
                 "type": "bytes"
@@ -3140,6 +3245,11 @@
                 "internalType": "struct MultiPhaseSecureOperation.TxParams",
                 "name": "params",
                 "type": "tuple"
+              },
+              {
+                "internalType": "bytes32",
+                "name": "message",
+                "type": "bytes32"
               },
               {
                 "internalType": "bytes",

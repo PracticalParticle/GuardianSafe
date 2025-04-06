@@ -71,6 +71,7 @@ library MultiPhaseSecureOperation {
         uint256 releaseTime;
         TxStatus status;
         TxParams params;
+        bytes32 message;
         bytes result;
         PaymentDetails payment;
     }
@@ -120,7 +121,7 @@ library MultiPhaseSecureOperation {
     bytes32 constant RECOVERY_ROLE = keccak256("RECOVERY_ROLE");
 
     // EIP-712 Type Hashes
-    bytes32 private constant TYPE_HASH = keccak256("MetaTransaction(TxRecord txRecord,MetaTxParams params,bytes data)TxRecord(uint256 txId,uint256 releaseTime,uint8 status,TxParams params,bytes result,PaymentDetails payment)TxParams(address requester,address target,uint256 value,uint256 gasLimit,bytes32 operationType,uint8 executionType,bytes executionOptions)MetaTxParams(uint256 chainId,uint256 nonce,address handlerContract,bytes4 handlerSelector,uint256 deadline,uint256 maxGasPrice,address signer)PaymentDetails(address recipient,uint256 nativeTokenAmount,address erc20TokenAddress,uint256 erc20TokenAmount)");
+    bytes32 private constant TYPE_HASH = keccak256("MetaTransaction(TxRecord txRecord,MetaTxParams params,bytes data)TxRecord(uint256 txId,uint256 releaseTime,uint8 status,TxParams params,bytes32 message,bytes result,PaymentDetails payment)TxParams(address requester,address target,uint256 value,uint256 gasLimit,bytes32 operationType,uint8 executionType,bytes executionOptions)MetaTxParams(uint256 chainId,uint256 nonce,address handlerContract,bytes4 handlerSelector,uint256 deadline,uint256 maxGasPrice,address signer)PaymentDetails(address recipient,uint256 nativeTokenAmount,address erc20TokenAddress,uint256 erc20TokenAmount)");
     bytes32 private constant DOMAIN_SEPARATOR_TYPE_HASH = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
 
     // Function Selectors
@@ -985,6 +986,7 @@ library MultiPhaseSecureOperation {
                 executionType: executionType,
                 executionOptions: executionOptions
             }),
+            message: bytes32(0),
             result: new bytes(0),
             payment: PaymentDetails({
                 recipient: address(0),
