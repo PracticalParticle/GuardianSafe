@@ -129,8 +129,6 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
             name: "TIMELOCK_UPDATE"
         }));
         
-        _transferOwnership(initialOwner);
-
         // Add meta-transaction function selector permissions for broadcaster
         _secureState.addRoleForFunction(TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR, MultiPhaseSecureOperation.BROADCASTER_ROLE);
         _secureState.addRoleForFunction(TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR, MultiPhaseSecureOperation.BROADCASTER_ROLE);
@@ -138,6 +136,8 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
         _secureState.addRoleForFunction(UPDATE_BROADCASTER_CANCEL_META_SELECTOR, MultiPhaseSecureOperation.BROADCASTER_ROLE);
         _secureState.addRoleForFunction(UPDATE_RECOVERY_META_SELECTOR, MultiPhaseSecureOperation.BROADCASTER_ROLE);
         _secureState.addRoleForFunction(UPDATE_TIMELOCK_META_SELECTOR, MultiPhaseSecureOperation.BROADCASTER_ROLE);
+
+        _transferOwnership(initialOwner);
     }
 
     // Ownership Management
