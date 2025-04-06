@@ -143,7 +143,7 @@ abstract contract SecureOwnable is Ownable {
      * @return The transaction record
      */
     function transferOwnershipRequest() public onlyRecovery returns (MultiPhaseSecureOperation.TxRecord memory) {
-        require(!_hasOpenOwnershipRequest, "An ownership transfer request is already pending");
+        require(!_hasOpenOwnershipRequest, "Request is already pending");
         bytes memory executionOptions = MultiPhaseSecureOperation.createStandardExecutionOptions(
             TRANSFER_OWNERSHIP_SELECTOR,
             abi.encode(_recoveryAddress)
@@ -172,7 +172,7 @@ abstract contract SecureOwnable is Ownable {
      */
     function transferOwnershipDelayedApproval(uint256 txId) public onlyOwnerOrRecovery returns (MultiPhaseSecureOperation.TxRecord memory) {
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txDelayedApproval(txId);
-        require(updatedRecord.params.operationType == OWNERSHIP_TRANSFER, "Invalid operation type");
+        _validateOperationType(updatedRecord.params.operationType, OWNERSHIP_TRANSFER);
         _hasOpenOwnershipRequest = false;
         finalizeOperation(updatedRecord);
         return updatedRecord;
@@ -187,7 +187,7 @@ abstract contract SecureOwnable is Ownable {
         _secureState.checkPermission(TRANSFER_OWNERSHIP_META_SELECTOR);
         require(metaTx.params.handlerSelector == TRANSFER_OWNERSHIP_META_SELECTOR, "Invalid handler selector");
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txApprovalWithMetaTx(metaTx);
-        require(updatedRecord.params.operationType == OWNERSHIP_TRANSFER, "Invalid operation type");
+        _validateOperationType(updatedRecord.params.operationType, OWNERSHIP_TRANSFER);
         _hasOpenOwnershipRequest = false;
         finalizeOperation(updatedRecord);
         return updatedRecord;
@@ -203,7 +203,7 @@ abstract contract SecureOwnable is Ownable {
         require(block.timestamp >= txRecord.releaseTime - (_timeLockPeriodInMinutes * 1 minutes) + 1 hours, "Cannot cancel within first hour");
         
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txCancellation(txId);
-        require(updatedRecord.params.operationType == OWNERSHIP_TRANSFER, "Invalid operation type");
+        _validateOperationType(updatedRecord.params.operationType, OWNERSHIP_TRANSFER);
         _hasOpenOwnershipRequest = false;
         finalizeOperation(updatedRecord);
         emit OwnershipTransferCancelled(txId);
@@ -219,7 +219,7 @@ abstract contract SecureOwnable is Ownable {
         _secureState.checkPermission(TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR);
         require(metaTx.params.handlerSelector == TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR, "Invalid handler selector");
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txCancellationWithMetaTx(metaTx);
-        require(updatedRecord.params.operationType == OWNERSHIP_TRANSFER, "Invalid operation type");
+        _validateOperationType(updatedRecord.params.operationType, OWNERSHIP_TRANSFER);
         _hasOpenOwnershipRequest = false;
         finalizeOperation(updatedRecord);
         emit OwnershipTransferCancelled(updatedRecord.txId);
@@ -233,8 +233,8 @@ abstract contract SecureOwnable is Ownable {
      * @return The execution options
      */
     function updateBroadcasterRequest(address newBroadcaster) public onlyOwner returns (MultiPhaseSecureOperation.TxRecord memory) {
-        require(!_hasOpenBroadcasterRequest, "A broadcaster update request is already pending");
-        require(newBroadcaster != address(0), "Invalid broadcaster address");
+        require(!_hasOpenBroadcasterRequest, "Request is already pending");
+        _validateNotZeroAddress(newBroadcaster);
         require(newBroadcaster != _broadcaster, "New broadcaster must be different");
         
         bytes memory executionOptions = MultiPhaseSecureOperation.createStandardExecutionOptions(
@@ -265,7 +265,7 @@ abstract contract SecureOwnable is Ownable {
      */
     function updateBroadcasterDelayedApproval(uint256 txId) public onlyOwner returns (MultiPhaseSecureOperation.TxRecord memory) {
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txDelayedApproval(txId);
-        require(updatedRecord.params.operationType == BROADCASTER_UPDATE, "Invalid operation type");
+        _validateOperationType(updatedRecord.params.operationType, BROADCASTER_UPDATE);
         _hasOpenBroadcasterRequest = false;
         finalizeOperation(updatedRecord);
         return updatedRecord;
@@ -280,7 +280,7 @@ abstract contract SecureOwnable is Ownable {
         _secureState.checkPermission(UPDATE_BROADCASTER_META_SELECTOR);
         require(metaTx.params.handlerSelector == UPDATE_BROADCASTER_META_SELECTOR, "Invalid handler selector");
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txApprovalWithMetaTx(metaTx);
-        require(updatedRecord.params.operationType == BROADCASTER_UPDATE, "Invalid operation type");
+        _validateOperationType(updatedRecord.params.operationType, BROADCASTER_UPDATE);
         _hasOpenBroadcasterRequest = false;
         finalizeOperation(updatedRecord);
         return updatedRecord;
@@ -296,7 +296,7 @@ abstract contract SecureOwnable is Ownable {
         require(block.timestamp >= txRecord.releaseTime - (_timeLockPeriodInMinutes * 1 minutes) + 1 hours, "Cannot cancel within first hour");
         
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txCancellation(txId);
-        require(updatedRecord.params.operationType == BROADCASTER_UPDATE, "Invalid operation type");
+        _validateOperationType(updatedRecord.params.operationType, BROADCASTER_UPDATE);
         _hasOpenBroadcasterRequest = false;
         finalizeOperation(updatedRecord);
         emit BroadcasterUpdateCancelled(txId);
@@ -312,7 +312,7 @@ abstract contract SecureOwnable is Ownable {
         _secureState.checkPermission(UPDATE_BROADCASTER_CANCEL_META_SELECTOR);
         require(metaTx.params.handlerSelector == UPDATE_BROADCASTER_CANCEL_META_SELECTOR, "Invalid handler selector");
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txCancellationWithMetaTx(metaTx);
-        require(updatedRecord.params.operationType == BROADCASTER_UPDATE, "Invalid operation type");
+        _validateOperationType(updatedRecord.params.operationType, BROADCASTER_UPDATE);
         _hasOpenBroadcasterRequest = false;
         finalizeOperation(updatedRecord);
         emit BroadcasterUpdateCancelled(updatedRecord.txId);
@@ -328,9 +328,8 @@ abstract contract SecureOwnable is Ownable {
     function updateRecoveryExecutionOptions(
         address newRecoveryAddress
     ) public view returns (bytes memory) {
-        require(newRecoveryAddress != address(0), "Invalid recovery address");
+        _validateNotZeroAddress(newRecoveryAddress);
         require(newRecoveryAddress != _recoveryAddress, "New recovery must be different");
-        require(newRecoveryAddress != owner(), "Recovery address cannot be owner");
 
         return MultiPhaseSecureOperation.createStandardExecutionOptions(
             UPDATE_RECOVERY_SELECTOR,
@@ -347,10 +346,6 @@ abstract contract SecureOwnable is Ownable {
         MultiPhaseSecureOperation.MetaTransaction memory metaTx
     ) public onlyBroadcaster returns (MultiPhaseSecureOperation.TxRecord memory) {
         _secureState.checkPermission(UPDATE_RECOVERY_META_SELECTOR);
-        // TODO: check the parameters
-        // require(newRecoveryAddress != address(0), "Invalid recovery address");
-        // require(newRecoveryAddress != _recoveryAddress, "New recovery must be different");
-        // require(newRecoveryAddress != owner(), "Recovery address cannot be owner");
 
         return _requestAndApprove(metaTx);
     }
@@ -382,9 +377,6 @@ abstract contract SecureOwnable is Ownable {
         MultiPhaseSecureOperation.MetaTransaction memory metaTx
     ) public onlyBroadcaster returns (MultiPhaseSecureOperation.TxRecord memory) {
         _secureState.checkPermission(UPDATE_TIMELOCK_META_SELECTOR);
-        // TODO: check the parameters
-        // require(newTimeLockPeriodInMinutes > 0, "Invalid timelock period");
-        // require(newTimeLockPeriodInMinutes != _timeLockPeriodInMinutes, "New timelock must be different");
 
         return _requestAndApprove(metaTx);
     }
@@ -547,7 +539,7 @@ abstract contract SecureOwnable is Ownable {
      * @param newOwner The new owner address
      */
     function executeTransferOwnership(address newOwner) external {
-        require(msg.sender == address(this), "Only callable by contract itself");
+        _validateInternal();
         _transferOwnership(newOwner);
     }
 
@@ -556,7 +548,7 @@ abstract contract SecureOwnable is Ownable {
      * @param newBroadcaster The new broadcaster address
      */
     function executeBroadcasterUpdate(address newBroadcaster) external {
-        require(msg.sender == address(this), "Only callable by contract itself");
+        _validateInternal();
         _updateBroadcaster(newBroadcaster);
     }
 
@@ -565,7 +557,7 @@ abstract contract SecureOwnable is Ownable {
      * @param newRecoveryAddress The new recovery address
      */
     function executeRecoveryUpdate(address newRecoveryAddress) external {
-        require(msg.sender == address(this), "Only callable by contract itself");
+        _validateInternal();
         _updateRecoveryAddress(newRecoveryAddress);
     }
 
@@ -574,7 +566,7 @@ abstract contract SecureOwnable is Ownable {
      * @param newTimeLockPeriodInMinutes The new timelock period in minutes
      */
     function executeTimeLockUpdate(uint256 newTimeLockPeriodInMinutes) external {
-        require(msg.sender == address(this), "Only callable by contract itself");
+        _validateInternal();
         _updateTimeLockPeriod(newTimeLockPeriodInMinutes);
     }
 
@@ -621,7 +613,7 @@ abstract contract SecureOwnable is Ownable {
      * @param newOwner The new owner of the contract
      */
     function transferOwnership(address newOwner) public virtual override onlyOwner {
-        revert("Direct ownership transfer disabled - use secure transfer process");
+        revert("Direct ownership transfer disabled");
     }
 
     /**
@@ -676,6 +668,30 @@ abstract contract SecureOwnable is Ownable {
         _timeLockPeriodInMinutes = newTimeLockPeriodInMinutes;
         _secureState.updateTimeLockPeriod(newTimeLockPeriodInMinutes);
         emit TimeLockPeriodUpdated(oldPeriod, newTimeLockPeriodInMinutes);
+    }
+
+    /**
+     * @dev Validates that the function is being called internally by the contract itself
+     */
+    function _validateInternal() internal view {
+        require(msg.sender == address(this), "Only callable by contract itself");
+    }
+
+    /**
+     * @dev Validates that an address is not the zero address
+     * @param addr The address to validate
+     */
+    function _validateNotZeroAddress(address addr) internal pure {
+        require(addr != address(0), "Invalid address");
+    }
+
+    /**
+     * @dev Validates that the operation type matches the expected type
+     * @param actualType The actual operation type from the record
+     * @param expectedType The expected operation type to validate against
+     */
+    function _validateOperationType(bytes32 actualType, bytes32 expectedType) internal pure {
+        require(actualType == expectedType, "Invalid operation type");
     }
 
 }
