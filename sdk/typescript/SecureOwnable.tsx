@@ -380,6 +380,15 @@ export class SecureOwnable implements ISecureOwnable {
       args: [operationType]
     }) as boolean;
   }
+
+  async supportsInterface(interfaceId: Hex): Promise<boolean> {
+    return await this.client.readContract({
+      address: this.contractAddress,
+      abi: SecureOwnableABIJson,
+      functionName: 'supportsInterface',
+      args: [interfaceId]
+    }) as boolean;
+  }
 }
 
 export default SecureOwnable;
