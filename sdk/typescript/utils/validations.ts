@@ -83,7 +83,7 @@ export class ContractValidations {
     await this.validateTxParams(txRecord.params);
 
     // Validate result (must be empty for pending transactions)
-    if (txRecord.result && txRecord.result !== '0x') {
+    if (txRecord.result && this.isValidHex(txRecord.result) && BigInt(txRecord.result) !== BigInt(0)) {
       throw new Error(`Result must be empty for pending transactions: ${txRecord.result}`);
     }
 
