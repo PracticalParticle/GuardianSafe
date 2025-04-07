@@ -83,8 +83,17 @@ export class ContractValidations {
     await this.validateTxParams(txRecord.params);
 
     // Validate result (must be empty for pending transactions)
-    if (txRecord.result && this.isValidHex(txRecord.result) && BigInt(txRecord.result) !== BigInt(0)) {
-      throw new Error(`Result must be empty for pending transactions: ${txRecord.result}`);
+    if (txRecord.result) {
+      // First check if it's a valid hex string
+      if (!this.isValidHex(txRecord.result)) {
+        throw new Error("Invalid hex format for transaction result");
+      }
+      
+      // For pending transactions, only allow '0x' or '0x0' or '0x000000'
+      const strippedResult = txRecord.result.replace(/^0x0*$/, '0x');
+      if (strippedResult !== '0x') {
+        throw new Error("Result must be empty for pending transactions");
+      }
     }
 
     // Validate payment details if present
