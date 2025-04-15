@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.2;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 /**
  * @title MultiPhaseSecureOperation
@@ -21,6 +21,8 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
  * that require high levels of security and flexibility.
  */
 library MultiPhaseSecureOperation {
+    using MessageHashUtils for bytes32;
+
     enum TxStatus {
         UNDEFINED,
         PENDING,
@@ -633,7 +635,7 @@ library MultiPhaseSecureOperation {
         require(uint256(s) <= 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0, "Invalid s value");
         require(v == 27 || v == 28, "Invalid v value");
 
-        address signer = ecrecover(ECDSA.toEthSignedMessageHash(messageHash), v, r, s);
+        address signer = ecrecover(messageHash.toEthSignedMessageHash(), v, r, s);
         require(signer != address(0), "ECDSA: invalid signature");
 
         return signer;

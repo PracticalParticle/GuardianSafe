@@ -22,7 +22,7 @@
   "author": "Particle Crypto Security",
   "license": "MPL-2.0",
   "dependencies": {
-    "@openzeppelin/contracts": "^4.9.6"
+    "@openzeppelin/contracts": "^5.3.0"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.2.3",

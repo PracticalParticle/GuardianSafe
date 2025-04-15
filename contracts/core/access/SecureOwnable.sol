@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.2;
 
 // OpenZeppelin imports
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -80,7 +80,7 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
     }
     
     modifier onlyRecovery() {
-        require(msg.sender == _recoveryAddress, "Restricted to recovery owner");
+        require(msg.sender == _recoveryAddress, "Restricted to recovery");
         _;
     }
 
@@ -101,7 +101,7 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
         address broadcaster,
         address recovery,
         uint256 timeLockPeriodInMinutes    
-    ) {       
+    ) Ownable(initialOwner) {       
         _timeLockPeriodInMinutes = timeLockPeriodInMinutes;
         _recoveryAddress = recovery;
         _broadcaster = broadcaster;
@@ -137,7 +137,6 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
         _secureState.addRoleForFunction(UPDATE_RECOVERY_META_SELECTOR, MultiPhaseSecureOperation.BROADCASTER_ROLE);
         _secureState.addRoleForFunction(UPDATE_TIMELOCK_META_SELECTOR, MultiPhaseSecureOperation.BROADCASTER_ROLE);
 
-        _transferOwnership(initialOwner);
     }
 
     // Ownership Management
@@ -188,7 +187,7 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
      */
     function transferOwnershipApprovalWithMetaTx(MultiPhaseSecureOperation.MetaTransaction memory metaTx) public onlyBroadcaster returns (MultiPhaseSecureOperation.TxRecord memory) {
         _secureState.checkPermission(TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR);
-        require(metaTx.params.handlerSelector == TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR, "Invalid handler selector");
+        _validateHandlerSelector(metaTx.params.handlerSelector, TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR);
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txApprovalWithMetaTx(metaTx);
         _validateOperationType(updatedRecord.params.operationType, OWNERSHIP_TRANSFER);
         _hasOpenOwnershipRequest = false;
@@ -217,7 +216,7 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
      */
     function transferOwnershipCancellationWithMetaTx(MultiPhaseSecureOperation.MetaTransaction memory metaTx) public onlyBroadcaster returns (MultiPhaseSecureOperation.TxRecord memory) {
         _secureState.checkPermission(TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR);
-        require(metaTx.params.handlerSelector == TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR, "Invalid handler selector");
+        _validateHandlerSelector(metaTx.params.handlerSelector, TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR);
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txCancellationWithMetaTx(metaTx);
         _validateOperationType(updatedRecord.params.operationType, OWNERSHIP_TRANSFER);
         _hasOpenOwnershipRequest = false;
@@ -235,7 +234,7 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
     function updateBroadcasterRequest(address newBroadcaster) public onlyOwner returns (MultiPhaseSecureOperation.TxRecord memory) {
         require(!_hasOpenBroadcasterRequest, "Request is already pending");
         _validateNotZeroAddress(newBroadcaster);
-        require(newBroadcaster != _broadcaster, "New broadcaster must be different");
+        _validateNewAddress(newBroadcaster, _broadcaster);
         
         bytes memory executionOptions = MultiPhaseSecureOperation.createStandardExecutionOptions(
             UPDATE_BROADCASTER_SELECTOR,
@@ -278,7 +277,7 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
      */
     function updateBroadcasterApprovalWithMetaTx(MultiPhaseSecureOperation.MetaTransaction memory metaTx) public onlyBroadcaster returns (MultiPhaseSecureOperation.TxRecord memory) {
         _secureState.checkPermission(UPDATE_BROADCASTER_APPROVE_META_SELECTOR);
-        require(metaTx.params.handlerSelector == UPDATE_BROADCASTER_APPROVE_META_SELECTOR, "Invalid handler selector");
+        _validateHandlerSelector(metaTx.params.handlerSelector, UPDATE_BROADCASTER_APPROVE_META_SELECTOR);
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txApprovalWithMetaTx(metaTx);
         _validateOperationType(updatedRecord.params.operationType, BROADCASTER_UPDATE);
         _hasOpenBroadcasterRequest = false;
@@ -307,7 +306,7 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
      */
     function updateBroadcasterCancellationWithMetaTx(MultiPhaseSecureOperation.MetaTransaction memory metaTx) public onlyBroadcaster returns (MultiPhaseSecureOperation.TxRecord memory) {
         _secureState.checkPermission(UPDATE_BROADCASTER_CANCEL_META_SELECTOR);
-        require(metaTx.params.handlerSelector == UPDATE_BROADCASTER_CANCEL_META_SELECTOR, "Invalid handler selector");
+        _validateHandlerSelector(metaTx.params.handlerSelector, UPDATE_BROADCASTER_CANCEL_META_SELECTOR);
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txCancellationWithMetaTx(metaTx);
         _validateOperationType(updatedRecord.params.operationType, BROADCASTER_UPDATE);
         _hasOpenBroadcasterRequest = false;
@@ -326,7 +325,7 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
         address newRecoveryAddress
     ) public view returns (bytes memory) {
         _validateNotZeroAddress(newRecoveryAddress);
-        require(newRecoveryAddress != _recoveryAddress, "New recovery must be different");
+        _validateNewAddress(newRecoveryAddress, _recoveryAddress);
 
         return MultiPhaseSecureOperation.createStandardExecutionOptions(
             UPDATE_RECOVERY_SELECTOR,
@@ -689,6 +688,24 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
      */
     function _validateOperationType(bytes32 actualType, bytes32 expectedType) internal pure {
         require(actualType == expectedType, "Invalid operation type");
+    }
+
+    /**
+     * @dev Validates that the handler selector matches the expected selector
+     * @param actualSelector The actual handler selector from the meta transaction
+     * @param expectedSelector The expected handler selector to validate against
+     */
+    function _validateHandlerSelector(bytes4 actualSelector, bytes4 expectedSelector) internal pure {
+        require(actualSelector == expectedSelector, "Invalid handler selector");
+    }
+
+    /**
+     * @dev Validates that the new address is different from the current address
+     * @param newAddress The proposed new address
+     * @param currentAddress The current address to compare against
+     */
+    function _validateNewAddress(address newAddress, address currentAddress) internal pure {
+        require(newAddress != currentAddress, "Not new address");
     }
 
     /**
