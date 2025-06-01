@@ -529,14 +529,12 @@ library MultiPhaseSecureOperation {
         require(metaTx.txRecord.status == TxStatus.PENDING, "Transaction not in pending state");
         
         // Transaction parameters validation
-        require(metaTx.txRecord.params.target != address(0), "Invalid target address");
         require(metaTx.txRecord.params.requester != address(0), "Invalid requester address");
         require(isOperationTypeSupported(self, metaTx.txRecord.params.operationType), "Operation type not supported");
         
         // Meta-transaction parameters validation
         require(metaTx.params.chainId == block.chainid, "Chain ID mismatch");
-        require(metaTx.params.handlerContract == msg.sender, "Handler contract mismatch");
-        require(metaTx.params.signer != address(0), "Invalid signer address");
+        require(metaTx.params.handlerContract == metaTx.txRecord.params.target, "Handler contract mismatch");
         require(block.timestamp <= metaTx.params.deadline, "Meta-transaction expired");
         
         // Gas price validation (if applicable)
