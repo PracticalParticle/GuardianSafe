@@ -116,6 +116,7 @@ library MultiPhaseSecureOperation {
         
         // Lists that grow over time
         bytes32[] supportedOperationTypesList;
+        bytes32[] supportedRolesList;
     }
 
     bytes32 constant OWNER_ROLE = keccak256("OWNER_ROLE");
@@ -162,19 +163,22 @@ library MultiPhaseSecureOperation {
         self.txCounter = 0;
         
         // Add owner role permissions
-        addRole(self, OWNER_ROLE, _owner);
+        addRole(self, OWNER_ROLE);
+        addToRole(self, OWNER_ROLE, _owner);
         addRoleForFunction(self, TX_REQUEST_SELECTOR, OWNER_ROLE);
         addRoleForFunction(self, TX_DELAYED_APPROVAL_SELECTOR, OWNER_ROLE);
         addRoleForFunction(self, TX_CANCELLATION_SELECTOR, OWNER_ROLE);
         
         // Add broadcaster role permissions
-        addRole(self, BROADCASTER_ROLE, _broadcaster);
+        addRole(self, BROADCASTER_ROLE);
+        addToRole(self, BROADCASTER_ROLE, _broadcaster);
         addRoleForFunction(self, META_TX_APPROVAL_SELECTOR, BROADCASTER_ROLE);
         addRoleForFunction(self, META_TX_REQUEST_AND_APPROVE_SELECTOR, BROADCASTER_ROLE);
         addRoleForFunction(self, META_TX_CANCELLATION_SELECTOR, BROADCASTER_ROLE);
 
         // Add recovery role permissions
-        addRole(self, RECOVERY_ROLE, _recovery);
+        addRole(self, RECOVERY_ROLE);
+        addToRole(self, RECOVERY_ROLE, _recovery);
         addRoleForFunction(self, TX_REQUEST_SELECTOR, RECOVERY_ROLE);
         addRoleForFunction(self, TX_DELAYED_APPROVAL_SELECTOR, RECOVERY_ROLE);
         addRoleForFunction(self, TX_CANCELLATION_SELECTOR, RECOVERY_ROLE);
@@ -403,19 +407,9 @@ library MultiPhaseSecureOperation {
      * @param role The role to add.
      * @param roleAddress The address to assign the role.
      */
-    function addRole(SecureOperationState storage self, bytes32 role, address roleAddress) public {
+    function addToRole(SecureOperationState storage self, bytes32 role, address roleAddress) public {
         require(roleAddress != address(0), "Cannot set role to zero address");
         self.roles[role] = roleAddress;
-    }
-
-    /**
-     * @dev Removes a role from a specified address.
-     * @param self The SecureOperationState to modify.
-     * @param role The role to remove.
-     */
-    function removeRole(SecureOperationState storage self, bytes32 role) public {
-        require(role != OWNER_ROLE && role != BROADCASTER_ROLE && role != RECOVERY_ROLE, "Cannot remove owner, broadcaster or recovery role");
-        delete self.roles[role];
     }
 
     /**
@@ -458,6 +452,77 @@ library MultiPhaseSecureOperation {
      */
     function getRole(SecureOperationState storage self, bytes32 role) public view returns (address) {
         return self.roles[role];
+    }
+
+    /**
+     * @dev Adds a role to the supported roles list.
+     * @param self The SecureOperationState to modify.
+     * @param role The role to add to supported roles.
+     */
+    function addRole(SecureOperationState storage self, bytes32 role) public {
+        require(role != bytes32(0), "Cannot add zero role");
+        require(!isRoleSupported(self, role), "Role already supported");
+        self.supportedRolesList.push(role);
+    }
+
+    /**
+     * @dev Removes a role from a specified address and from the supported roles list.
+     * @param self The SecureOperationState to modify.
+     * @param role The role to remove.
+     */
+    function removeRole(SecureOperationState storage self, bytes32 role) public {
+        require(role != OWNER_ROLE && role != BROADCASTER_ROLE && role != RECOVERY_ROLE, "Cannot remove owner, broadcaster or recovery role");
+        
+        // Remove role assignment from address
+        delete self.roles[role];
+        
+        // Remove role from supported roles list
+        removeRoleFromSupportedList(self, role);
+    }
+
+    /**
+     * @dev Checks if a role is supported in the SecureOperationState.
+     * @param self The SecureOperationState to check.
+     * @param role The role to check for support.
+     * @return bool True if the role is supported, false otherwise.
+     */
+    function isRoleSupported(SecureOperationState storage self, bytes32 role) public view returns (bool) {
+        for (uint i = 0; i < self.supportedRolesList.length; i++) {
+            if (self.supportedRolesList[i] == role) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @dev Gets all supported roles in the SecureOperationState.
+     * @param self The SecureOperationState to check.
+     * @return Array of supported roles.
+     */
+    function getSupportedRoles(SecureOperationState storage self) public view returns (bytes32[] memory) {
+        return self.supportedRolesList;
+    }
+
+    /**
+     * @dev Removes a role from the supported roles list.
+     * @param self The SecureOperationState to modify.
+     * @param role The role to remove from supported roles.
+     */
+    function removeRoleFromSupportedList(SecureOperationState storage self, bytes32 role) private {
+        for (uint i = 0; i < self.supportedRolesList.length; i++) {
+            if (self.supportedRolesList[i] == role) {
+                // If not the last element, replace with the last element
+                if (i != self.supportedRolesList.length - 1) {
+                    self.supportedRolesList[i] = self.supportedRolesList[
+                        self.supportedRolesList.length - 1
+                    ];
+                }
+                // Remove the last element
+                self.supportedRolesList.pop();
+                break;
+            }
+        }
     }
 
     /**
