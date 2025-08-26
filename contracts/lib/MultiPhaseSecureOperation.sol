@@ -180,14 +180,7 @@ library MultiPhaseSecureOperation {
         addRoleForFunction(self, TX_CANCELLATION_SELECTOR, RECOVERY_ROLE);
     }
 
-    /**
-     * @dev Retrieves the owner address from the roles mapping.
-     * @param self The SecureOperationState to check.
-     * @return The address of the owner.
-     */
-    function getOwner(SecureOperationState storage self) public view returns (address) {
-        return self.roles[OWNER_ROLE];
-    }
+
 
     /**
      * @dev Gets the transaction record by its ID.
@@ -458,6 +451,16 @@ library MultiPhaseSecureOperation {
     }
 
     /**
+     * @dev Gets the address associated with a specific role.
+     * @param self The SecureOperationState to check.
+     * @param role The role to get the address for.
+     * @return The address associated with the role, or address(0) if the role doesn't exist.
+     */
+    function getRole(SecureOperationState storage self, bytes32 role) public view returns (address) {
+        return self.roles[role];
+    }
+
+    /**
      * @dev Checks if the caller has permission to execute a function.
      * @param self The SecureOperationState to check.
      * @param functionSelector The selector of the function to check permissions for.
@@ -551,7 +554,7 @@ library MultiPhaseSecureOperation {
         require(recoveredSigner == metaTx.params.signer, "Invalid signature");
 
         // Authorization check
-        bool isAuthorized = metaTx.params.signer == getOwner(self) || 
+        bool isAuthorized = metaTx.params.signer == getRole(self, OWNER_ROLE) || 
                            isAuthorizedSigner(self, metaTx.params.signer);
         require(isAuthorized, "Signer not authorized");
         
@@ -656,7 +659,7 @@ library MultiPhaseSecureOperation {
      */
     function addAuthorizedSigner(SecureOperationState storage self, address signer) public {
         require(signer != address(0), "Cannot authorize zero address");
-        require(signer != getOwner(self), "Cannot delegate to owner");
+        require(signer != getRole(self, OWNER_ROLE), "Cannot delegate to owner");
         require(!isAuthorizedSigner(self, signer), "Wallet already authorized");
         self.authorizedSigners[signer] = true;
     }
