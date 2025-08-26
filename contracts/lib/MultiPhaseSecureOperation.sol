@@ -414,7 +414,7 @@ library MultiPhaseSecureOperation {
      * @param role The role to remove.
      */
     function removeRole(SecureOperationState storage self, bytes32 role) public {
-        require(role != OWNER_ROLE && role != BROADCASTER_ROLE, "Cannot remove owner or broadcaster role");
+        require(role != OWNER_ROLE && role != BROADCASTER_ROLE && role != RECOVERY_ROLE, "Cannot remove owner, broadcaster or recovery role");
         delete self.roles[role];
     }
 
