@@ -535,6 +535,12 @@ library MultiPhaseSecureOperation {
         require(hasPermission, "Caller does not have permission to execute this function");
     }
 
+    /**
+     * @dev Checks if the caller has permission to execute a function.
+     * @param self The SecureOperationState to check.
+     * @param functionSelector The selector of the function to check permissions for.
+     * @return True if the caller has permission, false otherwise.
+     */
     function checkPermissionPermissive(SecureOperationState storage self, bytes4 functionSelector) public view returns (bool) {
         bytes32[] memory allowedRoles = self.allowedRolesForFunction[functionSelector];
         bool hasPermission = false;
