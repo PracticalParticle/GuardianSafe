@@ -41,9 +41,7 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
     bytes32 public constant RECOVERY_UPDATE = keccak256("RECOVERY_UPDATE");
     bytes32 public constant TIMELOCK_UPDATE = keccak256("TIMELOCK_UPDATE");
 
-    uint256 private _timeLockPeriodInMinutes;
-    address private _recoveryAddress;
-    address private _broadcaster;  
+    uint256 private _timeLockPeriodInMinutes; 
 
     MultiPhaseSecureOperation.SecureOperationState private _secureState;
 
@@ -52,6 +50,14 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
     bytes4 private constant UPDATE_BROADCASTER_SELECTOR = bytes4(keccak256("executeBroadcasterUpdate(address)"));
     bytes4 private constant UPDATE_RECOVERY_SELECTOR = bytes4(keccak256("executeRecoveryUpdate(address)"));
     bytes4 private constant UPDATE_TIMELOCK_SELECTOR = bytes4(keccak256("executeTimeLockUpdate(uint256)"));
+
+    // Time delay function selectors
+    bytes4 private constant TRANSFER_OWNERSHIP_REQUEST_SELECTOR = bytes4(keccak256("transferOwnershipRequest()"));
+    bytes4 private constant TRANSFER_OWNERSHIP_DELAYED_APPROVAL_SELECTOR = bytes4(keccak256("transferOwnershipDelayedApproval(uint256)"));
+    bytes4 private constant TRANSFER_OWNERSHIP_CANCELLATION_SELECTOR = bytes4(keccak256("transferOwnershipCancellation(uint256)"));
+    bytes4 private constant UPDATE_BROADCASTER_REQUEST_SELECTOR = bytes4(keccak256("updateBroadcasterRequest(address)"));
+    bytes4 private constant UPDATE_BROADCASTER_DELAYED_APPROVAL_SELECTOR = bytes4(keccak256("updateBroadcasterDelayedApproval(uint256)"));
+    bytes4 private constant UPDATE_BROADCASTER_CANCELLATION_SELECTOR = bytes4(keccak256("updateBroadcasterCancellation(uint256)"));
 
     // Meta-transaction function selectors
     bytes4 private constant TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR = bytes4(keccak256("transferOwnershipApprovalWithMetaTx((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes32,bytes,(address,uint256,address,uint256),(uint256,uint256,address,bytes4,uint256,uint256,address),bytes,bytes))"));
@@ -75,17 +81,17 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
     event TimeLockPeriodUpdated(uint256 oldPeriod, uint256 newPeriod);
 
     modifier onlyOwnerOrRecovery() {
-        require(msg.sender == owner() || msg.sender == _recoveryAddress, "Restricted to owner or recovery");
+        require(msg.sender == owner() || msg.sender == getRecoveryAddress(), "Restricted to owner or recovery");
         _;
     }
     
     modifier onlyRecovery() {
-        require(msg.sender == _recoveryAddress, "Restricted to recovery");
+        require(msg.sender == getRecoveryAddress(), "Restricted to recovery");
         _;
     }
 
     modifier onlyBroadcaster() {
-        require(msg.sender == _broadcaster, "Restricted to Broadcaster");
+        require(msg.sender == getBroadcaster(), "Restricted to Broadcaster");
         _;
     }
 
@@ -103,8 +109,6 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
         uint256 timeLockPeriodInMinutes    
     ) Ownable(initialOwner) {       
         _timeLockPeriodInMinutes = timeLockPeriodInMinutes;
-        _recoveryAddress = recovery;
-        _broadcaster = broadcaster;
 
         _secureState.initialize( initialOwner, broadcaster, recovery, timeLockPeriodInMinutes);
             
@@ -148,7 +152,7 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
         require(!_hasOpenOwnershipRequest, "Request is already pending");
         bytes memory executionOptions = MultiPhaseSecureOperation.createStandardExecutionOptions(
             TRANSFER_OWNERSHIP_SELECTOR,
-            abi.encode(_recoveryAddress)
+            abi.encode(getRecoveryAddress())
         );
 
         MultiPhaseSecureOperation.TxRecord memory txRecord = _secureState.txRequest(
@@ -163,7 +167,7 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
 
         _hasOpenOwnershipRequest = true;
         addOperation(txRecord);
-        emit OwnershipTransferRequest(owner(), _recoveryAddress);
+        emit OwnershipTransferRequest(owner(), getRecoveryAddress());
         return txRecord;
     }
 
@@ -234,7 +238,7 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
     function updateBroadcasterRequest(address newBroadcaster) public onlyOwner returns (MultiPhaseSecureOperation.TxRecord memory) {
         require(!_hasOpenBroadcasterRequest, "Request is already pending");
         _validateNotZeroAddress(newBroadcaster);
-        _validateNewAddress(newBroadcaster, _broadcaster);
+        _validateNewAddress(newBroadcaster, getBroadcaster());
         
         bytes memory executionOptions = MultiPhaseSecureOperation.createStandardExecutionOptions(
             UPDATE_BROADCASTER_SELECTOR,
@@ -253,7 +257,7 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
 
         _hasOpenBroadcasterRequest = true;
         addOperation(txRecord);
-        emit BroadcasterUpdateRequest(_broadcaster, newBroadcaster);
+        emit BroadcasterUpdateRequest(getBroadcaster(), newBroadcaster);
         return txRecord;
     }
 
@@ -325,7 +329,7 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
         address newRecoveryAddress
     ) public view returns (bytes memory) {
         _validateNotZeroAddress(newRecoveryAddress);
-        _validateNewAddress(newRecoveryAddress, _recoveryAddress);
+        _validateNewAddress(newRecoveryAddress, getRecoveryAddress());
 
         return MultiPhaseSecureOperation.createStandardExecutionOptions(
             UPDATE_RECOVERY_SELECTOR,
@@ -494,7 +498,7 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
      * @return The broadcaster address
      */
     function getBroadcaster() public view virtual override returns (address) {
-        return _broadcaster;
+        return _secureState.getRole(MultiPhaseSecureOperation.BROADCASTER_ROLE).authorizedWallets[0];
     }
 
     /**
@@ -502,7 +506,7 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
      * @return The recovery address
      */
     function getRecoveryAddress() public view virtual override returns (address) {
-        return _recoveryAddress;
+        return _secureState.getRole(MultiPhaseSecureOperation.RECOVERY_ROLE).authorizedWallets[0];
     }
 
     /**
@@ -628,7 +632,7 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
         address oldOwner = owner();
         super._transferOwnership(newOwner);
         if (_secureState.isRoleExist(MultiPhaseSecureOperation.OWNER_ROLE)) {
-            _secureState.updateRole(MultiPhaseSecureOperation.OWNER_ROLE, newOwner);
+            _secureState.updateAuthorizedWalletInRole(MultiPhaseSecureOperation.OWNER_ROLE, newOwner, oldOwner);
         } 
         emit OwnershipTransferUpdated(oldOwner, owner());
     }
@@ -638,9 +642,8 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
      * @param newBroadcaster The new broadcaster address
      */
     function _updateBroadcaster(address newBroadcaster) internal virtual {
-        address oldBroadcaster = _broadcaster;
-        _broadcaster = newBroadcaster;
-        _secureState.updateRole(MultiPhaseSecureOperation.BROADCASTER_ROLE, newBroadcaster);
+        address oldBroadcaster = getBroadcaster();
+        _secureState.updateAuthorizedWalletInRole(MultiPhaseSecureOperation.BROADCASTER_ROLE, newBroadcaster, oldBroadcaster);
         emit BroadcasterUpdated(oldBroadcaster, newBroadcaster);
     }
 
@@ -649,9 +652,8 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
      * @param newRecoveryAddress The new recovery address
      */
     function _updateRecoveryAddress(address newRecoveryAddress) internal virtual {
-        address oldRecovery = _recoveryAddress;
-        _recoveryAddress = newRecoveryAddress;
-        _secureState.updateRole(MultiPhaseSecureOperation.RECOVERY_ROLE, newRecoveryAddress);
+        address oldRecovery = getRecoveryAddress();
+        _secureState.updateAuthorizedWalletInRole(MultiPhaseSecureOperation.RECOVERY_ROLE, newRecoveryAddress, oldRecovery);
         emit RecoveryAddressUpdated(oldRecovery, newRecoveryAddress);
     }
 
