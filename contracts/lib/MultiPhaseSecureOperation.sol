@@ -149,6 +149,7 @@ library MultiPhaseSecureOperation {
         // Lists that grow over time
         bytes32[] supportedOperationTypesList;
         bytes32[] supportedRolesList;
+        bytes4[] supportedFunctionsList;
     }
 
     bytes32 constant OWNER_ROLE = keccak256(bytes("OWNER_ROLE"));
@@ -1141,6 +1142,7 @@ library MultiPhaseSecureOperation {
             functionSelector: functionSelector,
             supportedActions: supportedActions
         });
+        self.supportedFunctionsList.push(functionSelector);
     }
 
     /**
@@ -1179,16 +1181,6 @@ library MultiPhaseSecureOperation {
     }
 
     /**
-     * @dev Checks if a role exists in the SecureOperationState
-     * @param self The SecureOperationState to check
-     * @param role The role to check for existence
-     * @return bool True if the role exists (has an assigned address), false otherwise
-     */
-    function isRoleExist(SecureOperationState storage self, bytes32 role) public view returns (bool) {
-        return self.roles[role].roleHash != bytes32(0);
-    }
-
-    /**
      * @dev Adds a wallet address to a role in the roles mapping.
      * @param self The SecureOperationState to modify.
      * @param roleHash The role hash to add the wallet to.
@@ -1215,7 +1207,7 @@ library MultiPhaseSecureOperation {
      * @return True if the address has the role, false otherwise.
      */
     function isAuthorizedWalletInRole(SecureOperationState storage self, bytes32 role, address wallet) public view returns (bool) {
-        Role memory roleData = self.roles[role];
+        Role memory roleData = getRole(self, role);
         if (roleData.roleHash == bytes32(0)) {
             return false;
         }

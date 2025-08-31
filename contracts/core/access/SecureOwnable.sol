@@ -710,7 +710,7 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
     function _transferOwnership(address newOwner) internal virtual override {
         address oldOwner = owner();
         super._transferOwnership(newOwner);
-        if (_secureState.isRoleExist(MultiPhaseSecureOperation.OWNER_ROLE)) {
+        if (_secureState.isAuthorizedWalletInRole(MultiPhaseSecureOperation.OWNER_ROLE, oldOwner)) {
             _secureState.updateAuthorizedWalletInRole(MultiPhaseSecureOperation.OWNER_ROLE, newOwner, oldOwner);
         } 
         emit OwnershipTransferUpdated(oldOwner, owner());
