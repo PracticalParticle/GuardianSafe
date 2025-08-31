@@ -1183,20 +1183,20 @@ library MultiPhaseSecureOperation {
     /**
      * @dev Adds a wallet address to a role in the roles mapping.
      * @param self The SecureOperationState to modify.
-     * @param roleHash The role hash to add the wallet to.
+     * @param role The role hash to add the wallet to.
      * @param wallet The wallet address to add.
      */
-    function addAuthorizedWalletToRole(SecureOperationState storage self, bytes32 roleHash, address wallet) public {
+    function addAuthorizedWalletToRole(SecureOperationState storage self, bytes32 role, address wallet) public {
         require(wallet != address(0), "Cannot add zero address to role");
-        require(self.roles[roleHash].roleHash != bytes32(0), "Role does not exist");
-        require(self.roles[roleHash].authorizedWallets.length < self.roles[roleHash].maxWallets, "Role wallet limit reached");
+        require(getRole(self, role).roleHash != bytes32(0), "Role does not exist");
+        require(getRole(self, role).authorizedWallets.length < getRole(self, role).maxWallets, "Role wallet limit reached");
         
         // Check if wallet is already in the role
-        for (uint i = 0; i < self.roles[roleHash].authorizedWallets.length; i++) {
-            require(self.roles[roleHash].authorizedWallets[i] != wallet, "Wallet already in role");
+        for (uint i = 0; i < getRole(self, role).authorizedWallets.length; i++) {
+            require(getRole(self, role).authorizedWallets[i] != wallet, "Wallet already in role");
         }
         
-        self.roles[roleHash].authorizedWallets.push(wallet);
+        self.roles[role].authorizedWallets.push(wallet);
     }
 
     /**
