@@ -852,37 +852,37 @@ library MultiPhaseSecureOperation {
         self.timeLockPeriodInMinutes = _newTimeLockPeriodInMinutes;
     }
     
-    /**
-     * @dev Executes the payment associated with a meta-transaction.
-     * @param self The SecureOperationState to modify.
-     * @param metaTx The meta-transaction containing the payment details.
-     * @notice This function verifies the signature of the meta-transaction and transfers
-     *         the specified native tokens and/or ERC20 tokens to the recipient.
-     */
-    function executePayment(
-        SecureOperationState storage self,
-        MetaTransaction memory metaTx
-    ) public {
-        require(verifySignature(self, metaTx), "Invalid signature");
+    // /**
+    //  * @dev Executes the payment associated with a meta-transaction.
+    //  * @param self The SecureOperationState to modify.
+    //  * @param metaTx The meta-transaction containing the payment details.
+    //  * @notice This function verifies the signature of the meta-transaction and transfers
+    //  *         the specified native tokens and/or ERC20 tokens to the recipient.
+    //  */
+    // function executePayment(
+    //     SecureOperationState storage self,
+    //     MetaTransaction memory metaTx
+    // ) public {
+    //     require(verifySignature(self, metaTx), "Invalid signature");
 
-        PaymentDetails memory payment = metaTx.txRecord.payment;
-        if (payment.nativeTokenAmount > 0) {
-            require(address(this).balance >= payment.nativeTokenAmount, "Insufficient native token balance");
-            (bool success, ) = payment.recipient.call{value: payment.nativeTokenAmount}("");
-            require(success, "Native token transfer failed");
-        }
+    //     PaymentDetails memory payment = metaTx.txRecord.payment;
+    //     if (payment.nativeTokenAmount > 0) {
+    //         require(address(this).balance >= payment.nativeTokenAmount, "Insufficient native token balance");
+    //         (bool success, ) = payment.recipient.call{value: payment.nativeTokenAmount}("");
+    //         require(success, "Native token transfer failed");
+    //     }
         
-        if (payment.erc20TokenAmount > 0) {
-            require(payment.erc20TokenAddress != address(0), "Invalid token address");
-            IERC20 erc20Token = IERC20(payment.erc20TokenAddress);
-            require(erc20Token.balanceOf(address(this)) >= payment.erc20TokenAmount, "Insufficient token balance");
+    //     if (payment.erc20TokenAmount > 0) {
+    //         require(payment.erc20TokenAddress != address(0), "Invalid token address");
+    //         IERC20 erc20Token = IERC20(payment.erc20TokenAddress);
+    //         require(erc20Token.balanceOf(address(this)) >= payment.erc20TokenAmount, "Insufficient token balance");
             
-            bool success = erc20Token.transfer(payment.recipient, payment.erc20TokenAmount);
-            require(success, "ERC20 token transfer failed");
-        }
+    //         bool success = erc20Token.transfer(payment.recipient, payment.erc20TokenAmount);
+    //         require(success, "ERC20 token transfer failed");
+    //     }
 
-        self.txRecords[metaTx.txRecord.txId].payment = payment;
-    }
+    //     self.txRecords[metaTx.txRecord.txId].payment = payment;
+    // }
 
     /**
      * @dev Creates StandardExecutionOptions with proper encoding
