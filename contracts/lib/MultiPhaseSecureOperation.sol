@@ -307,7 +307,7 @@ library MultiPhaseSecureOperation {
     ) public returns (TxRecord memory) {
         require(checkPermissionPermissive(self, TX_REQUEST_SELECTOR) || checkPermissionPermissive(self,META_TX_REQUEST_AND_APPROVE_SELECTOR),"Caller does not have permission to execute this function");
         require(target != address(0), "Invalid target address");
-        require(isOperationTypeSupported(self, operationType), "Operation type not supported");
+        require(isOperationTypeSupported(self, operationType), "Operation not supported");
 
         TxRecord memory txRequestRecord = createNewTxRecord(
             self,
@@ -619,7 +619,7 @@ library MultiPhaseSecureOperation {
      */
     function checkPermission(SecureOperationState storage self, bytes4 functionSelector) public view {
         bool hasPermission = checkPermissionPermissive(self,functionSelector);       
-        require(hasPermission, "Caller does not have permission to execute this function");
+        require(hasPermission, "Caller have no permission");
     }
 
     /**
@@ -734,7 +734,7 @@ library MultiPhaseSecureOperation {
         
         // Transaction parameters validation
         require(metaTx.txRecord.params.requester != address(0), "Invalid requester address");
-        require(isOperationTypeSupported(self, metaTx.txRecord.params.operationType), "Operation type not supported");
+        require(isOperationTypeSupported(self, metaTx.txRecord.params.operationType), "Operation not supported");
         
         // Meta-transaction parameters validation
         require(metaTx.params.chainId == block.chainid, "Chain ID mismatch");
@@ -756,7 +756,7 @@ library MultiPhaseSecureOperation {
 
         // Authorization check - verify signer has meta-transaction signing permissions for the function
         bool isAuthorized = hasMetaTxSigningPermission(self, metaTx.params.signer, metaTx.params.handlerSelector);
-        require(isAuthorized, "Signer not authorized for meta-transaction signing of this function");
+        require(isAuthorized, "Signer not authorized");
         
         return true;
     }
@@ -969,7 +969,7 @@ library MultiPhaseSecureOperation {
         TxParams memory txParams,
         MetaTxParams memory metaTxParams
     ) public view returns (MetaTransaction memory) {
-        require(isOperationTypeSupported(self, txParams.operationType), "Operation type not supported");
+        require(isOperationTypeSupported(self, txParams.operationType), "Operation not supported");
         require(txParams.target != address(0), "Invalid target address");
         
         TxRecord memory txRecord = createNewTxRecord(
@@ -1135,7 +1135,7 @@ library MultiPhaseSecureOperation {
         bytes4 functionSelector,
         TxAction[] memory supportedActions
     ) public {
-        require(self.functions[functionSelector].functionSelector == bytes4(0), "Function access control already exists");
+        require(self.functions[functionSelector].functionSelector == bytes4(0), "Function already exists");
         self.functions[functionSelector] = FunctionSchema({
             functionName: functionName,
             functionSelector: functionSelector,
@@ -1238,7 +1238,6 @@ library MultiPhaseSecureOperation {
     function updateAuthorizedWalletInRole(SecureOperationState storage self, bytes32 role, address newWallet, address oldWallet) public {
         require(self.roles[role].roleHash != bytes32(0), "Role does not exist");
         require(newWallet != address(0), "Cannot set role to zero address");
-        require(oldWallet != address(0), "Cannot remove zero address");
         
         Role storage roleData = self.roles[role];
     
@@ -1270,11 +1269,14 @@ library MultiPhaseSecureOperation {
         require(self.roles[roleHash].roleHash != bytes32(0), "Role does not exist");
         require(self.functions[functionSelector].functionSelector != bytes4(0), "Function does not exist");
         
+        // Validate that the grantedAction is supported by the function
+        require(isActionSupportedByFunction(self, functionSelector, grantedAction), "Action not supported by function");
+        
         Role storage role = self.roles[roleHash];
         
         // Check if permission already exists
         for (uint i = 0; i < role.functionPermissions.length; i++) {
-            require(role.functionPermissions[i].functionSelector != functionSelector, "Function permission already exists for this role");
+            require(role.functionPermissions[i].functionSelector != functionSelector, "Function permission already exists");
         }
         
         // If it doesn't exist, add it
@@ -1282,6 +1284,31 @@ library MultiPhaseSecureOperation {
             functionSelector: functionSelector,
             grantedAction: grantedAction
         }));
+    }
+
+    /**
+     * @dev Checks if a specific action is supported by a function.
+     * @param self The SecureOperationState to check.
+     * @param functionSelector The function selector to check.
+     * @param action The action to check for support.
+     * @return True if the action is supported by the function, false otherwise.
+     */
+    function isActionSupportedByFunction(
+        SecureOperationState storage self,
+        bytes4 functionSelector,
+        TxAction action
+    ) public view returns (bool) {
+        FunctionSchema memory functionSchema = self.functions[functionSelector];
+        if (functionSchema.functionSelector == bytes4(0)) {
+            return false; 
+        }
+        
+        for (uint i = 0; i < functionSchema.supportedActions.length; i++) {
+            if (functionSchema.supportedActions[i] == action) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }
