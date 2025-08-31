@@ -1158,14 +1158,13 @@ library MultiPhaseSecureOperation {
     ) public {
         bytes32 roleHash = keccak256(bytes(roleName));
         require(self.roles[roleHash].roleHash == bytes32(0), "Role already exists");
-        self.roles[roleHash] = Role({
-            roleName: roleName,
-            roleHash: roleHash,
-            authorizedWallets: new address[](0),
-            functionPermissions: new FunctionPermission[](0),
-            maxWallets: maxWallets,
-            isProtected: isProtected
-        });
+        
+        // Create the role with empty arrays
+        self.roles[roleHash].roleName = roleName;
+        self.roles[roleHash].roleHash = roleHash;
+        self.roles[roleHash].maxWallets = maxWallets;
+        self.roles[roleHash].isProtected = isProtected;
+        
         self.supportedRolesList.push(roleHash);
     }
 
