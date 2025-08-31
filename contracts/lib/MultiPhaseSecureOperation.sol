@@ -32,6 +32,18 @@ library MultiPhaseSecureOperation {
         REJECTED
     }
 
+    enum TxAction {
+        EXECUTE_TIME_DELAY_REQUEST,
+        EXECUTE_TIME_DELAY_APPROVE,
+        EXECUTE_TIME_DELAY_CANCEL,
+        SIGN_META_REQUEST_AND_APPROVE,
+        SIGN_META_APPROVE,
+        SIGN_META_CANCEL,
+        EXECUTE_META_REQUEST_AND_APPROVE,
+        EXECUTE_META_APPROVE,
+        EXECUTE_META_CANCEL
+    }
+
     enum ExecutionType {
         NONE,
         STANDARD,
@@ -62,6 +74,7 @@ library MultiPhaseSecureOperation {
         uint256 nonce;
         address handlerContract;
         bytes4 handlerSelector;
+        // TODO: add requested TXAction 
         uint256 deadline;
         uint256 maxGasPrice;
         // uint256 maxBasePrice; // optional for evm with EIP1559 support (can add a function to check if supported)
@@ -93,6 +106,26 @@ library MultiPhaseSecureOperation {
         uint256 erc20TokenAmount;
     }
 
+    struct Role {
+        string roleName;
+        bytes32 roleHash;
+        address[] authorizedWallets;
+        FunctionPermission[] functionPermissions;
+        uint256 maxWallets;
+        bool isProtected;
+    }
+
+    struct FunctionPermission {
+        bytes4 functionSelector;
+        TxAction grantedAction;
+    }
+
+    struct FunctionSchema {
+        string functionName;
+        bytes4 functionSelector;
+        TxAction[] supportedActions;
+    }
+
     struct ReadableOperationType {
         bytes32 operationType;
         string name;
@@ -101,11 +134,10 @@ library MultiPhaseSecureOperation {
     struct SecureOperationState {
         // Frequently accessed mappings
         mapping(uint256 => TxRecord) txRecords;
-        mapping(bytes32 => address) roles;
-        mapping(address => bool) authorizedSigners;
-        
+        mapping(bytes32 => Role) roles;
+
         // Less frequently accessed mappings
-        mapping(bytes32 => bytes32[]) allowedRolesForFunction;
+        mapping(bytes4 => FunctionSchema) functions;
         mapping(bytes32 => bool) supportedOperationTypes;
         mapping(bytes32 => string) operationTypeNames;
         
@@ -119,9 +151,9 @@ library MultiPhaseSecureOperation {
         bytes32[] supportedRolesList;
     }
 
-    bytes32 constant OWNER_ROLE = keccak256("OWNER_ROLE");
-    bytes32 constant BROADCASTER_ROLE = keccak256("BROADCASTER_ROLE");
-    bytes32 constant RECOVERY_ROLE = keccak256("RECOVERY_ROLE");
+    bytes32 constant OWNER_ROLE = keccak256(bytes("OWNER_ROLE"));
+    bytes32 constant BROADCASTER_ROLE = keccak256(bytes("BROADCASTER_ROLE"));
+    bytes32 constant RECOVERY_ROLE = keccak256(bytes("RECOVERY_ROLE"));
 
     // EIP-712 Type Hashes
     bytes32 private constant TYPE_HASH = keccak256("MetaTransaction(TxRecord txRecord,MetaTxParams params,bytes data)TxRecord(uint256 txId,uint256 releaseTime,uint8 status,TxParams params,bytes32 message,bytes result,PaymentDetails payment)TxParams(address requester,address target,uint256 value,uint256 gasLimit,bytes32 operationType,uint8 executionType,bytes executionOptions)MetaTxParams(uint256 chainId,uint256 nonce,address handlerContract,bytes4 handlerSelector,uint256 deadline,uint256 maxGasPrice,address signer)PaymentDetails(address recipient,uint256 nativeTokenAmount,address erc20TokenAddress,uint256 erc20TokenAmount)");
@@ -139,7 +171,6 @@ library MultiPhaseSecureOperation {
     event TxApproved(uint256 indexed txId);
     event TxCancelled(uint256 indexed txId);
     event TxExecuted(uint256 indexed txId, bool success, bytes result);
-
 
     /**
      * @dev Initializes the SecureOperationState with the specified time lock period and roles.
@@ -161,30 +192,86 @@ library MultiPhaseSecureOperation {
 
         self.timeLockPeriodInMinutes = _timeLockPeriodInMinutes;
         self.txCounter = 0;
-        
-        // Add owner role permissions
-        addRole(self, OWNER_ROLE);
-        addToRole(self, OWNER_ROLE, _owner);
-        addRoleForFunction(self, TX_REQUEST_SELECTOR, OWNER_ROLE);
-        addRoleForFunction(self, TX_DELAYED_APPROVAL_SELECTOR, OWNER_ROLE);
-        addRoleForFunction(self, TX_CANCELLATION_SELECTOR, OWNER_ROLE);
-        
-        // Add broadcaster role permissions
-        addRole(self, BROADCASTER_ROLE);
-        addToRole(self, BROADCASTER_ROLE, _broadcaster);
-        addRoleForFunction(self, META_TX_APPROVAL_SELECTOR, BROADCASTER_ROLE);
-        addRoleForFunction(self, META_TX_REQUEST_AND_APPROVE_SELECTOR, BROADCASTER_ROLE);
-        addRoleForFunction(self, META_TX_CANCELLATION_SELECTOR, BROADCASTER_ROLE);
 
-        // Add recovery role permissions
-        addRole(self, RECOVERY_ROLE);
-        addToRole(self, RECOVERY_ROLE, _recovery);
-        addRoleForFunction(self, TX_REQUEST_SELECTOR, RECOVERY_ROLE);
-        addRoleForFunction(self, TX_DELAYED_APPROVAL_SELECTOR, RECOVERY_ROLE);
-        addRoleForFunction(self, TX_CANCELLATION_SELECTOR, RECOVERY_ROLE);
+        // Initialize functions schemas
+        initializeBaseFunctionSchemas(self);
+        
+        // Initialize base roles
+        initializeBaseRoles(self, _owner, _broadcaster, _recovery);
     }
 
+    /**
+     * @dev Initializes function access control for all supported functions.
+     * @param self The SecureOperationState to initialize.
+     */
+    function initializeBaseFunctionSchemas(SecureOperationState storage self) private {
+        // Time-delay functions
+        TxAction[] memory timeDelayRequestPerms = new TxAction[](1);
+        timeDelayRequestPerms[0] = TxAction.EXECUTE_TIME_DELAY_REQUEST;
+        createFunctionSchema(self, "txRequest", TX_REQUEST_SELECTOR, timeDelayRequestPerms);
+        
+        TxAction[] memory timeDelayApprovePerms = new TxAction[](1);
+        timeDelayApprovePerms[0] = TxAction.EXECUTE_TIME_DELAY_APPROVE;
+        createFunctionSchema(self, "txDelayedApproval", TX_DELAYED_APPROVAL_SELECTOR, timeDelayApprovePerms);
+        
+        TxAction[] memory timeDelayCancelPerms = new TxAction[](1);
+        timeDelayCancelPerms[0] = TxAction.EXECUTE_TIME_DELAY_CANCEL;
+        createFunctionSchema(self, "txCancellation", TX_CANCELLATION_SELECTOR, timeDelayCancelPerms);
 
+        // Meta Tx Functions 
+        TxAction[] memory metaTxApprovePerms = new TxAction[](2);
+        metaTxApprovePerms[0] = TxAction.SIGN_META_APPROVE;
+        metaTxApprovePerms[1] = TxAction.EXECUTE_META_APPROVE;
+        createFunctionSchema(self, "txApprovalWithMetaTx", META_TX_APPROVAL_SELECTOR, metaTxApprovePerms);
+        
+        TxAction[] memory metaTxCancelPerms = new TxAction[](2);
+        metaTxCancelPerms[0] = TxAction.SIGN_META_CANCEL;
+        metaTxCancelPerms[1] = TxAction.EXECUTE_META_CANCEL;
+        createFunctionSchema(self, "txCancellationWithMetaTx", META_TX_CANCELLATION_SELECTOR, metaTxCancelPerms);
+        
+        TxAction[] memory metaTxRequestApprovePerms = new TxAction[](2);
+        metaTxRequestApprovePerms[0] = TxAction.SIGN_META_REQUEST_AND_APPROVE;
+        metaTxRequestApprovePerms[1] = TxAction.EXECUTE_META_REQUEST_AND_APPROVE;
+        createFunctionSchema(self, "requestAndApprove", META_TX_REQUEST_AND_APPROVE_SELECTOR, metaTxRequestApprovePerms);
+    }
+
+    /**
+     * @dev Initializes the base roles (OWNER, BROADCASTER, RECOVERY) with their function permissions.
+     * @param self The SecureOperationState to initialize.
+     * @param _owner The address of the owner.
+     * @param _broadcaster The address of the broadcaster.
+     * @param _recovery The address of the recovery.
+     */
+    function initializeBaseRoles(
+        SecureOperationState storage self,
+        address _owner,
+        address _broadcaster,
+        address _recovery
+    ) private {
+        // Initialize owner role in roles mapping
+        createRole(self, "OWNER_ROLE", 1, true);
+        addAuthorizedWalletToRole(self, OWNER_ROLE, _owner);
+        addFunctionToRole(self, OWNER_ROLE, TX_REQUEST_SELECTOR, TxAction.EXECUTE_TIME_DELAY_REQUEST);
+        addFunctionToRole(self, OWNER_ROLE, TX_DELAYED_APPROVAL_SELECTOR, TxAction.EXECUTE_TIME_DELAY_APPROVE);
+        addFunctionToRole(self, OWNER_ROLE, TX_CANCELLATION_SELECTOR, TxAction.EXECUTE_TIME_DELAY_CANCEL);
+        addFunctionToRole(self, OWNER_ROLE, META_TX_REQUEST_AND_APPROVE_SELECTOR, TxAction.SIGN_META_REQUEST_AND_APPROVE);
+        addFunctionToRole(self, OWNER_ROLE, META_TX_APPROVAL_SELECTOR, TxAction.SIGN_META_APPROVE);
+        addFunctionToRole(self, OWNER_ROLE, META_TX_CANCELLATION_SELECTOR, TxAction.SIGN_META_CANCEL);
+         
+        // Initialize broadcaster role in roles mapping    
+        createRole(self, "BROADCASTER_ROLE", 1, true);
+        addAuthorizedWalletToRole(self, BROADCASTER_ROLE, _broadcaster);
+        addFunctionToRole(self, BROADCASTER_ROLE, META_TX_REQUEST_AND_APPROVE_SELECTOR, TxAction.EXECUTE_META_REQUEST_AND_APPROVE);
+        addFunctionToRole(self, BROADCASTER_ROLE, META_TX_APPROVAL_SELECTOR, TxAction.EXECUTE_META_APPROVE);
+        addFunctionToRole(self, BROADCASTER_ROLE, META_TX_CANCELLATION_SELECTOR, TxAction.EXECUTE_META_CANCEL);
+        
+        // Initialize recovery role in roles mapping    
+        createRole(self, "RECOVERY_ROLE", 1, true);
+        addAuthorizedWalletToRole(self, RECOVERY_ROLE, _recovery);
+        addFunctionToRole(self, RECOVERY_ROLE, TX_REQUEST_SELECTOR, TxAction.EXECUTE_TIME_DELAY_REQUEST);
+        addFunctionToRole(self, RECOVERY_ROLE, TX_DELAYED_APPROVAL_SELECTOR, TxAction.EXECUTE_TIME_DELAY_APPROVE);
+        addFunctionToRole(self, RECOVERY_ROLE, TX_CANCELLATION_SELECTOR, TxAction.EXECUTE_TIME_DELAY_CANCEL);
+    }
 
     /**
      * @dev Gets the transaction record by its ID.
@@ -401,129 +488,129 @@ library MultiPhaseSecureOperation {
         }
     }
 
-    /**
-     * @dev Adds a role to a specified address.
-     * @param self The SecureOperationState to modify.
-     * @param role The role to add.
-     * @param roleAddress The address to assign the role.
-     */
-    function addToRole(SecureOperationState storage self, bytes32 role, address roleAddress) public {
-        require(roleAddress != address(0), "Cannot set role to zero address");
-        self.roles[role] = roleAddress;
-    }
+    // /**
+    //  * @dev Adds a role to a specified address.
+    //  * @param self The SecureOperationState to modify.
+    //  * @param role The role to add.
+    //  * @param roleAddress The address to assign the role.
+    //  */
+    // function addToRole(SecureOperationState storage self, bytes32 role, address roleAddress) public {
+    //     require(roleAddress != address(0), "Cannot set role to zero address");
+    //     self.roles[role] = roleAddress;
+    // }
 
-    /**
-     * @dev Updates a role from an old address to a new address.
-     * @param self The SecureOperationState to modify.
-     * @param role The role to update.
-     * @param newRoleAddress The new address to assign the role to.
-     */
-    function updateRole(SecureOperationState storage self, bytes32 role, address newRoleAddress) public {
-        require(self.roles[role] != address(0), "Role does not exist");
-        self.roles[role] = newRoleAddress;
-    }
+    // /**
+    //  * @dev Updates a role from an old address to a new address.
+    //  * @param self The SecureOperationState to modify.
+    //  * @param role The role to update.
+    //  * @param newRoleAddress The new address to assign the role to.
+    //  */
+    // function updateRole(SecureOperationState storage self, bytes32 role, address newRoleAddress) public {
+    //     require(self.roles[role] != address(0), "Role does not exist");
+    //     self.roles[role] = newRoleAddress;
+    // }
 
-    /**
-     * @dev Checks if a specified address has a given role.
-     * @param self The SecureOperationState to check.
-     * @param role The role to check.
-     * @param roleAddress The address to check for the role.
-     * @return True if the address has the role, false otherwise.
-     */
-    function hasRole(SecureOperationState storage self, bytes32 role, address roleAddress) public view returns (bool) {
-        return self.roles[role] == roleAddress;
-    }
+    // /**
+    //  * @dev Checks if a specified address has a given role.
+    //  * @param self The SecureOperationState to check.
+    //  * @param role The role to check.
+    //  * @param roleAddress The address to check for the role.
+    //  * @return True if the address has the role, false otherwise.
+    //  */
+    // function hasRole(SecureOperationState storage self, bytes32 role, address roleAddress) public view returns (bool) {
+    //     return self.roles[role] == roleAddress;
+    // }
 
-    /**
-     * @dev Checks if a role exists in the SecureOperationState
-     * @param self The SecureOperationState to check
-     * @param role The role to check for existence
-     * @return bool True if the role exists (has an assigned address), false otherwise
-     */
-    function isRoleExist(SecureOperationState storage self, bytes32 role) public view returns (bool) {
-        return self.roles[role] != address(0);
-    }
+    // /**
+    //  * @dev Checks if a role exists in the SecureOperationState
+    //  * @param self The SecureOperationState to check
+    //  * @param role The role to check for existence
+    //  * @return bool True if the role exists (has an assigned address), false otherwise
+    //  */
+    // function isRoleExist(SecureOperationState storage self, bytes32 role) public view returns (bool) {
+    //     return self.roles[role] != address(0);
+    // }
 
-    /**
-     * @dev Gets the address associated with a specific role.
-     * @param self The SecureOperationState to check.
-     * @param role The role to get the address for.
-     * @return The address associated with the role, or address(0) if the role doesn't exist.
-     */
-    function getRole(SecureOperationState storage self, bytes32 role) public view returns (address) {
-        return self.roles[role];
-    }
+    // /**
+    //  * @dev Gets the address associated with a specific role.
+    //  * @param self The SecureOperationState to check.
+    //  * @param role The role to get the address for.
+    //  * @return The address associated with the role, or address(0) if the role doesn't exist.
+    //  */
+    // function getRole(SecureOperationState storage self, bytes32 role) public view returns (address) {
+    //     return self.roles[role];
+    // }
 
-    /**
-     * @dev Adds a role to the supported roles list.
-     * @param self The SecureOperationState to modify.
-     * @param role The role to add to supported roles.
-     */
-    function addRole(SecureOperationState storage self, bytes32 role) public {
-        require(role != bytes32(0), "Cannot add zero role");
-        require(!isRoleSupported(self, role), "Role already supported");
-        self.supportedRolesList.push(role);
-    }
+    // /**
+    //  * @dev Adds a role to the supported roles list.
+    //  * @param self The SecureOperationState to modify.
+    //  * @param role The role to add to supported roles.
+    //  */
+    // function addRole(SecureOperationState storage self, bytes32 role) public {
+    //     require(role != bytes32(0), "Cannot add zero role");
+    //     require(!isRoleSupported(self, role), "Role already supported");
+    //     self.supportedRolesList.push(role);
+    // }
 
-    /**
-     * @dev Removes a role from a specified address and from the supported roles list.
-     * @param self The SecureOperationState to modify.
-     * @param role The role to remove.
-     */
-    function removeRole(SecureOperationState storage self, bytes32 role) public {
-        require(role != OWNER_ROLE && role != BROADCASTER_ROLE && role != RECOVERY_ROLE, "Cannot remove owner, broadcaster or recovery role");
+    // /**
+    //  * @dev Removes a role from a specified address and from the supported roles list.
+    //  * @param self The SecureOperationState to modify.
+    //  * @param role The role to remove.
+    //  */
+    // function removeRole(SecureOperationState storage self, bytes32 role) public {
+    //     require(role != OWNER_ROLE && role != BROADCASTER_ROLE && role != RECOVERY_ROLE, "Cannot remove owner, broadcaster or recovery role");
         
-        // Remove role assignment from address
-        delete self.roles[role];
+    //     // Remove role assignment from address
+    //     delete self.roles[role];
         
-        // Remove role from supported roles list
-        removeRoleFromSupportedList(self, role);
-    }
+    //     // Remove role from supported roles list
+    //     removeRoleFromSupportedList(self, role);
+    // }
 
-    /**
-     * @dev Checks if a role is supported in the SecureOperationState.
-     * @param self The SecureOperationState to check.
-     * @param role The role to check for support.
-     * @return bool True if the role is supported, false otherwise.
-     */
-    function isRoleSupported(SecureOperationState storage self, bytes32 role) public view returns (bool) {
-        for (uint i = 0; i < self.supportedRolesList.length; i++) {
-            if (self.supportedRolesList[i] == role) {
-                return true;
-            }
-        }
-        return false;
-    }
+    // /**
+    //  * @dev Checks if a role is supported in the SecureOperationState.
+    //  * @param self The SecureOperationState to check.
+    //  * @param role The role to check for support.
+    //  * @return bool True if the role is supported, false otherwise.
+    //  */
+    // function isRoleSupported(SecureOperationState storage self, bytes32 role) public view returns (bool) {
+    //     for (uint i = 0; i < self.supportedRolesList.length; i++) {
+    //         if (self.supportedRolesList[i] == role) {
+    //             return true;
+    //         }
+    //     }
+    //     return false;
+    // }
 
-    /**
-     * @dev Gets all supported roles in the SecureOperationState.
-     * @param self The SecureOperationState to check.
-     * @return Array of supported roles.
-     */
-    function getSupportedRoles(SecureOperationState storage self) public view returns (bytes32[] memory) {
-        return self.supportedRolesList;
-    }
+    // /**
+    //  * @dev Gets all supported roles in the SecureOperationState.
+    //  * @param self The SecureOperationState to check.
+    //  * @return Array of supported roles.
+    //  */
+    // function getSupportedRoles(SecureOperationState storage self) public view returns (bytes32[] memory) {
+    //     return self.supportedRolesList;
+    // }
 
-    /**
-     * @dev Removes a role from the supported roles list.
-     * @param self The SecureOperationState to modify.
-     * @param role The role to remove from supported roles.
-     */
-    function removeRoleFromSupportedList(SecureOperationState storage self, bytes32 role) private {
-        for (uint i = 0; i < self.supportedRolesList.length; i++) {
-            if (self.supportedRolesList[i] == role) {
-                // If not the last element, replace with the last element
-                if (i != self.supportedRolesList.length - 1) {
-                    self.supportedRolesList[i] = self.supportedRolesList[
-                        self.supportedRolesList.length - 1
-                    ];
-                }
-                // Remove the last element
-                self.supportedRolesList.pop();
-                break;
-            }
-        }
-    }
+    // /**
+    //  * @dev Removes a role from the supported roles list.
+    //  * @param self The SecureOperationState to modify.
+    //  * @param role The role to remove from supported roles.
+    //  */
+    // function removeRoleFromSupportedList(SecureOperationState storage self, bytes32 role) private {
+    //     for (uint i = 0; i < self.supportedRolesList.length; i++) {
+    //         if (self.supportedRolesList[i] == role) {
+    //             // If not the last element, replace with the last element
+    //             if (i != self.supportedRolesList.length - 1) {
+    //                 self.supportedRolesList[i] = self.supportedRolesList[
+    //                     self.supportedRolesList.length - 1
+    //                 ];
+    //             }
+    //             // Remove the last element
+    //             self.supportedRolesList.pop();
+    //             break;
+    //         }
+    //     }
+    // }
 
     /**
      * @dev Checks if the caller has permission to execute a function.
@@ -542,15 +629,58 @@ library MultiPhaseSecureOperation {
      * @return True if the caller has permission, false otherwise.
      */
     function checkPermissionPermissive(SecureOperationState storage self, bytes4 functionSelector) public view returns (bool) {
-        bytes32[] memory allowedRoles = self.allowedRolesForFunction[functionSelector];
-        bool hasPermission = false;
-        for (uint i = 0; i < allowedRoles.length; i++) {
-            if (hasRole(self, allowedRoles[i], msg.sender)) {
-                hasPermission = true;
-                break;
+        // Check if caller has any role that grants permission for this function
+        for (uint i = 0; i < self.supportedRolesList.length; i++) {
+            bytes32 roleHash = self.supportedRolesList[i];
+            Role storage role = self.roles[roleHash];
+            
+            if (isAuthorizedWalletInRole(self, roleHash, msg.sender)) {
+                // Check if role has permission for this function
+                for (uint j = 0; j < role.functionPermissions.length; j++) {
+                    FunctionPermission storage permission = role.functionPermissions[j];
+                    if (permission.functionSelector == functionSelector) {
+                        return true; // Role has permission for this function
+                    }
+                }
             }
         }
-        return hasPermission;
+        return false;
+    }
+
+    /**
+     * @dev Checks if a signer has meta-transaction signing permissions for a specific function selector.
+     * @param self The SecureOperationState to check.
+     * @param signer The address of the signer to check.
+     * @param functionSelector The function selector to check permissions for.
+     * @return True if the signer has meta-transaction signing permissions for the function, false otherwise.
+     */
+    function hasMetaTxSigningPermission(
+        SecureOperationState storage self,
+        address signer,
+        bytes4 functionSelector
+    ) public view returns (bool) {
+        // Check if signer has any role that grants meta-transaction signing permissions for this function
+        for (uint i = 0; i < self.supportedRolesList.length; i++) {
+            bytes32 roleHash = self.supportedRolesList[i];
+            Role storage role = self.roles[roleHash];
+            
+            if (isAuthorizedWalletInRole(self, roleHash, signer)) {
+                // Check if role has meta-transaction signing permissions for this function
+                for (uint j = 0; j < role.functionPermissions.length; j++) {
+                    FunctionPermission storage permission = role.functionPermissions[j];
+                    if (permission.functionSelector == functionSelector) {
+                        // Check if the granted action is a meta-transaction signing action
+                        TxAction action = permission.grantedAction;
+                        if (action == TxAction.SIGN_META_REQUEST_AND_APPROVE ||
+                            action == TxAction.SIGN_META_APPROVE ||
+                            action == TxAction.SIGN_META_CANCEL) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -624,10 +754,9 @@ library MultiPhaseSecureOperation {
         address recoveredSigner = recoverSigner(messageHash, metaTx.signature);
         require(recoveredSigner == metaTx.params.signer, "Invalid signature");
 
-        // Authorization check
-        bool isAuthorized = metaTx.params.signer == getRole(self, OWNER_ROLE) || 
-                           isAuthorizedSigner(self, metaTx.params.signer);
-        require(isAuthorized, "Signer not authorized");
+        // Authorization check - verify signer has meta-transaction signing permissions for the function
+        bool isAuthorized = hasMetaTxSigningPermission(self, metaTx.params.signer, metaTx.params.handlerSelector);
+        require(isAuthorized, "Signer not authorized for meta-transaction signing of this function");
         
         return true;
     }
@@ -722,38 +851,6 @@ library MultiPhaseSecureOperation {
         require(_newTimeLockPeriodInMinutes > 0, "Time lock period must be greater than zero");
         self.timeLockPeriodInMinutes = _newTimeLockPeriodInMinutes;
     }
-
-    /**
-     * @dev Adds an authorized signer
-     * @param self The SecureOperationState to modify.
-     * @param signer The address to authorize as a signer.
-     */
-    function addAuthorizedSigner(SecureOperationState storage self, address signer) public {
-        require(signer != address(0), "Cannot authorize zero address");
-        require(signer != getRole(self, OWNER_ROLE), "Cannot delegate to owner");
-        require(!isAuthorizedSigner(self, signer), "Wallet already authorized");
-        self.authorizedSigners[signer] = true;
-    }
-
-    /**
-     * @dev Removes an authorized signer
-     * @param self The SecureOperationState to modify.
-     * @param signer The address to remove from authorized signers.
-     */
-    function removeAuthorizedSigner(SecureOperationState storage self, address signer) public {
-        require(isAuthorizedSigner(self, signer), "Wallet not authorized");
-        delete self.authorizedSigners[signer];
-    }
-
-    /**
-     * @dev Checks if an address is an authorized signer
-     * @param self The SecureOperationState to check.
-     * @param signer The address to check.
-     * @return bool True if the address is an authorized signer.
-     */
-    function isAuthorizedSigner(SecureOperationState storage self, address signer) public view returns (bool) {
-        return self.authorizedSigners[signer];
-    }
     
     /**
      * @dev Executes the payment associated with a meta-transaction.
@@ -831,34 +928,6 @@ library MultiPhaseSecureOperation {
         self.supportedOperationTypes[readableType.operationType] = true;
         self.operationTypeNames[readableType.operationType] = readableType.name;
         self.supportedOperationTypesList.push(readableType.operationType);
-    }
-
-    /**
-     * @dev Removes a supported operation type
-     * @param self The SecureOperationState to modify
-     * @param operationType The operation type to remove (as bytes32)
-     */
-    function removeOperationType(SecureOperationState storage self, bytes32 operationType) public {
-        require(self.supportedOperationTypes[operationType], "Operation type does not exist");
-        
-        // Remove from mapping
-        delete self.supportedOperationTypes[operationType];
-        delete self.operationTypeNames[operationType];
-        
-        // Remove from array by finding and replacing with last element
-        for (uint i = 0; i < self.supportedOperationTypesList.length; i++) {
-            if (self.supportedOperationTypesList[i] == operationType) {
-                // If not the last element, replace with the last element
-                if (i != self.supportedOperationTypesList.length - 1) {
-                    self.supportedOperationTypesList[i] = self.supportedOperationTypesList[
-                        self.supportedOperationTypesList.length - 1
-                    ];
-                }
-                // Remove the last element
-                self.supportedOperationTypesList.pop();
-                break;
-            }
-        }
     }
 
     /**
@@ -974,57 +1043,6 @@ library MultiPhaseSecureOperation {
     }
 
     /**
-     * @dev Adds a role to the allowed roles for a specific function.
-     * @param self The SecureOperationState to modify.
-     * @param functionSelector The selector of the function to add role for.
-     * @param role The role to add to the allowed roles.
-     */
-    function addRoleForFunction(SecureOperationState storage self, bytes4 functionSelector, bytes32 role) public {
-        bytes32[] storage currentRoles = self.allowedRolesForFunction[functionSelector];
-        // Check if role already exists
-        for (uint i = 0; i < currentRoles.length; i++) {
-            require(currentRoles[i] != role, "Role already exists for function");
-        }
-        currentRoles.push(role);
-    }
-
-    /**
-     * @dev Removes a role from the allowed roles for a specific function.
-     * @param self The SecureOperationState to modify.
-     * @param functionSelector The selector of the function to remove role from.
-     * @param role The role to remove from the allowed roles.
-     */
-    function removeRoleForFunction(SecureOperationState storage self, bytes4 functionSelector, bytes32 role) public {
-        bytes32[] storage currentRoles = self.allowedRolesForFunction[functionSelector];
-        bool found = false;
-        
-        // Find and remove the role by shifting elements
-        for (uint i = 0; i < currentRoles.length; i++) {
-            if (found) {
-                currentRoles[i-1] = currentRoles[i];
-            } else if (currentRoles[i] == role) {
-                found = true;
-            }
-        }
-        
-        require(found, "Role not found for function");
-        
-        if (currentRoles.length > 0) {
-            currentRoles.pop();
-        }
-    }
-
-    /**
-     * @dev Gets all allowed roles for a specific function.
-     * @param self The SecureOperationState to check.
-     * @param functionSelector The selector of the function to get roles for.
-     * @return Array of allowed roles for the function.
-     */
-    function getAllowedRolesForFunction(SecureOperationState storage self, bytes4 functionSelector) public view returns (bytes32[] memory) {
-        return self.allowedRolesForFunction[functionSelector];
-    }
-
-    /**
      * @notice Creates a new transaction record with basic fields populated
      * @dev Initializes a TxRecord struct with the provided parameters and default values
      * @param self The SecureOperationState to reference for txId and timelock
@@ -1103,4 +1121,168 @@ library MultiPhaseSecureOperation {
             signer: signer
         });
     }
+
+    /**
+     * @dev Creates a function access control with specified permissions.
+     * @param self The SecureOperationState to check.
+     * @param functionName Name of the function.
+     * @param functionSelector Hash identifier for the function.
+     * @param supportedActions Array of permissions required to execute this function.
+     */
+    function createFunctionSchema(
+        SecureOperationState storage self,
+        string memory functionName,
+        bytes4 functionSelector,
+        TxAction[] memory supportedActions
+    ) public {
+        require(self.functions[functionSelector].functionSelector == bytes4(0), "Function access control already exists");
+        self.functions[functionSelector] = FunctionSchema({
+            functionName: functionName,
+            functionSelector: functionSelector,
+            supportedActions: supportedActions
+        });
+    }
+
+    /**
+     * @dev Creates a role with specified function permissions.
+     * @param self The SecureOperationState to check.
+     * @param roleName Name of the role.
+     * @param maxWallets Maximum number of wallets allowed for this role.
+     * @param isProtected Whether the role is protected from removal.
+     */
+    function createRole(
+        SecureOperationState storage self,
+        string memory roleName,
+        uint256 maxWallets,
+        bool isProtected
+    ) public {
+        bytes32 roleHash = keccak256(bytes(roleName));
+        require(self.roles[roleHash].roleHash == bytes32(0), "Role already exists");
+        self.roles[roleHash] = Role({
+            roleName: roleName,
+            roleHash: roleHash,
+            authorizedWallets: new address[](0),
+            functionPermissions: new FunctionPermission[](0),
+            maxWallets: maxWallets,
+            isProtected: isProtected
+        });
+        self.supportedRolesList.push(roleHash);
+    }
+
+    /**
+     * @dev Gets the role by its hash.
+     * @param self The SecureOperationState to check.
+     * @param role The role to get the hash for.
+     * @return The role associated with the hash, or Role(0) if the role doesn't exist.
+     */
+    function getRole(SecureOperationState storage self, bytes32 role) public view returns (Role memory) {
+        return self.roles[role];
+    }
+
+    /**
+     * @dev Checks if a role exists in the SecureOperationState
+     * @param self The SecureOperationState to check
+     * @param role The role to check for existence
+     * @return bool True if the role exists (has an assigned address), false otherwise
+     */
+    function isRoleExist(SecureOperationState storage self, bytes32 role) public view returns (bool) {
+        return self.roles[role].roleHash != bytes32(0);
+    }
+
+    /**
+     * @dev Adds a wallet address to a role in the roles mapping.
+     * @param self The SecureOperationState to modify.
+     * @param roleHash The role hash to add the wallet to.
+     * @param wallet The wallet address to add.
+     */
+    function addAuthorizedWalletToRole(SecureOperationState storage self, bytes32 roleHash, address wallet) public {
+        require(wallet != address(0), "Cannot add zero address to role");
+        require(self.roles[roleHash].roleHash != bytes32(0), "Role does not exist");
+        require(self.roles[roleHash].authorizedWallets.length < self.roles[roleHash].maxWallets, "Role wallet limit reached");
+        
+        // Check if wallet is already in the role
+        for (uint i = 0; i < self.roles[roleHash].authorizedWallets.length; i++) {
+            require(self.roles[roleHash].authorizedWallets[i] != wallet, "Wallet already in role");
+        }
+        
+        self.roles[roleHash].authorizedWallets.push(wallet);
+    }
+
+    /**
+     * @dev Checks if a specified address has a given role.
+     * @param self The SecureOperationState to check.
+     * @param role The role to check.
+     * @param wallet The address to check for the role.
+     * @return True if the address has the role, false otherwise.
+     */
+    function isAuthorizedWalletInRole(SecureOperationState storage self, bytes32 role, address wallet) public view returns (bool) {
+        Role memory roleData = self.roles[role];
+        if (roleData.roleHash == bytes32(0)) {
+            return false;
+        }
+        
+        for (uint i = 0; i < roleData.authorizedWallets.length; i++) {
+            if (roleData.authorizedWallets[i] == wallet) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @dev Updates a role from an old address to a new address.
+     * @param self The SecureOperationState to modify.
+     * @param role The role to update.
+     * @param newWallet The new wallet address to assign the role to.
+     * @param oldWallet The old wallet address to remove from the role.
+     */
+    function updateAuthorizedWalletInRole(SecureOperationState storage self, bytes32 role, address newWallet, address oldWallet) public {
+        require(self.roles[role].roleHash != bytes32(0), "Role does not exist");
+        require(newWallet != address(0), "Cannot set role to zero address");
+        require(oldWallet != address(0), "Cannot remove zero address");
+        
+        Role storage roleData = self.roles[role];
+    
+        // Find and replace the old wallet with the new one
+        for (uint i = 0; i < roleData.authorizedWallets.length; i++) {
+            if (roleData.authorizedWallets[i] == oldWallet) {
+                roleData.authorizedWallets[i] = newWallet;
+                return;
+            }
+        }
+        
+        // If old wallet not found, revert
+        revert("Old wallet not found in role");
+    }
+
+    /**
+     * @dev Adds a function permission to an existing role.
+     * @param self The SecureOperationState to modify.
+     * @param roleHash The role hash to add the function permission to.
+     * @param functionSelector The function selector to add permission for.
+     * @param grantedAction The action granted for this function selector.
+     */
+    function addFunctionToRole(
+        SecureOperationState storage self,
+        bytes32 roleHash,
+        bytes4 functionSelector,
+        TxAction grantedAction
+    ) public {
+        require(self.roles[roleHash].roleHash != bytes32(0), "Role does not exist");
+        require(self.functions[functionSelector].functionSelector != bytes4(0), "Function does not exist");
+        
+        Role storage role = self.roles[roleHash];
+        
+        // Check if permission already exists
+        for (uint i = 0; i < role.functionPermissions.length; i++) {
+            require(role.functionPermissions[i].functionSelector != functionSelector, "Function permission already exists for this role");
+        }
+        
+        // If it doesn't exist, add it
+        role.functionPermissions.push(FunctionPermission({
+            functionSelector: functionSelector,
+            grantedAction: grantedAction
+        }));
+    }
+
 }
