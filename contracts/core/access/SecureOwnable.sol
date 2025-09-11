@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 // Contracts imports
 import "../../lib/MultiPhaseSecureOperation.sol";
+import "../../lib/SecureOwnableDefinitions.sol";
 import "./ISecureOwnable.sol";
 
 /**
@@ -34,37 +35,11 @@ import "./ISecureOwnable.sol";
 abstract contract SecureOwnable is ERC165, ISecureOwnable {
     using MultiPhaseSecureOperation for MultiPhaseSecureOperation.SecureOperationState;
 
-    // Define operation type constants
-    bytes32 public constant OWNERSHIP_TRANSFER = keccak256("OWNERSHIP_TRANSFER");
-    bytes32 public constant BROADCASTER_UPDATE = keccak256("BROADCASTER_UPDATE");
-    bytes32 public constant RECOVERY_UPDATE = keccak256("RECOVERY_UPDATE");
-    bytes32 public constant TIMELOCK_UPDATE = keccak256("TIMELOCK_UPDATE");
 
     uint256 private _timeLockPeriodInMinutes; 
 
     MultiPhaseSecureOperation.SecureOperationState private _secureState;
 
-    // Function selector constants
-    bytes4 private constant TRANSFER_OWNERSHIP_SELECTOR = bytes4(keccak256("executeTransferOwnership(address)"));
-    bytes4 private constant UPDATE_BROADCASTER_SELECTOR = bytes4(keccak256("executeBroadcasterUpdate(address)"));
-    bytes4 private constant UPDATE_RECOVERY_SELECTOR = bytes4(keccak256("executeRecoveryUpdate(address)"));
-    bytes4 private constant UPDATE_TIMELOCK_SELECTOR = bytes4(keccak256("executeTimeLockUpdate(uint256)"));
-
-    // Time delay function selectors
-    bytes4 private constant TRANSFER_OWNERSHIP_REQUEST_SELECTOR = bytes4(keccak256("transferOwnershipRequest()"));
-    bytes4 private constant TRANSFER_OWNERSHIP_DELAYED_APPROVAL_SELECTOR = bytes4(keccak256("transferOwnershipDelayedApproval(uint256)"));
-    bytes4 private constant TRANSFER_OWNERSHIP_CANCELLATION_SELECTOR = bytes4(keccak256("transferOwnershipCancellation(uint256)"));
-    bytes4 private constant UPDATE_BROADCASTER_REQUEST_SELECTOR = bytes4(keccak256("updateBroadcasterRequest(address)"));
-    bytes4 private constant UPDATE_BROADCASTER_DELAYED_APPROVAL_SELECTOR = bytes4(keccak256("updateBroadcasterDelayedApproval(uint256)"));
-    bytes4 private constant UPDATE_BROADCASTER_CANCELLATION_SELECTOR = bytes4(keccak256("updateBroadcasterCancellation(uint256)"));
-
-    // Meta-transaction function selectors
-    bytes4 private constant TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR = bytes4(keccak256("transferOwnershipApprovalWithMetaTx((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes32,bytes,(address,uint256,address,uint256),(uint256,uint256,address,bytes4,uint256,uint256,address),bytes,bytes))"));
-    bytes4 private constant TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR = bytes4(keccak256("transferOwnershipCancellationWithMetaTx((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes32,bytes,(address,uint256,address,uint256),(uint256,uint256,address,bytes4,uint256,uint256,address),bytes,bytes))"));
-    bytes4 private constant UPDATE_BROADCASTER_APPROVE_META_SELECTOR = bytes4(keccak256("updateBroadcasterApprovalWithMetaTx((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes32,bytes,(address,uint256,address,uint256),(uint256,uint256,address,bytes4,uint256,uint256,address),bytes,bytes))"));
-    bytes4 private constant UPDATE_BROADCASTER_CANCEL_META_SELECTOR = bytes4(keccak256("updateBroadcasterCancellationWithMetaTx((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes32,bytes,(address,uint256,address,uint256),(uint256,uint256,address,bytes4,uint256,uint256,address),bytes,bytes))"));
-    bytes4 private constant UPDATE_RECOVERY_META_SELECTOR = bytes4(keccak256("updateRecoveryRequestAndApprove((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes32,bytes,(address,uint256,address,uint256),(uint256,uint256,address,bytes4,uint256,uint256,address),bytes,bytes))"));
-    bytes4 private constant UPDATE_TIMELOCK_META_SELECTOR = bytes4(keccak256("updateTimeLockRequestAndApprove((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes32,bytes,(address,uint256,address,uint256),(uint256,uint256,address,bytes4,uint256,uint256,address),bytes,bytes))"));
 
     // Request flags
     bool private _hasOpenOwnershipRequest;
@@ -115,116 +90,47 @@ abstract contract SecureOwnable is ERC165, ISecureOwnable {
         _timeLockPeriodInMinutes = timeLockPeriodInMinutes;
 
         _secureState.initialize( initialOwner, broadcaster, recovery, timeLockPeriodInMinutes);
-            
-        // Initialize operation types and their names
-        _secureState.addOperationType(MultiPhaseSecureOperation.ReadableOperationType({
-            operationType: OWNERSHIP_TRANSFER,
-            name: "OWNERSHIP_TRANSFER"
-        }));
-        
-        _secureState.addOperationType(MultiPhaseSecureOperation.ReadableOperationType({
-            operationType: BROADCASTER_UPDATE,
-            name: "BROADCASTER_UPDATE"
-        }));
-        
-        _secureState.addOperationType(MultiPhaseSecureOperation.ReadableOperationType({
-            operationType: RECOVERY_UPDATE,
-            name: "RECOVERY_UPDATE"
-        }));
-        
-        _secureState.addOperationType(MultiPhaseSecureOperation.ReadableOperationType({
-            operationType: TIMELOCK_UPDATE,
-            name: "TIMELOCK_UPDATE"
-        }));
-        
-        // Initialize contract function schemas and roles
-        initializeContractFunctionSchemas();
-        initializeContractRoles();
+        initializeAdvancedFromLibrary();
 
     }
 
     /**
-     * @dev Initializes function access control for all SecureOwnable contract functions.
-     * This function registers all function schemas with their appropriate permissions.
+     * @dev Initialize advanced features using external definition library
+     * This function uses the SecureOwnableDefinitions library to initialize
+     * operation types, function schemas, and role permissions without
+     * increasing the main contract size
      */
-    function initializeContractFunctionSchemas() private {
-        // Register function schemas for meta-transaction functions
-        MultiPhaseSecureOperation.TxAction[] memory transferOwnershipApprovePerms = new MultiPhaseSecureOperation.TxAction[](1);
-        transferOwnershipApprovePerms[0] = MultiPhaseSecureOperation.TxAction.EXECUTE_META_APPROVE;
-        _secureState.createFunctionSchema("transferOwnershipApprovalWithMetaTx", TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR, transferOwnershipApprovePerms);
-
-        MultiPhaseSecureOperation.TxAction[] memory transferOwnershipCancelPerms = new MultiPhaseSecureOperation.TxAction[](1);
-        transferOwnershipCancelPerms[0] = MultiPhaseSecureOperation.TxAction.EXECUTE_META_CANCEL;
-        _secureState.createFunctionSchema("transferOwnershipCancellationWithMetaTx", TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR, transferOwnershipCancelPerms);
-
-        MultiPhaseSecureOperation.TxAction[] memory updateBroadcasterApprovePerms = new MultiPhaseSecureOperation.TxAction[](1);
-        updateBroadcasterApprovePerms[0] = MultiPhaseSecureOperation.TxAction.EXECUTE_META_APPROVE;
-        _secureState.createFunctionSchema("updateBroadcasterApprovalWithMetaTx", UPDATE_BROADCASTER_APPROVE_META_SELECTOR, updateBroadcasterApprovePerms);
-
-        MultiPhaseSecureOperation.TxAction[] memory updateBroadcasterCancelPerms = new MultiPhaseSecureOperation.TxAction[](1);
-        updateBroadcasterCancelPerms[0] = MultiPhaseSecureOperation.TxAction.EXECUTE_META_CANCEL;
-        _secureState.createFunctionSchema("updateBroadcasterCancellationWithMetaTx", UPDATE_BROADCASTER_CANCEL_META_SELECTOR, updateBroadcasterCancelPerms);
-
-        MultiPhaseSecureOperation.TxAction[] memory updateRecoveryPerms = new MultiPhaseSecureOperation.TxAction[](1);
-        updateRecoveryPerms[0] = MultiPhaseSecureOperation.TxAction.EXECUTE_META_REQUEST_AND_APPROVE;
-        _secureState.createFunctionSchema("updateRecoveryRequestAndApprove", UPDATE_RECOVERY_META_SELECTOR, updateRecoveryPerms);
-
-        MultiPhaseSecureOperation.TxAction[] memory updateTimeLockPerms = new MultiPhaseSecureOperation.TxAction[](1);
-        updateTimeLockPerms[0] = MultiPhaseSecureOperation.TxAction.EXECUTE_META_REQUEST_AND_APPROVE;
-        _secureState.createFunctionSchema("updateTimeLockRequestAndApprove", UPDATE_TIMELOCK_META_SELECTOR, updateTimeLockPerms);
-
-        // Register function schemas for time-delayed functions
-        MultiPhaseSecureOperation.TxAction[] memory transferOwnershipRequestPerms = new MultiPhaseSecureOperation.TxAction[](1);
-        transferOwnershipRequestPerms[0] = MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_REQUEST;
-        _secureState.createFunctionSchema("transferOwnershipRequest", TRANSFER_OWNERSHIP_REQUEST_SELECTOR, transferOwnershipRequestPerms);
-
-        MultiPhaseSecureOperation.TxAction[] memory transferOwnershipDelayedApprovalPerms = new MultiPhaseSecureOperation.TxAction[](1);
-        transferOwnershipDelayedApprovalPerms[0] = MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_APPROVE;
-        _secureState.createFunctionSchema("transferOwnershipDelayedApproval", TRANSFER_OWNERSHIP_DELAYED_APPROVAL_SELECTOR, transferOwnershipDelayedApprovalPerms);
-
-        MultiPhaseSecureOperation.TxAction[] memory transferOwnershipCancellationPerms = new MultiPhaseSecureOperation.TxAction[](1);
-        transferOwnershipCancellationPerms[0] = MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_CANCEL;
-        _secureState.createFunctionSchema("transferOwnershipCancellation", TRANSFER_OWNERSHIP_CANCELLATION_SELECTOR, transferOwnershipCancellationPerms);
-
-        MultiPhaseSecureOperation.TxAction[] memory updateBroadcasterRequestPerms = new MultiPhaseSecureOperation.TxAction[](1);
-        updateBroadcasterRequestPerms[0] = MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_REQUEST;
-        _secureState.createFunctionSchema("updateBroadcasterRequest", UPDATE_BROADCASTER_REQUEST_SELECTOR, updateBroadcasterRequestPerms);
-
-        MultiPhaseSecureOperation.TxAction[] memory updateBroadcasterDelayedApprovalPerms = new MultiPhaseSecureOperation.TxAction[](1);
-        updateBroadcasterDelayedApprovalPerms[0] = MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_APPROVE;
-        _secureState.createFunctionSchema("updateBroadcasterDelayedApproval", UPDATE_BROADCASTER_DELAYED_APPROVAL_SELECTOR, updateBroadcasterDelayedApprovalPerms);
-
-        MultiPhaseSecureOperation.TxAction[] memory updateBroadcasterCancellationPerms = new MultiPhaseSecureOperation.TxAction[](1);
-        updateBroadcasterCancellationPerms[0] = MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_CANCEL;
-        _secureState.createFunctionSchema("updateBroadcasterCancellation", UPDATE_BROADCASTER_CANCELLATION_SELECTOR, updateBroadcasterCancellationPerms);
+    function initializeAdvancedFromLibrary() internal {
+        // Initialize operation types from library
+        SecureOwnableDefinitions.OperationTypeDefinition[] memory operationTypes = SecureOwnableDefinitions.getOperationTypes();
+        for (uint256 i = 0; i < operationTypes.length; i++) {
+            _secureState.addOperationType(MultiPhaseSecureOperation.ReadableOperationType({
+                operationType: operationTypes[i].operationType,
+                name: operationTypes[i].name
+            }));
+        }
+        
+        // Initialize function schemas from library
+        SecureOwnableDefinitions.FunctionSchemaDefinition[] memory functionSchemas = SecureOwnableDefinitions.getFunctionSchemas();
+        for (uint256 i = 0; i < functionSchemas.length; i++) {
+            _secureState.createFunctionSchema(
+                functionSchemas[i].functionName,
+                functionSchemas[i].functionSelector,
+                functionSchemas[i].supportedActions
+            );
+        }
+        
+        // Initialize role permissions from library
+        SecureOwnableDefinitions.RolePermissionDefinition[] memory rolePermissions = SecureOwnableDefinitions.getRolePermissions();
+        for (uint256 i = 0; i < rolePermissions.length; i++) {
+            _secureState.addFunctionToRole(
+                rolePermissions[i].roleHash,
+                rolePermissions[i].functionSelector,
+                rolePermissions[i].grantedAction
+            );
+        }
     }
 
-    /**
-     * @dev Initializes the contract-specific roles with their function permissions.
-     * This function assigns function permissions to the appropriate roles for SecureOwnable operations.
-     */
-    function initializeContractRoles() private {
-        // Add function permissions for broadcaster role
-        _secureState.addFunctionToRole(MultiPhaseSecureOperation.BROADCASTER_ROLE, TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR, MultiPhaseSecureOperation.TxAction.EXECUTE_META_APPROVE);
-        _secureState.addFunctionToRole(MultiPhaseSecureOperation.BROADCASTER_ROLE, TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR, MultiPhaseSecureOperation.TxAction.EXECUTE_META_CANCEL);
-        _secureState.addFunctionToRole(MultiPhaseSecureOperation.BROADCASTER_ROLE, UPDATE_BROADCASTER_APPROVE_META_SELECTOR, MultiPhaseSecureOperation.TxAction.EXECUTE_META_APPROVE);
-        _secureState.addFunctionToRole(MultiPhaseSecureOperation.BROADCASTER_ROLE, UPDATE_BROADCASTER_CANCEL_META_SELECTOR, MultiPhaseSecureOperation.TxAction.EXECUTE_META_CANCEL);
-        _secureState.addFunctionToRole(MultiPhaseSecureOperation.BROADCASTER_ROLE, UPDATE_RECOVERY_META_SELECTOR, MultiPhaseSecureOperation.TxAction.EXECUTE_META_REQUEST_AND_APPROVE);
-        _secureState.addFunctionToRole(MultiPhaseSecureOperation.BROADCASTER_ROLE, UPDATE_TIMELOCK_META_SELECTOR, MultiPhaseSecureOperation.TxAction.EXECUTE_META_REQUEST_AND_APPROVE);
-
-        // Add function permissions for owner role
-        _secureState.addFunctionToRole(MultiPhaseSecureOperation.OWNER_ROLE, TRANSFER_OWNERSHIP_REQUEST_SELECTOR, MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_REQUEST);
-        _secureState.addFunctionToRole(MultiPhaseSecureOperation.OWNER_ROLE, TRANSFER_OWNERSHIP_DELAYED_APPROVAL_SELECTOR, MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_APPROVE);
-        _secureState.addFunctionToRole(MultiPhaseSecureOperation.OWNER_ROLE, TRANSFER_OWNERSHIP_CANCELLATION_SELECTOR, MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_CANCEL);
-        _secureState.addFunctionToRole(MultiPhaseSecureOperation.OWNER_ROLE, UPDATE_BROADCASTER_REQUEST_SELECTOR, MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_REQUEST);
-        _secureState.addFunctionToRole(MultiPhaseSecureOperation.OWNER_ROLE, UPDATE_BROADCASTER_DELAYED_APPROVAL_SELECTOR, MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_APPROVE);
-        _secureState.addFunctionToRole(MultiPhaseSecureOperation.OWNER_ROLE, UPDATE_BROADCASTER_CANCELLATION_SELECTOR, MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_CANCEL);
-
-        // Add function permissions for recovery role
-        _secureState.addFunctionToRole(MultiPhaseSecureOperation.RECOVERY_ROLE, TRANSFER_OWNERSHIP_REQUEST_SELECTOR, MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_REQUEST);
-        _secureState.addFunctionToRole(MultiPhaseSecureOperation.RECOVERY_ROLE, TRANSFER_OWNERSHIP_DELAYED_APPROVAL_SELECTOR, MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_APPROVE);
-        _secureState.addFunctionToRole(MultiPhaseSecureOperation.RECOVERY_ROLE, TRANSFER_OWNERSHIP_CANCELLATION_SELECTOR, MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_CANCEL);
-    }
 
     // Ownership Management
     /**
@@ -234,7 +140,7 @@ abstract contract SecureOwnable is ERC165, ISecureOwnable {
     function transferOwnershipRequest() public onlyRecovery returns (MultiPhaseSecureOperation.TxRecord memory) {
         require(!_hasOpenOwnershipRequest, "Request is already pending");
         bytes memory executionOptions = MultiPhaseSecureOperation.createStandardExecutionOptions(
-            TRANSFER_OWNERSHIP_SELECTOR,
+            SecureOwnableDefinitions.TRANSFER_OWNERSHIP_SELECTOR,
             abi.encode(getRecoveryAddress())
         );
 
@@ -243,7 +149,7 @@ abstract contract SecureOwnable is ERC165, ISecureOwnable {
             address(this),
             0, // no value
             0, // no gas limit
-            OWNERSHIP_TRANSFER,
+            SecureOwnableDefinitions.OWNERSHIP_TRANSFER,
             MultiPhaseSecureOperation.ExecutionType.STANDARD,
             executionOptions
         );
@@ -261,7 +167,7 @@ abstract contract SecureOwnable is ERC165, ISecureOwnable {
      */
     function transferOwnershipDelayedApproval(uint256 txId) public onlyOwnerOrRecovery returns (MultiPhaseSecureOperation.TxRecord memory) {
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txDelayedApproval(txId);
-        _validateOperationType(updatedRecord.params.operationType, OWNERSHIP_TRANSFER);
+        _validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.OWNERSHIP_TRANSFER);
         _hasOpenOwnershipRequest = false;
         finalizeOperation(updatedRecord);
         return updatedRecord;
@@ -273,10 +179,10 @@ abstract contract SecureOwnable is ERC165, ISecureOwnable {
      * @return The updated transaction record
      */
     function transferOwnershipApprovalWithMetaTx(MultiPhaseSecureOperation.MetaTransaction memory metaTx) public onlyBroadcaster returns (MultiPhaseSecureOperation.TxRecord memory) {
-        _secureState.checkPermission(TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR);
-        _validateHandlerSelector(metaTx.params.handlerSelector, TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR);
+        _secureState.checkPermission(SecureOwnableDefinitions.TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR);
+        _validateHandlerSelector(metaTx.params.handlerSelector, SecureOwnableDefinitions.TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR);
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txApprovalWithMetaTx(metaTx);
-        _validateOperationType(updatedRecord.params.operationType, OWNERSHIP_TRANSFER);
+        _validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.OWNERSHIP_TRANSFER);
         _hasOpenOwnershipRequest = false;
         finalizeOperation(updatedRecord);
         return updatedRecord;
@@ -289,7 +195,7 @@ abstract contract SecureOwnable is ERC165, ISecureOwnable {
      */
     function transferOwnershipCancellation(uint256 txId) public onlyRecovery returns (MultiPhaseSecureOperation.TxRecord memory) {
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txCancellation(txId);
-        _validateOperationType(updatedRecord.params.operationType, OWNERSHIP_TRANSFER);
+        _validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.OWNERSHIP_TRANSFER);
         _hasOpenOwnershipRequest = false;
         finalizeOperation(updatedRecord);
         emit OwnershipTransferCancelled(txId);
@@ -302,10 +208,10 @@ abstract contract SecureOwnable is ERC165, ISecureOwnable {
      * @return The updated transaction record
      */
     function transferOwnershipCancellationWithMetaTx(MultiPhaseSecureOperation.MetaTransaction memory metaTx) public onlyBroadcaster returns (MultiPhaseSecureOperation.TxRecord memory) {
-        _secureState.checkPermission(TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR);
-        _validateHandlerSelector(metaTx.params.handlerSelector, TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR);
+        _secureState.checkPermission(SecureOwnableDefinitions.TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR);
+        _validateHandlerSelector(metaTx.params.handlerSelector, SecureOwnableDefinitions.TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR);
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txCancellationWithMetaTx(metaTx);
-        _validateOperationType(updatedRecord.params.operationType, OWNERSHIP_TRANSFER);
+        _validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.OWNERSHIP_TRANSFER);
         _hasOpenOwnershipRequest = false;
         finalizeOperation(updatedRecord);
         emit OwnershipTransferCancelled(updatedRecord.txId);
@@ -324,7 +230,7 @@ abstract contract SecureOwnable is ERC165, ISecureOwnable {
         _validateNewAddress(newBroadcaster, getBroadcaster());
         
         bytes memory executionOptions = MultiPhaseSecureOperation.createStandardExecutionOptions(
-            UPDATE_BROADCASTER_SELECTOR,
+            SecureOwnableDefinitions.UPDATE_BROADCASTER_SELECTOR,
             abi.encode(newBroadcaster)
         );
 
@@ -333,7 +239,7 @@ abstract contract SecureOwnable is ERC165, ISecureOwnable {
             address(this),
             0, // no value
             0, // no gas limit
-            BROADCASTER_UPDATE,
+            SecureOwnableDefinitions.BROADCASTER_UPDATE,
             MultiPhaseSecureOperation.ExecutionType.STANDARD,
             executionOptions
         );
@@ -351,7 +257,7 @@ abstract contract SecureOwnable is ERC165, ISecureOwnable {
      */
     function updateBroadcasterDelayedApproval(uint256 txId) public onlyOwner returns (MultiPhaseSecureOperation.TxRecord memory) {
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txDelayedApproval(txId);
-        _validateOperationType(updatedRecord.params.operationType, BROADCASTER_UPDATE);
+        _validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.BROADCASTER_UPDATE);
         _hasOpenBroadcasterRequest = false;
         finalizeOperation(updatedRecord);
         return updatedRecord;
@@ -363,10 +269,10 @@ abstract contract SecureOwnable is ERC165, ISecureOwnable {
      * @return The updated transaction record
      */
     function updateBroadcasterApprovalWithMetaTx(MultiPhaseSecureOperation.MetaTransaction memory metaTx) public onlyBroadcaster returns (MultiPhaseSecureOperation.TxRecord memory) {
-        _secureState.checkPermission(UPDATE_BROADCASTER_APPROVE_META_SELECTOR);
-        _validateHandlerSelector(metaTx.params.handlerSelector, UPDATE_BROADCASTER_APPROVE_META_SELECTOR);
+        _secureState.checkPermission(SecureOwnableDefinitions.UPDATE_BROADCASTER_APPROVE_META_SELECTOR);
+        _validateHandlerSelector(metaTx.params.handlerSelector, SecureOwnableDefinitions.UPDATE_BROADCASTER_APPROVE_META_SELECTOR);
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txApprovalWithMetaTx(metaTx);
-        _validateOperationType(updatedRecord.params.operationType, BROADCASTER_UPDATE);
+        _validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.BROADCASTER_UPDATE);
         _hasOpenBroadcasterRequest = false;
         finalizeOperation(updatedRecord);
         return updatedRecord;
@@ -379,7 +285,7 @@ abstract contract SecureOwnable is ERC165, ISecureOwnable {
      */
     function updateBroadcasterCancellation(uint256 txId) public onlyOwner returns (MultiPhaseSecureOperation.TxRecord memory) {
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txCancellation(txId);
-        _validateOperationType(updatedRecord.params.operationType, BROADCASTER_UPDATE);
+        _validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.BROADCASTER_UPDATE);
         _hasOpenBroadcasterRequest = false;
         finalizeOperation(updatedRecord);
         emit BroadcasterUpdateCancelled(txId);
@@ -392,10 +298,10 @@ abstract contract SecureOwnable is ERC165, ISecureOwnable {
      * @return The updated transaction record
      */
     function updateBroadcasterCancellationWithMetaTx(MultiPhaseSecureOperation.MetaTransaction memory metaTx) public onlyBroadcaster returns (MultiPhaseSecureOperation.TxRecord memory) {
-        _secureState.checkPermission(UPDATE_BROADCASTER_CANCEL_META_SELECTOR);
-        _validateHandlerSelector(metaTx.params.handlerSelector, UPDATE_BROADCASTER_CANCEL_META_SELECTOR);
+        _secureState.checkPermission(SecureOwnableDefinitions.UPDATE_BROADCASTER_CANCEL_META_SELECTOR);
+        _validateHandlerSelector(metaTx.params.handlerSelector, SecureOwnableDefinitions.UPDATE_BROADCASTER_CANCEL_META_SELECTOR);
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txCancellationWithMetaTx(metaTx);
-        _validateOperationType(updatedRecord.params.operationType, BROADCASTER_UPDATE);
+        _validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.BROADCASTER_UPDATE);
         _hasOpenBroadcasterRequest = false;
         finalizeOperation(updatedRecord);
         emit BroadcasterUpdateCancelled(updatedRecord.txId);
@@ -415,7 +321,7 @@ abstract contract SecureOwnable is ERC165, ISecureOwnable {
         _validateNewAddress(newRecoveryAddress, getRecoveryAddress());
 
         return MultiPhaseSecureOperation.createStandardExecutionOptions(
-            UPDATE_RECOVERY_SELECTOR,
+            SecureOwnableDefinitions.UPDATE_RECOVERY_SELECTOR,
             abi.encode(newRecoveryAddress)
         );
     }
@@ -428,7 +334,7 @@ abstract contract SecureOwnable is ERC165, ISecureOwnable {
     function updateRecoveryRequestAndApprove(
         MultiPhaseSecureOperation.MetaTransaction memory metaTx
     ) public onlyBroadcaster returns (MultiPhaseSecureOperation.TxRecord memory) {
-        _secureState.checkPermission(UPDATE_RECOVERY_META_SELECTOR);
+        _secureState.checkPermission(SecureOwnableDefinitions.UPDATE_RECOVERY_META_SELECTOR);
 
         return _requestAndApprove(metaTx);
     }
@@ -446,7 +352,7 @@ abstract contract SecureOwnable is ERC165, ISecureOwnable {
         require(newTimeLockPeriodInMinutes != _timeLockPeriodInMinutes, "New timelock must be different");
 
         return MultiPhaseSecureOperation.createStandardExecutionOptions(
-            UPDATE_TIMELOCK_SELECTOR,
+            SecureOwnableDefinitions.UPDATE_TIMELOCK_SELECTOR,
             abi.encode(newTimeLockPeriodInMinutes)
         );
     }
@@ -459,7 +365,7 @@ abstract contract SecureOwnable is ERC165, ISecureOwnable {
     function updateTimeLockRequestAndApprove(
         MultiPhaseSecureOperation.MetaTransaction memory metaTx
     ) public onlyBroadcaster returns (MultiPhaseSecureOperation.TxRecord memory) {
-        _secureState.checkPermission(UPDATE_TIMELOCK_META_SELECTOR);
+        _secureState.checkPermission(SecureOwnableDefinitions.UPDATE_TIMELOCK_META_SELECTOR);
 
         return _requestAndApprove(metaTx);
     }
