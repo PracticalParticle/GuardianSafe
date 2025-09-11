@@ -2,7 +2,6 @@
 pragma solidity ^0.8.2;
 
 // OpenZeppelin imports
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
@@ -32,7 +31,7 @@ import "./ISecureOwnable.sol";
  * This contract is designed for high-security systems where immediate administrative
  * changes would pose security risks.
  */
-abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
+abstract contract SecureOwnable is ERC165, ISecureOwnable {
     using MultiPhaseSecureOperation for MultiPhaseSecureOperation.SecureOperationState;
 
     // Define operation type constants
@@ -80,6 +79,11 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
     event RecoveryAddressUpdated(address oldRecovery, address newRecovery);
     event TimeLockPeriodUpdated(uint256 oldPeriod, uint256 newPeriod);
 
+    modifier onlyOwner() {
+        require(owner() == msg.sender, "Ownable: caller is not the owner");
+        _;
+    }
+
     modifier onlyOwnerOrRecovery() {
         require(msg.sender == owner() || msg.sender == getRecoveryAddress(), "Restricted to owner or recovery");
         _;
@@ -107,7 +111,7 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
         address broadcaster,
         address recovery,
         uint256 timeLockPeriodInMinutes    
-    ) Ownable(initialOwner) {       
+    ) {       
         _timeLockPeriodInMinutes = timeLockPeriodInMinutes;
 
         _secureState.initialize( initialOwner, broadcaster, recovery, timeLockPeriodInMinutes);
@@ -664,35 +668,13 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
         return txRecord;
     }
 
-    // Ownership overrides
+    // Ownership management
     /**
      * @dev Returns the owner of the contract
      * @return The owner of the contract
      */
-    function owner() public view virtual override(Ownable, ISecureOwnable) returns (address) {
-        return super.owner();
-    }
-
-    /**
-     * @dev Checks if the owner is valid
-     */
-    function _checkOwner() internal view virtual override {
-        super._checkOwner();
-    }
-
-    /**
-     * @dev Renounces ownership of the contract
-     */
-    function renounceOwnership() public virtual override onlyOwner {
-        revert("Ownership renouncement disabled");
-    }
-
-    /**
-     * @dev Transfers ownership of the contract
-     * @param newOwner The new owner of the contract
-     */
-    function transferOwnership(address newOwner) public virtual override onlyOwner {
-        revert("Direct ownership transfer disabled");
+    function owner() public view virtual override returns (address) {
+        return _secureState.getRole(MultiPhaseSecureOperation.OWNER_ROLE).authorizedWallets[0];
     }
 
     /**
@@ -707,13 +689,10 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
      * @dev Transfers ownership of the contract
      * @param newOwner The new owner of the contract
      */
-    function _transferOwnership(address newOwner) internal virtual override {
+    function _transferOwnership(address newOwner) internal virtual {
         address oldOwner = owner();
-        super._transferOwnership(newOwner);
-        if (_secureState.isAuthorizedWalletInRole(MultiPhaseSecureOperation.OWNER_ROLE, oldOwner)) {
-            _secureState.updateAuthorizedWalletInRole(MultiPhaseSecureOperation.OWNER_ROLE, newOwner, oldOwner);
-        } 
-        emit OwnershipTransferUpdated(oldOwner, owner());
+        _secureState.updateAuthorizedWalletInRole(MultiPhaseSecureOperation.OWNER_ROLE, newOwner, oldOwner);
+        emit OwnershipTransferUpdated(oldOwner, newOwner);
     }
 
     /**
@@ -792,7 +771,7 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
     /**
      * @dev See {IERC165-supportsInterface}.
      */
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165) returns (bool) {
         return
             interfaceId == type(ISecureOwnable).interfaceId ||
             super.supportsInterface(interfaceId);

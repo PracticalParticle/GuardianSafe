@@ -1,17 +1,14 @@
 // SPDX-License-Identifier: MPL-2.0
 pragma solidity ^0.8.2;
 
-// OpenZeppelin imports
-import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-
 // Contracts imports
 import "../../lib/MultiPhaseSecureOperation.sol";
 
 /**
  * @title ISecureOwnable
- * @dev Interface for SecureOwnable functionality that implements ERC-165 for interface detection
+ * @dev Interface for SecureOwnable functionality
  */
-interface ISecureOwnable is IERC165 {    
+interface ISecureOwnable {    
     function owner() external view returns (address);
     function getBroadcaster() external view returns (address);
     function getRecoveryAddress() external view returns (address);
