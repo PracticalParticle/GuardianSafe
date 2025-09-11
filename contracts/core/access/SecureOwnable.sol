@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 // Contracts imports
 import "../../lib/MultiPhaseSecureOperation.sol";
 import "../../lib/SecureOwnableDefinitions.sol";
+import "../../lib/IDefinitionContract.sol";
 import "./ISecureOwnable.sol";
 
 /**
@@ -90,45 +91,10 @@ abstract contract SecureOwnable is ERC165, ISecureOwnable {
         _timeLockPeriodInMinutes = timeLockPeriodInMinutes;
 
         _secureState.initialize( initialOwner, broadcaster, recovery, timeLockPeriodInMinutes);
-        initializeAdvancedFromLibrary();
-
-    }
-
-    /**
-     * @dev Initialize advanced features using external definition library
-     * This function uses the SecureOwnableDefinitions library to initialize
-     * operation types, function schemas, and role permissions without
-     * increasing the main contract size
-     */
-    function initializeAdvancedFromLibrary() internal {
-        // Initialize operation types from library
-        SecureOwnableDefinitions.OperationTypeDefinition[] memory operationTypes = SecureOwnableDefinitions.getOperationTypes();
-        for (uint256 i = 0; i < operationTypes.length; i++) {
-            _secureState.addOperationType(MultiPhaseSecureOperation.ReadableOperationType({
-                operationType: operationTypes[i].operationType,
-                name: operationTypes[i].name
-            }));
-        }
         
-        // Initialize function schemas from library
-        SecureOwnableDefinitions.FunctionSchemaDefinition[] memory functionSchemas = SecureOwnableDefinitions.getFunctionSchemas();
-        for (uint256 i = 0; i < functionSchemas.length; i++) {
-            _secureState.createFunctionSchema(
-                functionSchemas[i].functionName,
-                functionSchemas[i].functionSelector,
-                functionSchemas[i].supportedActions
-            );
-        }
-        
-        // Initialize role permissions from library
-        SecureOwnableDefinitions.RolePermissionDefinition[] memory rolePermissions = SecureOwnableDefinitions.getRolePermissions();
-        for (uint256 i = 0; i < rolePermissions.length; i++) {
-            _secureState.addFunctionToRole(
-                rolePermissions[i].roleHash,
-                rolePermissions[i].functionSelector,
-                rolePermissions[i].grantedAction
-            );
-        }
+        // Load definitions directly from SecureOwnableDefinitions library
+        SecureOwnableDefinitions.loadDefinitionContract(_secureState);
+
     }
 
 

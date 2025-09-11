@@ -2,12 +2,16 @@
 pragma solidity ^0.8.2;
 
 import "./MultiPhaseSecureOperation.sol";
+import "./IDefinitionContract.sol";
 
 /**
  * @title SecureOwnableDefinitions
  * @dev Library containing predefined definitions for SecureOwnable initialization
  * This library holds static data that can be used to initialize SecureOwnable contracts
  * without increasing the main contract size
+ * 
+ * This library implements the IDefinitionContract interface from MultiPhaseSecureOperation
+ * and provides a direct initialization function for SecureOwnable contracts
  */
 library SecureOwnableDefinitions {
     
@@ -39,25 +43,8 @@ library SecureOwnableDefinitions {
     bytes4 public constant UPDATE_RECOVERY_META_SELECTOR = bytes4(keccak256("updateRecoveryRequestAndApprove((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes32,bytes,(address,uint256,address,uint256),(uint256,uint256,address,bytes4,uint256,uint256,address),bytes,bytes))"));
     bytes4 public constant UPDATE_TIMELOCK_META_SELECTOR = bytes4(keccak256("updateTimeLockRequestAndApprove((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes32,bytes,(address,uint256,address,uint256),(uint256,uint256,address,bytes4,uint256,uint256,address),bytes,bytes))"));
     
-    // Operation Type Definitions
-    struct OperationTypeDefinition {
-        bytes32 operationType;
-        string name;
-    }
-    
-    // Function Schema Definition
-    struct FunctionSchemaDefinition {
-        string functionName;
-        bytes4 functionSelector;
-        MultiPhaseSecureOperation.TxAction[] supportedActions;
-    }
-    
-    // Role Permission Definition
-    struct RolePermissionDefinition {
-        bytes32 roleHash;
-        bytes4 functionSelector;
-        MultiPhaseSecureOperation.TxAction grantedAction;
-    }
+    // Use the structs from MultiPhaseSecureOperation
+    // These are now defined in the main library
     
     /**
      * @dev Returns predefined operation types
@@ -97,23 +84,23 @@ library SecureOwnableDefinitions {
         FunctionSchemaDefinition[] memory schemas = new FunctionSchemaDefinition[](12);
         
         // Meta-transaction function schemas
-        MultiPhaseSecureOperation.TxAction[] memory metaApproveActions = new MultiPhaseSecureOperation.TxAction[](1);
-        metaApproveActions[0] = MultiPhaseSecureOperation.TxAction.EXECUTE_META_APPROVE;
+        uint8[] memory metaApproveActions = new uint8[](1);
+        metaApproveActions[0] = uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_META_APPROVE);
         
-        MultiPhaseSecureOperation.TxAction[] memory metaCancelActions = new MultiPhaseSecureOperation.TxAction[](1);
-        metaCancelActions[0] = MultiPhaseSecureOperation.TxAction.EXECUTE_META_CANCEL;
+        uint8[] memory metaCancelActions = new uint8[](1);
+        metaCancelActions[0] = uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_META_CANCEL);
         
-        MultiPhaseSecureOperation.TxAction[] memory metaRequestApproveActions = new MultiPhaseSecureOperation.TxAction[](1);
-        metaRequestApproveActions[0] = MultiPhaseSecureOperation.TxAction.EXECUTE_META_REQUEST_AND_APPROVE;
+        uint8[] memory metaRequestApproveActions = new uint8[](1);
+        metaRequestApproveActions[0] = uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_META_REQUEST_AND_APPROVE);
         
-        MultiPhaseSecureOperation.TxAction[] memory timeDelayRequestActions = new MultiPhaseSecureOperation.TxAction[](1);
-        timeDelayRequestActions[0] = MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_REQUEST;
+        uint8[] memory timeDelayRequestActions = new uint8[](1);
+        timeDelayRequestActions[0] = uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_REQUEST);
         
-        MultiPhaseSecureOperation.TxAction[] memory timeDelayApproveActions = new MultiPhaseSecureOperation.TxAction[](1);
-        timeDelayApproveActions[0] = MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_APPROVE;
+        uint8[] memory timeDelayApproveActions = new uint8[](1);
+        timeDelayApproveActions[0] = uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_APPROVE);
         
-        MultiPhaseSecureOperation.TxAction[] memory timeDelayCancelActions = new MultiPhaseSecureOperation.TxAction[](1);
-        timeDelayCancelActions[0] = MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_CANCEL;
+        uint8[] memory timeDelayCancelActions = new uint8[](1);
+        timeDelayCancelActions[0] = uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_CANCEL);
         
         // Meta-transaction functions
         schemas[0] = FunctionSchemaDefinition({
@@ -203,95 +190,141 @@ library SecureOwnableDefinitions {
         permissions[0] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.BROADCASTER_ROLE,
             functionSelector: TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR,
-            grantedAction: MultiPhaseSecureOperation.TxAction.EXECUTE_META_APPROVE
+            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_META_APPROVE)
         });
         
         permissions[1] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.BROADCASTER_ROLE,
             functionSelector: TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR,
-            grantedAction: MultiPhaseSecureOperation.TxAction.EXECUTE_META_CANCEL
+            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_META_CANCEL)
         });
         
         permissions[2] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.BROADCASTER_ROLE,
             functionSelector: UPDATE_BROADCASTER_APPROVE_META_SELECTOR,
-            grantedAction: MultiPhaseSecureOperation.TxAction.EXECUTE_META_APPROVE
+            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_META_APPROVE)
         });
         
         permissions[3] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.BROADCASTER_ROLE,
             functionSelector: UPDATE_BROADCASTER_CANCEL_META_SELECTOR,
-            grantedAction: MultiPhaseSecureOperation.TxAction.EXECUTE_META_CANCEL
+            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_META_CANCEL)
         });
         
         permissions[4] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.BROADCASTER_ROLE,
             functionSelector: UPDATE_RECOVERY_META_SELECTOR,
-            grantedAction: MultiPhaseSecureOperation.TxAction.EXECUTE_META_REQUEST_AND_APPROVE
+            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_META_REQUEST_AND_APPROVE)
         });
         
         permissions[5] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.BROADCASTER_ROLE,
             functionSelector: UPDATE_TIMELOCK_META_SELECTOR,
-            grantedAction: MultiPhaseSecureOperation.TxAction.EXECUTE_META_REQUEST_AND_APPROVE
+            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_META_REQUEST_AND_APPROVE)
         });
         
         // Owner role permissions
         permissions[6] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.OWNER_ROLE,
             functionSelector: TRANSFER_OWNERSHIP_REQUEST_SELECTOR,
-            grantedAction: MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_REQUEST
+            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_REQUEST)
         });
         
         permissions[7] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.OWNER_ROLE,
             functionSelector: TRANSFER_OWNERSHIP_DELAYED_APPROVAL_SELECTOR,
-            grantedAction: MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_APPROVE
+            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_APPROVE)
         });
         
         permissions[8] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.OWNER_ROLE,
             functionSelector: TRANSFER_OWNERSHIP_CANCELLATION_SELECTOR,
-            grantedAction: MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_CANCEL
+            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_CANCEL)
         });
         
         permissions[9] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.OWNER_ROLE,
             functionSelector: UPDATE_BROADCASTER_REQUEST_SELECTOR,
-            grantedAction: MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_REQUEST
+            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_REQUEST)
         });
         
         permissions[10] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.OWNER_ROLE,
             functionSelector: UPDATE_BROADCASTER_DELAYED_APPROVAL_SELECTOR,
-            grantedAction: MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_APPROVE
+            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_APPROVE)
         });
         
         permissions[11] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.OWNER_ROLE,
             functionSelector: UPDATE_BROADCASTER_CANCELLATION_SELECTOR,
-            grantedAction: MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_CANCEL
+            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_CANCEL)
         });
         
         // Recovery role permissions
         permissions[12] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.RECOVERY_ROLE,
             functionSelector: TRANSFER_OWNERSHIP_REQUEST_SELECTOR,
-            grantedAction: MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_REQUEST
+            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_REQUEST)
         });
         
         permissions[13] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.RECOVERY_ROLE,
             functionSelector: TRANSFER_OWNERSHIP_DELAYED_APPROVAL_SELECTOR,
-            grantedAction: MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_APPROVE
+            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_APPROVE)
         });
         
         permissions[14] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.RECOVERY_ROLE,
             functionSelector: TRANSFER_OWNERSHIP_CANCELLATION_SELECTOR,
-            grantedAction: MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_CANCEL
+            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_CANCEL)
         });
         
         return permissions;
+    }
+    
+    /**
+     * @dev Loads definitions directly into a SecureOperationState
+     * This function initializes the secure state with all predefined definitions
+     * @param secureState The SecureOperationState to initialize
+     */
+    function loadDefinitionContract(
+        MultiPhaseSecureOperation.SecureOperationState storage secureState
+    ) public {
+        // Load operation types
+        OperationTypeDefinition[] memory operationTypes = getOperationTypes();
+        for (uint256 i = 0; i < operationTypes.length; i++) {
+            MultiPhaseSecureOperation.addOperationType(secureState, MultiPhaseSecureOperation.ReadableOperationType({
+                operationType: operationTypes[i].operationType,
+                name: operationTypes[i].name
+            }));
+        }
+        
+        // Load function schemas
+        FunctionSchemaDefinition[] memory functionSchemas = getFunctionSchemas();
+        for (uint256 i = 0; i < functionSchemas.length; i++) {
+            // Convert uint8 array to TxAction array
+            MultiPhaseSecureOperation.TxAction[] memory actions = new MultiPhaseSecureOperation.TxAction[](functionSchemas[i].supportedActions.length);
+            for (uint256 j = 0; j < functionSchemas[i].supportedActions.length; j++) {
+                actions[j] = MultiPhaseSecureOperation.TxAction(functionSchemas[i].supportedActions[j]);
+            }
+            
+            MultiPhaseSecureOperation.createFunctionSchema(
+                secureState,
+                functionSchemas[i].functionName,
+                functionSchemas[i].functionSelector,
+                actions
+            );
+        }
+        
+        // Load role permissions
+        RolePermissionDefinition[] memory rolePermissions = getRolePermissions();
+        for (uint256 i = 0; i < rolePermissions.length; i++) {
+            MultiPhaseSecureOperation.addFunctionToRole(
+                secureState,
+                rolePermissions[i].roleHash,
+                rolePermissions[i].functionSelector,
+                MultiPhaseSecureOperation.TxAction(rolePermissions[i].grantedAction)
+            );
+        }
     }
 }

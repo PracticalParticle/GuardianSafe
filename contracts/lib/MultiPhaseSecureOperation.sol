@@ -4,6 +4,9 @@ pragma solidity ^0.8.2;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
+// Local imports
+import "./IDefinitionContract.sol";
+
 /**
  * @title MultiPhaseSecureOperation
  * @dev A library for implementing secure multi-phase operations with time-locks and meta-transactions
