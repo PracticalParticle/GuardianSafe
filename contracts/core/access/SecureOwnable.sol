@@ -2,8 +2,8 @@
 pragma solidity ^0.8.2;
 
 // OpenZeppelin imports
-import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 // Contracts imports
 import "../../lib/MultiPhaseSecureOperation.sol";
@@ -34,7 +34,7 @@ import "./ISecureOwnable.sol";
  * This contract is designed for high-security systems where immediate administrative
  * changes would pose security risks.
  */
-abstract contract SecureOwnable is ERC165, ISecureOwnable {
+abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwnable {
     using MultiPhaseSecureOperation for MultiPhaseSecureOperation.SecureOperationState;
     using SharedValidationLibrary for *;
 
@@ -75,25 +75,25 @@ abstract contract SecureOwnable is ERC165, ISecureOwnable {
     }
 
     /**
-     * @notice Constructor to initialize SecureOwnable state
+     * @notice Initializer to initialize SecureOwnable state
      * @param initialOwner The initial owner address
      * @param broadcaster The broadcaster address
      * @param recovery The recovery address
      * @param timeLockPeriodInMinutes The timelock period in minutes
      */
-    constructor(
+    function initialize(
         address initialOwner,
         address broadcaster,
         address recovery,
         uint256 timeLockPeriodInMinutes    
-    ) {       
-        _secureState.initialize( initialOwner, broadcaster, recovery, timeLockPeriodInMinutes);
+    ) public virtual initializer {
+        __ERC165_init();
+        
+        _secureState.initialize(initialOwner, broadcaster, recovery, timeLockPeriodInMinutes);
         
         // Load definitions directly from SecureOwnableDefinitions library
         SecureOwnableDefinitions.loadDefinitionContract(_secureState);
-
     }
-
 
     // Ownership Management
     /**
@@ -636,7 +636,7 @@ abstract contract SecureOwnable is ERC165, ISecureOwnable {
     /**
      * @dev See {IERC165-supportsInterface}.
      */
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165Upgradeable) returns (bool) {
         return
             interfaceId == type(ISecureOwnable).interfaceId ||
             super.supportsInterface(interfaceId);

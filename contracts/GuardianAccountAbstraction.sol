@@ -9,23 +9,24 @@ import "./core/access/SecureOwnable.sol";
  */
 contract GuardianAccountAbstraction is SecureOwnable {
     /**
-     * @notice Constructor to initialize GuardianAccountAbstraction
+     * @notice Initializer to initialize GuardianAccountAbstraction
      * @param initialOwner The initial owner address
      * @param broadcaster The broadcaster address
      * @param recovery The recovery address
      * @param timeLockPeriodInMinutes The timelock period in minutes
      */
-    constructor(
+    function initialize(
         address initialOwner,
         address broadcaster,
         address recovery,
         uint256 timeLockPeriodInMinutes      
-    ) SecureOwnable(
-        initialOwner,
-        broadcaster,
-        recovery,
-        timeLockPeriodInMinutes      
-    ) {
+    ) public override initializer {
+        super.initialize(
+            initialOwner,
+            broadcaster,
+            recovery,
+            timeLockPeriodInMinutes      
+        );
         // add your initialization logic here
     }
 
