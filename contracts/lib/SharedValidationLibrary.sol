@@ -26,9 +26,7 @@ library SharedValidationLibrary {
     
     // Address validation errors
     string internal constant ERROR_INVALID_ADDRESS = "Invalid address";
-    string internal constant ERROR_INVALID_OWNER_ADDRESS = "Invalid owner address";
-    string internal constant ERROR_INVALID_BROADCASTER_ADDRESS = "Invalid broadcaster address";
-    string internal constant ERROR_INVALID_RECOVERY_ADDRESS = "Invalid recovery address";
+    string internal constant ERROR_INVALID_ROLE_ADDRESS = "Invalid role address";
     string internal constant ERROR_INVALID_TARGET_ADDRESS = "Invalid target address";
     string internal constant ERROR_INVALID_REQUESTER_ADDRESS = "Invalid requester address";
     string internal constant ERROR_INVALID_HANDLER_CONTRACT = "Invalid handler contract";
@@ -64,6 +62,7 @@ library SharedValidationLibrary {
     string internal constant ERROR_CAN_ONLY_CANCEL_PENDING = "Can only cancel pending requests";
     string internal constant ERROR_TRANSACTION_NOT_PENDING = "Transaction not in pending state";
     string internal constant ERROR_REQUEST_ALREADY_PENDING = "Request is already pending";
+    string internal constant ERROR_ALREADY_INITIALIZED = "Already initialized";
     
     // Signature and meta-transaction errors
     string internal constant ERROR_INVALID_SIGNATURE_LENGTH = "Invalid signature length";

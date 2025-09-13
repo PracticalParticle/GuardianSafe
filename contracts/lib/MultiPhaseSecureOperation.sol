@@ -137,6 +137,9 @@ library MultiPhaseSecureOperation {
     }
 
     struct SecureOperationState {
+        // Initialization flag
+        bool initialized;
+        
         // Frequently accessed mappings
         mapping(uint256 => TxRecord) txRecords;
         mapping(bytes32 => Role) roles;
@@ -185,6 +188,7 @@ library MultiPhaseSecureOperation {
      * @param _timeLockPeriodInMinutes The time lock period in minutes.
      * @param _owner The address of the owner.
      * @param _broadcaster The address of the broadcaster.
+     * @param _recovery The address of the recovery.
      */
     function initialize(
         SecureOperationState storage self,  
@@ -193,18 +197,24 @@ library MultiPhaseSecureOperation {
         address _recovery,
         uint256 _timeLockPeriodInMinutes
     ) public {
-        SharedValidationLibrary.validateNotZeroAddress(_owner, "Invalid owner address");
-        SharedValidationLibrary.validateNotZeroAddress(_broadcaster, "Invalid broadcaster address");
+        SharedValidationLibrary.validateTrue(!self.initialized, SharedValidationLibrary.ERROR_ALREADY_INITIALIZED); 
+        SharedValidationLibrary.validateNotZeroAddress(_owner, SharedValidationLibrary.ERROR_INVALID_ROLE_ADDRESS);
+        SharedValidationLibrary.validateNotZeroAddress(_broadcaster, SharedValidationLibrary.ERROR_INVALID_ROLE_ADDRESS);
+        SharedValidationLibrary.validateNotZeroAddress(_recovery, SharedValidationLibrary.ERROR_INVALID_ROLE_ADDRESS);
         SharedValidationLibrary.validateTimeLockPeriod(_timeLockPeriodInMinutes);
 
         self.timeLockPeriodInMinutes = _timeLockPeriodInMinutes;
         self.txCounter = 0;
+        self.metaTxNonce = 0;
 
         // Initialize functions schemas
         initializeBaseFunctionSchemas(self);
         
         // Initialize base roles
         initializeBaseRoles(self, _owner, _broadcaster, _recovery);
+        
+        // Mark as initialized after successful setup
+        self.initialized = true;
     }
 
     /**
@@ -314,9 +324,9 @@ library MultiPhaseSecureOperation {
     ) public returns (TxRecord memory) {
         SharedValidationLibrary.validateTrue(
             checkPermissionPermissive(self, TX_REQUEST_SELECTOR) || checkPermissionPermissive(self,META_TX_REQUEST_AND_APPROVE_SELECTOR),
-            "Caller does not have permission to execute this function"
+            SharedValidationLibrary.ERROR_NO_PERMISSION_EXECUTE
         );
-        SharedValidationLibrary.validateNotZeroAddress(target, "Invalid target address");
+        SharedValidationLibrary.validateNotZeroAddress(target, SharedValidationLibrary.ERROR_INVALID_TARGET_ADDRESS);
         SharedValidationLibrary.validateOperationSupported(isOperationTypeSupported(self, operationType));
 
         TxRecord memory txRequestRecord = createNewTxRecord(
@@ -401,7 +411,7 @@ library MultiPhaseSecureOperation {
         uint256 txId = metaTx.txRecord.txId;
         checkPermission(self, META_TX_CANCELLATION_SELECTOR);
         SharedValidationLibrary.validatePendingTransaction(uint8(self.txRecords[txId].status));
-        SharedValidationLibrary.validateTrue(verifySignature(self, metaTx), "Invalid signature");
+        SharedValidationLibrary.validateTrue(verifySignature(self, metaTx), SharedValidationLibrary.ERROR_INVALID_SIGNATURE);
         
         self.metaTxNonce++;    
         self.txRecords[txId].status = TxStatus.CANCELLED;
@@ -424,7 +434,7 @@ library MultiPhaseSecureOperation {
         uint256 txId = metaTx.txRecord.txId;
         checkPermission(self, META_TX_APPROVAL_SELECTOR);
         SharedValidationLibrary.validatePendingTransaction(uint8(self.txRecords[txId].status));
-        SharedValidationLibrary.validateTrue(verifySignature(self, metaTx), "Invalid signature");
+        SharedValidationLibrary.validateTrue(verifySignature(self, metaTx), SharedValidationLibrary.ERROR_INVALID_SIGNATURE);
         
         self.metaTxNonce++;     
         (bool success, bytes memory result) = executeTransaction(self.txRecords[txId]);
@@ -511,7 +521,7 @@ library MultiPhaseSecureOperation {
             RawExecutionOptions memory options = abi.decode(record.params.executionOptions, (RawExecutionOptions));
             return options.rawTxData;
         } else {
-            revert("Invalid execution type");
+            revert(SharedValidationLibrary.ERROR_OPERATION_NOT_SUPPORTED);
         }
     }
 
@@ -522,7 +532,7 @@ library MultiPhaseSecureOperation {
      */
     function checkPermission(SecureOperationState storage self, bytes4 functionSelector) public view {
         bool hasPermission = checkPermissionPermissive(self,functionSelector);       
-        SharedValidationLibrary.validateTrue(hasPermission, "Caller have no permission");
+        SharedValidationLibrary.validateTrue(hasPermission, SharedValidationLibrary.ERROR_NO_PERMISSION);
     }
 
     /**
@@ -636,7 +646,7 @@ library MultiPhaseSecureOperation {
         SharedValidationLibrary.validatePendingTransaction(uint8(metaTx.txRecord.status));
         
         // Transaction parameters validation
-        SharedValidationLibrary.validateNotZeroAddress(metaTx.txRecord.params.requester, "Invalid requester address");
+        SharedValidationLibrary.validateNotZeroAddress(metaTx.txRecord.params.requester, SharedValidationLibrary.ERROR_INVALID_REQUESTER_ADDRESS);
         SharedValidationLibrary.validateOperationSupported(isOperationTypeSupported(self, metaTx.txRecord.params.operationType));
         
         // Meta-transaction parameters validation
@@ -645,7 +655,7 @@ library MultiPhaseSecureOperation {
         SharedValidationLibrary.validateMetaTxDeadline(metaTx.params.deadline);
         
         // Gas price validation (if applicable)
-        SharedValidationLibrary.validateGasPrice(metaTx.params.maxGasPrice);
+        // SharedValidationLibrary.validateGasPrice(metaTx.params.maxGasPrice);
         
         // Check against stored pending nonce instead of current nonce
         SharedValidationLibrary.validateNonce(metaTx.params.nonce, getNonce(self));
@@ -653,11 +663,11 @@ library MultiPhaseSecureOperation {
         // Signature verification
         bytes32 messageHash = generateMessageHash(metaTx);
         address recoveredSigner = recoverSigner(messageHash, metaTx.signature);
-        require(recoveredSigner == metaTx.params.signer, "Invalid signature");
+        require(recoveredSigner == metaTx.params.signer, SharedValidationLibrary.ERROR_INVALID_SIGNATURE);
 
         // Authorization check - verify signer has meta-transaction signing permissions for the function
         bool isAuthorized = hasMetaTxSigningPermission(self, metaTx.params.signer, metaTx.params.handlerSelector);
-        SharedValidationLibrary.validateTrue(isAuthorized, "Signer not authorized");
+        SharedValidationLibrary.validateTrue(isAuthorized, SharedValidationLibrary.ERROR_SIGNER_NOT_AUTHORIZED);
         
         return true;
     }
@@ -847,7 +857,7 @@ library MultiPhaseSecureOperation {
         MetaTxParams memory metaTxParams
     ) public view returns (MetaTransaction memory) {
         SharedValidationLibrary.validateOperationSupported(isOperationTypeSupported(self, txParams.operationType));
-        SharedValidationLibrary.validateNotZeroAddress(txParams.target, "Invalid target address");
+        SharedValidationLibrary.validateNotZeroAddress(txParams.target, SharedValidationLibrary.ERROR_INVALID_TARGET_ADDRESS);
         
         TxRecord memory txRecord = createNewTxRecord(
             self,
@@ -873,7 +883,7 @@ library MultiPhaseSecureOperation {
         MetaTxParams memory metaTxParams
     ) public view returns (MetaTransaction memory) {
         TxRecord memory txRecord = getTxRecord(self, txId);
-        require(txRecord.txId == txId, "Transaction not found");
+        require(txRecord.txId == txId, SharedValidationLibrary.ERROR_TRANSACTION_NOT_FOUND);
         
         return generateMetaTransaction(self, txRecord, metaTxParams);
     }
@@ -899,10 +909,10 @@ library MultiPhaseSecureOperation {
     ) private view returns (MetaTransaction memory) {
         SharedValidationLibrary.validateChainId(metaTxParams.chainId);
         SharedValidationLibrary.validateNonce(metaTxParams.nonce, getNonce(self));
-        SharedValidationLibrary.validateNotZeroAddress(metaTxParams.handlerContract, "Invalid handler contract");
+        SharedValidationLibrary.validateNotZeroAddress(metaTxParams.handlerContract, SharedValidationLibrary.ERROR_INVALID_HANDLER_CONTRACT);
         SharedValidationLibrary.validateHandlerSelector(metaTxParams.handlerSelector);
         SharedValidationLibrary.validateDeadline(metaTxParams.deadline);
-        SharedValidationLibrary.validateNotZeroAddress(metaTxParams.signer, "Invalid signer address");
+        SharedValidationLibrary.validateNotZeroAddress(metaTxParams.signer, SharedValidationLibrary.ERROR_INVALID_SIGNER_ADDRESS);
 
         MetaTransaction memory metaTx = MetaTransaction({
             txRecord: txRecord,
@@ -984,10 +994,10 @@ library MultiPhaseSecureOperation {
         uint256 maxGasPrice,
         address signer
     ) public view returns (MetaTxParams memory) {
-        SharedValidationLibrary.validateNotZeroAddress(handlerContract, "Invalid handler contract");
+        SharedValidationLibrary.validateNotZeroAddress(handlerContract, SharedValidationLibrary.ERROR_INVALID_HANDLER_CONTRACT);
         SharedValidationLibrary.validateHandlerSelector(handlerSelector);
         SharedValidationLibrary.validateDeadline(deadline);
-        SharedValidationLibrary.validateNotZeroAddress(signer, "Invalid signer address");
+        SharedValidationLibrary.validateNotZeroAddress(signer, SharedValidationLibrary.ERROR_INVALID_SIGNER_ADDRESS);
         return MetaTxParams({
             chainId: block.chainid,
             nonce: getNonce(self),
@@ -1066,7 +1076,7 @@ library MultiPhaseSecureOperation {
      * @param wallet The wallet address to add.
      */
     function addAuthorizedWalletToRole(SecureOperationState storage self, bytes32 role, address wallet) public {
-        SharedValidationLibrary.validateNotZeroAddress(wallet, "Cannot add zero address to role");
+        SharedValidationLibrary.validateNotZeroAddress(wallet, SharedValidationLibrary.ERROR_CANNOT_ADD_ZERO_ADDRESS);
         SharedValidationLibrary.validateRoleExists(getRole(self, role).roleHash);
         
         Role memory roleData = getRole(self, role);
@@ -1109,7 +1119,7 @@ library MultiPhaseSecureOperation {
      */
     function updateAuthorizedWalletInRole(SecureOperationState storage self, bytes32 role, address newWallet, address oldWallet) public {
         SharedValidationLibrary.validateRoleExists(self.roles[role].roleHash);
-        SharedValidationLibrary.validateNotZeroAddress(newWallet, "Cannot set role to zero address");
+        SharedValidationLibrary.validateNotZeroAddress(newWallet, SharedValidationLibrary.ERROR_CANNOT_SET_ZERO_ADDRESS);
         
         Role storage roleData = self.roles[role];
     
@@ -1122,7 +1132,7 @@ library MultiPhaseSecureOperation {
         }
         
         // If old wallet not found, revert
-        revert("Old wallet not found in role");
+        revert(SharedValidationLibrary.ERROR_OLD_WALLET_NOT_FOUND);
     }
 
     /**
@@ -1226,12 +1236,12 @@ library MultiPhaseSecureOperation {
      * @param txId The transaction ID to add to the pending list.
      */
     function addToPendingTransactionsList(SecureOperationState storage self, uint256 txId) public {
-        SharedValidationLibrary.validateTrue(txId > 0, "Invalid transaction ID");
+        SharedValidationLibrary.validateTrue(txId > 0, SharedValidationLibrary.ERROR_TRANSACTION_NOT_FOUND);
         SharedValidationLibrary.validatePendingTransaction(uint8(self.txRecords[txId].status));
         
         // Check if transaction ID is already in the list
         for (uint i = 0; i < self.pendingTransactionsList.length; i++) {
-            SharedValidationLibrary.validateTrue(self.pendingTransactionsList[i] != txId, "Transaction already in pending list");
+            SharedValidationLibrary.validateTrue(self.pendingTransactionsList[i] != txId, SharedValidationLibrary.ERROR_REQUEST_ALREADY_PENDING);
         }
         
         self.pendingTransactionsList.push(txId);
@@ -1243,7 +1253,7 @@ library MultiPhaseSecureOperation {
      * @param txId The transaction ID to remove from the pending list.
      */
     function removeFromPendingTransactionsList(SecureOperationState storage self, uint256 txId) public {
-        SharedValidationLibrary.validateTrue(txId > 0, "Invalid transaction ID");
+        SharedValidationLibrary.validateTrue(txId > 0, SharedValidationLibrary.ERROR_TRANSACTION_NOT_FOUND);
         
         // Find and remove the transaction ID from the list
         for (uint i = 0; i < self.pendingTransactionsList.length; i++) {
@@ -1256,7 +1266,7 @@ library MultiPhaseSecureOperation {
             }
         }
         
-        revert("Transaction ID not found in pending list");
+        revert(SharedValidationLibrary.ERROR_TRANSACTION_NOT_FOUND);
     }
 
     /**
