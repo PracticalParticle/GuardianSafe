@@ -36,9 +36,6 @@ import "./ISecureOwnable.sol";
 abstract contract SecureOwnable is ERC165, ISecureOwnable {
     using MultiPhaseSecureOperation for MultiPhaseSecureOperation.SecureOperationState;
 
-
-    uint256 private _timeLockPeriodInMinutes; 
-
     MultiPhaseSecureOperation.SecureOperationState private _secureState;
 
 
@@ -88,8 +85,6 @@ abstract contract SecureOwnable is ERC165, ISecureOwnable {
         address recovery,
         uint256 timeLockPeriodInMinutes    
     ) {       
-        _timeLockPeriodInMinutes = timeLockPeriodInMinutes;
-
         _secureState.initialize( initialOwner, broadcaster, recovery, timeLockPeriodInMinutes);
         
         // Load definitions directly from SecureOwnableDefinitions library
@@ -315,7 +310,7 @@ abstract contract SecureOwnable is ERC165, ISecureOwnable {
         uint256 newTimeLockPeriodInMinutes
     ) public view returns (bytes memory) {
         require(newTimeLockPeriodInMinutes > 0, "Invalid timelock period");
-        require(newTimeLockPeriodInMinutes != _timeLockPeriodInMinutes, "New timelock must be different");
+        require(newTimeLockPeriodInMinutes != getTimeLockPeriodInMinutes(), "New timelock must be different");
 
         return MultiPhaseSecureOperation.createStandardExecutionOptions(
             SecureOwnableDefinitions.UPDATE_TIMELOCK_SELECTOR,
@@ -469,7 +464,7 @@ abstract contract SecureOwnable is ERC165, ISecureOwnable {
      * @return The time lock period in minutes
      */
     function getTimeLockPeriodInMinutes() public view virtual override returns (uint256) {
-        return _timeLockPeriodInMinutes;
+        return _secureState.getTimeLockPeriod();
     }
 
     /**
@@ -592,8 +587,7 @@ abstract contract SecureOwnable is ERC165, ISecureOwnable {
      * @param newTimeLockPeriodInMinutes The new time lock period in minutes
      */
     function _updateTimeLockPeriod(uint256 newTimeLockPeriodInMinutes) internal virtual {
-        uint256 oldPeriod = _timeLockPeriodInMinutes;
-        _timeLockPeriodInMinutes = newTimeLockPeriodInMinutes;
+        uint256 oldPeriod = getTimeLockPeriodInMinutes();
         _secureState.updateTimeLockPeriod(newTimeLockPeriodInMinutes);
         emit TimeLockPeriodUpdated(oldPeriod, newTimeLockPeriodInMinutes);
     }

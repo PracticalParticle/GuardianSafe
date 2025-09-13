@@ -856,6 +856,15 @@ library MultiPhaseSecureOperation {
         require(_newTimeLockPeriodInMinutes > 0, "Time lock period must be greater than zero");
         self.timeLockPeriodInMinutes = _newTimeLockPeriodInMinutes;
     }
+
+    /**
+     * @dev Gets the current time lock period for the SecureOperationState.
+     * @param self The SecureOperationState to check.
+     * @return The current time lock period in minutes.
+     */
+    function getTimeLockPeriod(SecureOperationState storage self) public view returns (uint256) {
+        return self.timeLockPeriodInMinutes;
+    }
     
     // /**
     //  * @dev Executes the payment associated with a meta-transaction.
