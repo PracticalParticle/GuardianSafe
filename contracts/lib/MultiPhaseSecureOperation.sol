@@ -155,6 +155,7 @@ library MultiPhaseSecureOperation {
         bytes32[] supportedOperationTypesList;
         bytes32[] supportedRolesList;
         bytes4[] supportedFunctionsList;
+        uint256[] pendingTransactionsList;
     }
 
     bytes32 constant OWNER_ROLE = keccak256(bytes("OWNER_ROLE"));
@@ -332,6 +333,9 @@ library MultiPhaseSecureOperation {
         self.txRecords[txRequestRecord.txId] = txRequestRecord;
         setNextTxId(self);
 
+        // Add to pending transactions list
+        addToPendingTransactionsList(self, txRequestRecord.txId);
+
         emit RequestedTx(txRequestRecord.txId, txRequestRecord.releaseTime, txRequestRecord.params.target, txRequestRecord.params.executionType, txRequestRecord.params.executionOptions);
         
         return txRequestRecord;
@@ -358,6 +362,9 @@ library MultiPhaseSecureOperation {
             self.txRecords[txId].status = TxStatus.FAILED;
         }
         
+        // Remove from pending transactions list
+        removeFromPendingTransactionsList(self, txId);
+        
         emit TxApproved(txId);
         emit TxExecuted(txId, success, result);
         
@@ -375,6 +382,10 @@ library MultiPhaseSecureOperation {
         SharedValidationLibrary.validatePendingTransaction(uint8(self.txRecords[txId].status));
         
         self.txRecords[txId].status = TxStatus.CANCELLED;
+        
+        // Remove from pending transactions list
+        removeFromPendingTransactionsList(self, txId);
+        
         emit TxCancelled(txId);
         
         return self.txRecords[txId];
@@ -394,6 +405,10 @@ library MultiPhaseSecureOperation {
         
         self.metaTxNonce++;    
         self.txRecords[txId].status = TxStatus.CANCELLED;
+        
+        // Remove from pending transactions list
+        removeFromPendingTransactionsList(self, txId);
+        
         emit TxCancelled(txId);
         
         return self.txRecords[txId];
@@ -421,6 +436,9 @@ library MultiPhaseSecureOperation {
         } else {
             self.txRecords[txId].status = TxStatus.FAILED;
         }
+        
+        // Remove from pending transactions list
+        removeFromPendingTransactionsList(self, txId);
         
         emit TxApproved(txId);
         emit TxExecuted(txId, success, result);
@@ -1201,5 +1219,53 @@ library MultiPhaseSecureOperation {
 
     //     self.txRecords[metaTx.txRecord.txId].payment = payment;
     // }
+
+    /**
+     * @dev Adds a transaction ID to the pending transactions list.
+     * @param self The SecureOperationState to modify.
+     * @param txId The transaction ID to add to the pending list.
+     */
+    function addToPendingTransactionsList(SecureOperationState storage self, uint256 txId) public {
+        SharedValidationLibrary.validateTrue(txId > 0, "Invalid transaction ID");
+        SharedValidationLibrary.validatePendingTransaction(uint8(self.txRecords[txId].status));
+        
+        // Check if transaction ID is already in the list
+        for (uint i = 0; i < self.pendingTransactionsList.length; i++) {
+            SharedValidationLibrary.validateTrue(self.pendingTransactionsList[i] != txId, "Transaction already in pending list");
+        }
+        
+        self.pendingTransactionsList.push(txId);
+    }
+
+    /**
+     * @dev Removes a transaction ID from the pending transactions list.
+     * @param self The SecureOperationState to modify.
+     * @param txId The transaction ID to remove from the pending list.
+     */
+    function removeFromPendingTransactionsList(SecureOperationState storage self, uint256 txId) public {
+        SharedValidationLibrary.validateTrue(txId > 0, "Invalid transaction ID");
+        
+        // Find and remove the transaction ID from the list
+        for (uint i = 0; i < self.pendingTransactionsList.length; i++) {
+            if (self.pendingTransactionsList[i] == txId) {
+                // Move the last element to the position of the element to delete
+                self.pendingTransactionsList[i] = self.pendingTransactionsList[self.pendingTransactionsList.length - 1];
+                // Remove the last element
+                self.pendingTransactionsList.pop();
+                return;
+            }
+        }
+        
+        revert("Transaction ID not found in pending list");
+    }
+
+    /**
+     * @dev Gets all pending transaction IDs.
+     * @param self The SecureOperationState to check.
+     * @return Array of pending transaction IDs.
+     */
+    function getPendingTransactionsList(SecureOperationState storage self) public view returns (uint256[] memory) {
+        return self.pendingTransactionsList;
+    }
 
 }
