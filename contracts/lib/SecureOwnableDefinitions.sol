@@ -106,36 +106,42 @@ library SecureOwnableDefinitions {
         schemas[0] = FunctionSchemaDefinition({
             functionName: "transferOwnershipApprovalWithMetaTx",
             functionSelector: TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR,
+            operationType: OWNERSHIP_TRANSFER,
             supportedActions: metaApproveActions
         });
         
         schemas[1] = FunctionSchemaDefinition({
             functionName: "transferOwnershipCancellationWithMetaTx",
             functionSelector: TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR,
+            operationType: OWNERSHIP_TRANSFER,
             supportedActions: metaCancelActions
         });
         
         schemas[2] = FunctionSchemaDefinition({
             functionName: "updateBroadcasterApprovalWithMetaTx",
             functionSelector: UPDATE_BROADCASTER_APPROVE_META_SELECTOR,
+            operationType: BROADCASTER_UPDATE,
             supportedActions: metaApproveActions
         });
         
         schemas[3] = FunctionSchemaDefinition({
             functionName: "updateBroadcasterCancellationWithMetaTx",
             functionSelector: UPDATE_BROADCASTER_CANCEL_META_SELECTOR,
+            operationType: BROADCASTER_UPDATE,
             supportedActions: metaCancelActions
         });
         
         schemas[4] = FunctionSchemaDefinition({
             functionName: "updateRecoveryRequestAndApprove",
             functionSelector: UPDATE_RECOVERY_META_SELECTOR,
+            operationType: RECOVERY_UPDATE,
             supportedActions: metaRequestApproveActions
         });
         
         schemas[5] = FunctionSchemaDefinition({
             functionName: "updateTimeLockRequestAndApprove",
             functionSelector: UPDATE_TIMELOCK_META_SELECTOR,
+            operationType: TIMELOCK_UPDATE,
             supportedActions: metaRequestApproveActions
         });
         
@@ -143,36 +149,42 @@ library SecureOwnableDefinitions {
         schemas[6] = FunctionSchemaDefinition({
             functionName: "transferOwnershipRequest",
             functionSelector: TRANSFER_OWNERSHIP_REQUEST_SELECTOR,
+            operationType: OWNERSHIP_TRANSFER,
             supportedActions: timeDelayRequestActions
         });
         
         schemas[7] = FunctionSchemaDefinition({
             functionName: "transferOwnershipDelayedApproval",
             functionSelector: TRANSFER_OWNERSHIP_DELAYED_APPROVAL_SELECTOR,
+            operationType: OWNERSHIP_TRANSFER,
             supportedActions: timeDelayApproveActions
         });
         
         schemas[8] = FunctionSchemaDefinition({
             functionName: "transferOwnershipCancellation",
             functionSelector: TRANSFER_OWNERSHIP_CANCELLATION_SELECTOR,
+            operationType: OWNERSHIP_TRANSFER,
             supportedActions: timeDelayCancelActions
         });
         
         schemas[9] = FunctionSchemaDefinition({
             functionName: "updateBroadcasterRequest",
             functionSelector: UPDATE_BROADCASTER_REQUEST_SELECTOR,
+            operationType: BROADCASTER_UPDATE,
             supportedActions: timeDelayRequestActions
         });
         
         schemas[10] = FunctionSchemaDefinition({
             functionName: "updateBroadcasterDelayedApproval",
             functionSelector: UPDATE_BROADCASTER_DELAYED_APPROVAL_SELECTOR,
+            operationType: BROADCASTER_UPDATE,
             supportedActions: timeDelayApproveActions
         });
         
         schemas[11] = FunctionSchemaDefinition({
             functionName: "updateBroadcasterCancellation",
             functionSelector: UPDATE_BROADCASTER_CANCELLATION_SELECTOR,
+            operationType: BROADCASTER_UPDATE,
             supportedActions: timeDelayCancelActions
         });
         
@@ -312,6 +324,7 @@ library SecureOwnableDefinitions {
                 secureState,
                 functionSchemas[i].functionName,
                 functionSchemas[i].functionSelector,
+                functionSchemas[i].operationType,
                 actions
             );
         }

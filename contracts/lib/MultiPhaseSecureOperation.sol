@@ -126,6 +126,7 @@ library MultiPhaseSecureOperation {
     struct FunctionSchema {
         string functionName;
         bytes4 functionSelector;
+        bytes32 operationType;
         TxAction[] supportedActions;
     }
 
@@ -212,31 +213,31 @@ library MultiPhaseSecureOperation {
         // Time-delay functions
         TxAction[] memory timeDelayRequestPerms = new TxAction[](1);
         timeDelayRequestPerms[0] = TxAction.EXECUTE_TIME_DELAY_REQUEST;
-        createFunctionSchema(self, "txRequest", TX_REQUEST_SELECTOR, timeDelayRequestPerms);
+        createFunctionSchema(self, "txRequest", TX_REQUEST_SELECTOR, bytes32(0), timeDelayRequestPerms);
         
         TxAction[] memory timeDelayApprovePerms = new TxAction[](1);
         timeDelayApprovePerms[0] = TxAction.EXECUTE_TIME_DELAY_APPROVE;
-        createFunctionSchema(self, "txDelayedApproval", TX_DELAYED_APPROVAL_SELECTOR, timeDelayApprovePerms);
+        createFunctionSchema(self, "txDelayedApproval", TX_DELAYED_APPROVAL_SELECTOR, bytes32(0), timeDelayApprovePerms);
         
         TxAction[] memory timeDelayCancelPerms = new TxAction[](1);
         timeDelayCancelPerms[0] = TxAction.EXECUTE_TIME_DELAY_CANCEL;
-        createFunctionSchema(self, "txCancellation", TX_CANCELLATION_SELECTOR, timeDelayCancelPerms);
+        createFunctionSchema(self, "txCancellation", TX_CANCELLATION_SELECTOR, bytes32(0), timeDelayCancelPerms);
 
         // Meta Tx Functions 
         TxAction[] memory metaTxApprovePerms = new TxAction[](2);
         metaTxApprovePerms[0] = TxAction.SIGN_META_APPROVE;
         metaTxApprovePerms[1] = TxAction.EXECUTE_META_APPROVE;
-        createFunctionSchema(self, "txApprovalWithMetaTx", META_TX_APPROVAL_SELECTOR, metaTxApprovePerms);
+        createFunctionSchema(self, "txApprovalWithMetaTx", META_TX_APPROVAL_SELECTOR, bytes32(0), metaTxApprovePerms);
         
         TxAction[] memory metaTxCancelPerms = new TxAction[](2);
         metaTxCancelPerms[0] = TxAction.SIGN_META_CANCEL;
         metaTxCancelPerms[1] = TxAction.EXECUTE_META_CANCEL;
-        createFunctionSchema(self, "txCancellationWithMetaTx", META_TX_CANCELLATION_SELECTOR, metaTxCancelPerms);
+        createFunctionSchema(self, "txCancellationWithMetaTx", META_TX_CANCELLATION_SELECTOR, bytes32(0), metaTxCancelPerms);
         
         TxAction[] memory metaTxRequestApprovePerms = new TxAction[](2);
         metaTxRequestApprovePerms[0] = TxAction.SIGN_META_REQUEST_AND_APPROVE;
         metaTxRequestApprovePerms[1] = TxAction.EXECUTE_META_REQUEST_AND_APPROVE;
-        createFunctionSchema(self, "requestAndApprove", META_TX_REQUEST_AND_APPROVE_SELECTOR, metaTxRequestApprovePerms);
+        createFunctionSchema(self, "requestAndApprove", META_TX_REQUEST_AND_APPROVE_SELECTOR, bytes32(0), metaTxRequestApprovePerms);
     }
 
     /**
@@ -1131,18 +1132,21 @@ library MultiPhaseSecureOperation {
      * @param self The SecureOperationState to check.
      * @param functionName Name of the function.
      * @param functionSelector Hash identifier for the function.
+     * @param operationType The operation type this function belongs to.
      * @param supportedActions Array of permissions required to execute this function.
      */
     function createFunctionSchema(
         SecureOperationState storage self,
         string memory functionName,
         bytes4 functionSelector,
+        bytes32 operationType,
         TxAction[] memory supportedActions
     ) public {
         require(self.functions[functionSelector].functionSelector == bytes4(0), "Function already exists");
         self.functions[functionSelector] = FunctionSchema({
             functionName: functionName,
             functionSelector: functionSelector,
+            operationType: operationType,
             supportedActions: supportedActions
         });
         self.supportedFunctionsList.push(functionSelector);

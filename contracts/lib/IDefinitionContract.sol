@@ -46,6 +46,7 @@ struct OperationTypeDefinition {
 struct FunctionSchemaDefinition {
     string functionName;
     bytes4 functionSelector;
+    bytes32 operationType;
     uint8[] supportedActions; // Using uint8 array instead of enum array to avoid circular dependency
 }
 
