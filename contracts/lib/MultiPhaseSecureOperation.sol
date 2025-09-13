@@ -82,7 +82,6 @@ library MultiPhaseSecureOperation {
         // TODO: add requested TXAction 
         uint256 deadline;
         uint256 maxGasPrice;
-        // uint256 maxBasePrice; // optional for evm with EIP1559 support (can add a function to check if supported)
         address signer;
     }
 
@@ -498,130 +497,6 @@ library MultiPhaseSecureOperation {
         }
     }
 
-    // /**
-    //  * @dev Adds a role to a specified address.
-    //  * @param self The SecureOperationState to modify.
-    //  * @param role The role to add.
-    //  * @param roleAddress The address to assign the role.
-    //  */
-    // function addToRole(SecureOperationState storage self, bytes32 role, address roleAddress) public {
-    //     require(roleAddress != address(0), "Cannot set role to zero address");
-    //     self.roles[role] = roleAddress;
-    // }
-
-    // /**
-    //  * @dev Updates a role from an old address to a new address.
-    //  * @param self The SecureOperationState to modify.
-    //  * @param role The role to update.
-    //  * @param newRoleAddress The new address to assign the role to.
-    //  */
-    // function updateRole(SecureOperationState storage self, bytes32 role, address newRoleAddress) public {
-    //     require(self.roles[role] != address(0), "Role does not exist");
-    //     self.roles[role] = newRoleAddress;
-    // }
-
-    // /**
-    //  * @dev Checks if a specified address has a given role.
-    //  * @param self The SecureOperationState to check.
-    //  * @param role The role to check.
-    //  * @param roleAddress The address to check for the role.
-    //  * @return True if the address has the role, false otherwise.
-    //  */
-    // function hasRole(SecureOperationState storage self, bytes32 role, address roleAddress) public view returns (bool) {
-    //     return self.roles[role] == roleAddress;
-    // }
-
-    // /**
-    //  * @dev Checks if a role exists in the SecureOperationState
-    //  * @param self The SecureOperationState to check
-    //  * @param role The role to check for existence
-    //  * @return bool True if the role exists (has an assigned address), false otherwise
-    //  */
-    // function isRoleExist(SecureOperationState storage self, bytes32 role) public view returns (bool) {
-    //     return self.roles[role] != address(0);
-    // }
-
-    // /**
-    //  * @dev Gets the address associated with a specific role.
-    //  * @param self The SecureOperationState to check.
-    //  * @param role The role to get the address for.
-    //  * @return The address associated with the role, or address(0) if the role doesn't exist.
-    //  */
-    // function getRole(SecureOperationState storage self, bytes32 role) public view returns (address) {
-    //     return self.roles[role];
-    // }
-
-    // /**
-    //  * @dev Adds a role to the supported roles list.
-    //  * @param self The SecureOperationState to modify.
-    //  * @param role The role to add to supported roles.
-    //  */
-    // function addRole(SecureOperationState storage self, bytes32 role) public {
-    //     require(role != bytes32(0), "Cannot add zero role");
-    //     require(!isRoleSupported(self, role), "Role already supported");
-    //     self.supportedRolesList.push(role);
-    // }
-
-    // /**
-    //  * @dev Removes a role from a specified address and from the supported roles list.
-    //  * @param self The SecureOperationState to modify.
-    //  * @param role The role to remove.
-    //  */
-    // function removeRole(SecureOperationState storage self, bytes32 role) public {
-    //     require(role != OWNER_ROLE && role != BROADCASTER_ROLE && role != RECOVERY_ROLE, "Cannot remove owner, broadcaster or recovery role");
-        
-    //     // Remove role assignment from address
-    //     delete self.roles[role];
-        
-    //     // Remove role from supported roles list
-    //     removeRoleFromSupportedList(self, role);
-    // }
-
-    // /**
-    //  * @dev Checks if a role is supported in the SecureOperationState.
-    //  * @param self The SecureOperationState to check.
-    //  * @param role The role to check for support.
-    //  * @return bool True if the role is supported, false otherwise.
-    //  */
-    // function isRoleSupported(SecureOperationState storage self, bytes32 role) public view returns (bool) {
-    //     for (uint i = 0; i < self.supportedRolesList.length; i++) {
-    //         if (self.supportedRolesList[i] == role) {
-    //             return true;
-    //         }
-    //     }
-    //     return false;
-    // }
-
-    // /**
-    //  * @dev Gets all supported roles in the SecureOperationState.
-    //  * @param self The SecureOperationState to check.
-    //  * @return Array of supported roles.
-    //  */
-    // function getSupportedRoles(SecureOperationState storage self) public view returns (bytes32[] memory) {
-    //     return self.supportedRolesList;
-    // }
-
-    // /**
-    //  * @dev Removes a role from the supported roles list.
-    //  * @param self The SecureOperationState to modify.
-    //  * @param role The role to remove from supported roles.
-    //  */
-    // function removeRoleFromSupportedList(SecureOperationState storage self, bytes32 role) private {
-    //     for (uint i = 0; i < self.supportedRolesList.length; i++) {
-    //         if (self.supportedRolesList[i] == role) {
-    //             // If not the last element, replace with the last element
-    //             if (i != self.supportedRolesList.length - 1) {
-    //                 self.supportedRolesList[i] = self.supportedRolesList[
-    //                     self.supportedRolesList.length - 1
-    //                 ];
-    //             }
-    //             // Remove the last element
-    //             self.supportedRolesList.pop();
-    //             break;
-    //         }
-    //     }
-    // }
-
     /**
      * @dev Checks if the caller has permission to execute a function.
      * @param self The SecureOperationState to check.
@@ -867,38 +742,6 @@ library MultiPhaseSecureOperation {
     function getTimeLockPeriod(SecureOperationState storage self) public view returns (uint256) {
         return self.timeLockPeriodInMinutes;
     }
-    
-    // /**
-    //  * @dev Executes the payment associated with a meta-transaction.
-    //  * @param self The SecureOperationState to modify.
-    //  * @param metaTx The meta-transaction containing the payment details.
-    //  * @notice This function verifies the signature of the meta-transaction and transfers
-    //  *         the specified native tokens and/or ERC20 tokens to the recipient.
-    //  */
-    // function executePayment(
-    //     SecureOperationState storage self,
-    //     MetaTransaction memory metaTx
-    // ) public {
-    //     require(verifySignature(self, metaTx), "Invalid signature");
-
-    //     PaymentDetails memory payment = metaTx.txRecord.payment;
-    //     if (payment.nativeTokenAmount > 0) {
-    //         require(address(this).balance >= payment.nativeTokenAmount, "Insufficient native token balance");
-    //         (bool success, ) = payment.recipient.call{value: payment.nativeTokenAmount}("");
-    //         require(success, "Native token transfer failed");
-    //     }
-        
-    //     if (payment.erc20TokenAmount > 0) {
-    //         require(payment.erc20TokenAddress != address(0), "Invalid token address");
-    //         IERC20 erc20Token = IERC20(payment.erc20TokenAddress);
-    //         require(erc20Token.balanceOf(address(this)) >= payment.erc20TokenAmount, "Insufficient token balance");
-            
-    //         bool success = erc20Token.transfer(payment.recipient, payment.erc20TokenAmount);
-    //         require(success, "ERC20 token transfer failed");
-    //     }
-
-    //     self.txRecords[metaTx.txRecord.txId].payment = payment;
-    // }
 
     /**
      * @dev Creates StandardExecutionOptions with proper encoding
@@ -1326,5 +1169,37 @@ library MultiPhaseSecureOperation {
         }
         return false;
     }
+
+    // /**
+    //  * @dev Executes the payment associated with a meta-transaction.
+    //  * @param self The SecureOperationState to modify.
+    //  * @param metaTx The meta-transaction containing the payment details.
+    //  * @notice This function verifies the signature of the meta-transaction and transfers
+    //  *         the specified native tokens and/or ERC20 tokens to the recipient.
+    //  */
+    // function executePayment(
+    //     SecureOperationState storage self,
+    //     MetaTransaction memory metaTx
+    // ) public {
+    //     require(verifySignature(self, metaTx), "Invalid signature");
+
+    //     PaymentDetails memory payment = metaTx.txRecord.payment;
+    //     if (payment.nativeTokenAmount > 0) {
+    //         require(address(this).balance >= payment.nativeTokenAmount, "Insufficient native token balance");
+    //         (bool success, ) = payment.recipient.call{value: payment.nativeTokenAmount}("");
+    //         require(success, "Native token transfer failed");
+    //     }
+        
+    //     if (payment.erc20TokenAmount > 0) {
+    //         require(payment.erc20TokenAddress != address(0), "Invalid token address");
+    //         IERC20 erc20Token = IERC20(payment.erc20TokenAddress);
+    //         require(erc20Token.balanceOf(address(this)) >= payment.erc20TokenAmount, "Insufficient token balance");
+            
+    //         bool success = erc20Token.transfer(payment.recipient, payment.erc20TokenAmount);
+    //         require(success, "ERC20 token transfer failed");
+    //     }
+
+    //     self.txRecords[metaTx.txRecord.txId].payment = payment;
+    // }
 
 }
