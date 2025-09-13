@@ -6,6 +6,7 @@ import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/Mes
 
 // Local imports
 import "./IDefinitionContract.sol";
+import "./SharedValidationLibrary.sol";
 
 /**
  * @title MultiPhaseSecureOperation
@@ -25,6 +26,7 @@ import "./IDefinitionContract.sol";
  */
 library MultiPhaseSecureOperation {
     using MessageHashUtils for bytes32;
+    using SharedValidationLibrary for *;
 
     enum TxStatus {
         UNDEFINED,
@@ -191,9 +193,9 @@ library MultiPhaseSecureOperation {
         address _recovery,
         uint256 _timeLockPeriodInMinutes
     ) public {
-        require(_owner != address(0), "Invalid owner address");
-        require(_broadcaster != address(0), "Invalid broadcaster address");
-        require(_timeLockPeriodInMinutes > 0, "Invalid time lock period");
+        SharedValidationLibrary.validateNotZeroAddress(_owner, "Invalid owner address");
+        SharedValidationLibrary.validateNotZeroAddress(_broadcaster, "Invalid broadcaster address");
+        SharedValidationLibrary.validateTimeLockPeriod(_timeLockPeriodInMinutes);
 
         self.timeLockPeriodInMinutes = _timeLockPeriodInMinutes;
         self.txCounter = 0;
@@ -310,9 +312,12 @@ library MultiPhaseSecureOperation {
         ExecutionType executionType,
         bytes memory executionOptions
     ) public returns (TxRecord memory) {
-        require(checkPermissionPermissive(self, TX_REQUEST_SELECTOR) || checkPermissionPermissive(self,META_TX_REQUEST_AND_APPROVE_SELECTOR),"Caller does not have permission to execute this function");
-        require(target != address(0), "Invalid target address");
-        require(isOperationTypeSupported(self, operationType), "Operation not supported");
+        SharedValidationLibrary.validateTrue(
+            checkPermissionPermissive(self, TX_REQUEST_SELECTOR) || checkPermissionPermissive(self,META_TX_REQUEST_AND_APPROVE_SELECTOR),
+            "Caller does not have permission to execute this function"
+        );
+        SharedValidationLibrary.validateNotZeroAddress(target, "Invalid target address");
+        SharedValidationLibrary.validateOperationSupported(isOperationTypeSupported(self, operationType));
 
         TxRecord memory txRequestRecord = createNewTxRecord(
             self,
@@ -341,8 +346,8 @@ library MultiPhaseSecureOperation {
      */
     function txDelayedApproval(SecureOperationState storage self, uint256 txId) public returns (TxRecord memory) {
         checkPermission(self, TX_DELAYED_APPROVAL_SELECTOR);
-        require(self.txRecords[txId].status == TxStatus.PENDING, "Can only approve pending requests");
-        require(block.timestamp >= self.txRecords[txId].releaseTime, "Current time is before release time");
+        SharedValidationLibrary.validatePendingTransaction(uint8(self.txRecords[txId].status));
+        SharedValidationLibrary.validateReleaseTime(self.txRecords[txId].releaseTime);
         
         (bool success, bytes memory result) = executeTransaction(self.txRecords[txId]);
         
@@ -368,7 +373,7 @@ library MultiPhaseSecureOperation {
      */
     function txCancellation(SecureOperationState storage self, uint256 txId) public returns (TxRecord memory) {
         checkPermission(self, TX_CANCELLATION_SELECTOR);
-        require(self.txRecords[txId].status == TxStatus.PENDING, "Can only cancel pending requests");
+        SharedValidationLibrary.validatePendingTransaction(uint8(self.txRecords[txId].status));
         
         self.txRecords[txId].status = TxStatus.CANCELLED;
         emit TxCancelled(txId);
@@ -385,8 +390,8 @@ library MultiPhaseSecureOperation {
     function txCancellationWithMetaTx(SecureOperationState storage self, MetaTransaction memory metaTx) public returns (TxRecord memory) {
         uint256 txId = metaTx.txRecord.txId;
         checkPermission(self, META_TX_CANCELLATION_SELECTOR);
-        require(self.txRecords[txId].status == TxStatus.PENDING, "Can only cancel pending requests");  
-        require(verifySignature(self, metaTx), "Invalid signature");
+        SharedValidationLibrary.validatePendingTransaction(uint8(self.txRecords[txId].status));
+        SharedValidationLibrary.validateTrue(verifySignature(self, metaTx), "Invalid signature");
         
         self.metaTxNonce++;    
         self.txRecords[txId].status = TxStatus.CANCELLED;
@@ -404,8 +409,8 @@ library MultiPhaseSecureOperation {
     function txApprovalWithMetaTx(SecureOperationState storage self, MetaTransaction memory metaTx) public returns (TxRecord memory) {
         uint256 txId = metaTx.txRecord.txId;
         checkPermission(self, META_TX_APPROVAL_SELECTOR);
-        require(self.txRecords[txId].status == TxStatus.PENDING, "Can only approve pending requests");
-        require(verifySignature(self, metaTx), "Invalid signature");
+        SharedValidationLibrary.validatePendingTransaction(uint8(self.txRecords[txId].status));
+        SharedValidationLibrary.validateTrue(verifySignature(self, metaTx), "Invalid signature");
         
         self.metaTxNonce++;     
         (bool success, bytes memory result) = executeTransaction(self.txRecords[txId]);
@@ -624,7 +629,7 @@ library MultiPhaseSecureOperation {
      */
     function checkPermission(SecureOperationState storage self, bytes4 functionSelector) public view {
         bool hasPermission = checkPermissionPermissive(self,functionSelector);       
-        require(hasPermission, "Caller have no permission");
+        SharedValidationLibrary.validateTrue(hasPermission, "Caller have no permission");
     }
 
     /**
@@ -734,25 +739,23 @@ library MultiPhaseSecureOperation {
         MetaTransaction memory metaTx
     ) public view returns (bool) {
         // Basic validation
-        require(metaTx.signature.length == 65, "Invalid signature length");
-        require(metaTx.txRecord.status == TxStatus.PENDING, "Transaction not in pending state");
+        SharedValidationLibrary.validateSignatureLength(metaTx.signature);
+        SharedValidationLibrary.validatePendingTransaction(uint8(metaTx.txRecord.status));
         
         // Transaction parameters validation
-        require(metaTx.txRecord.params.requester != address(0), "Invalid requester address");
-        require(isOperationTypeSupported(self, metaTx.txRecord.params.operationType), "Operation not supported");
+        SharedValidationLibrary.validateNotZeroAddress(metaTx.txRecord.params.requester, "Invalid requester address");
+        SharedValidationLibrary.validateOperationSupported(isOperationTypeSupported(self, metaTx.txRecord.params.operationType));
         
         // Meta-transaction parameters validation
-        require(metaTx.params.chainId == block.chainid, "Chain ID mismatch");
-        require(metaTx.params.handlerContract == metaTx.txRecord.params.target, "Handler contract mismatch");
-        require(block.timestamp <= metaTx.params.deadline, "Meta-transaction expired");
+        SharedValidationLibrary.validateChainId(metaTx.params.chainId);
+        SharedValidationLibrary.validateHandlerContract(metaTx.params.handlerContract, metaTx.txRecord.params.target);
+        SharedValidationLibrary.validateMetaTxDeadline(metaTx.params.deadline);
         
         // Gas price validation (if applicable)
-        if (metaTx.params.maxGasPrice > 0) {
-            require(block.basefee <= metaTx.params.maxGasPrice, "Current gas price exceeds maximum");
-        }
+        SharedValidationLibrary.validateGasPrice(metaTx.params.maxGasPrice);
         
         // Check against stored pending nonce instead of current nonce
-         require(metaTx.params.nonce == getNonce(self), "Invalid nonce");
+        SharedValidationLibrary.validateNonce(metaTx.params.nonce, getNonce(self));
         
         // Signature verification
         bytes32 messageHash = generateMessageHash(metaTx);
@@ -761,7 +764,7 @@ library MultiPhaseSecureOperation {
 
         // Authorization check - verify signer has meta-transaction signing permissions for the function
         bool isAuthorized = hasMetaTxSigningPermission(self, metaTx.params.signer, metaTx.params.handlerSelector);
-        require(isAuthorized, "Signer not authorized");
+        SharedValidationLibrary.validateTrue(isAuthorized, "Signer not authorized");
         
         return true;
     }
@@ -814,7 +817,7 @@ library MultiPhaseSecureOperation {
      * @return The address of the signer.
      */
     function recoverSigner(bytes32 messageHash, bytes memory signature) public pure returns (address) {
-        require(signature.length == 65, "Invalid signature length");
+        SharedValidationLibrary.validateSignatureLength(signature);
 
         bytes32 r;
         bytes32 s;
@@ -838,11 +841,10 @@ library MultiPhaseSecureOperation {
         // EIP-2 still allows signature malleability for ecrecover(). Remove this possibility and make the signature
         // unique. Appendix F in the Ethereum Yellow paper (https://ethereum.github.io/yellowpaper/paper.pdf), defines
         // the valid range for s in (301): 0 < s < secp256k1n ÷ 2 + 1, and for v in (302): v ∈ {27, 28}
-        require(uint256(s) <= 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0, "Invalid s value");
-        require(v == 27 || v == 28, "Invalid v value");
+        SharedValidationLibrary.validateSignatureParams(s, v);
 
         address signer = ecrecover(messageHash.toEthSignedMessageHash(), v, r, s);
-        require(signer != address(0), "ECDSA: invalid signature");
+        SharedValidationLibrary.validateRecoveredSigner(signer);
 
         return signer;
     }
@@ -853,7 +855,7 @@ library MultiPhaseSecureOperation {
      * @param _newTimeLockPeriodInMinutes The new time lock period in minutes.
      */
     function updateTimeLockPeriod(SecureOperationState storage self, uint256 _newTimeLockPeriodInMinutes) public {
-        require(_newTimeLockPeriodInMinutes > 0, "Time lock period must be greater than zero");
+        SharedValidationLibrary.validateTimeLockPeriod(_newTimeLockPeriodInMinutes);
         self.timeLockPeriodInMinutes = _newTimeLockPeriodInMinutes;
     }
 
@@ -938,7 +940,7 @@ library MultiPhaseSecureOperation {
         SecureOperationState storage self,
         ReadableOperationType memory readableType
     ) public {
-        require(!self.supportedOperationTypes[readableType.operationType], "Operation type already exists");
+        SharedValidationLibrary.validateOperationTypeNew(self.supportedOperationTypes[readableType.operationType]);
         self.supportedOperationTypes[readableType.operationType] = true;
         self.operationTypeNames[readableType.operationType] = readableType.name;
         self.supportedOperationTypesList.push(readableType.operationType);
@@ -983,8 +985,8 @@ library MultiPhaseSecureOperation {
         TxParams memory txParams,
         MetaTxParams memory metaTxParams
     ) public view returns (MetaTransaction memory) {
-        require(isOperationTypeSupported(self, txParams.operationType), "Operation not supported");
-        require(txParams.target != address(0), "Invalid target address");
+        SharedValidationLibrary.validateOperationSupported(isOperationTypeSupported(self, txParams.operationType));
+        SharedValidationLibrary.validateNotZeroAddress(txParams.target, "Invalid target address");
         
         TxRecord memory txRecord = createNewTxRecord(
             self,
@@ -1034,12 +1036,12 @@ library MultiPhaseSecureOperation {
         TxRecord memory txRecord,
         MetaTxParams memory metaTxParams
     ) private view returns (MetaTransaction memory) {
-        require(metaTxParams.chainId == block.chainid, "Chain ID mismatch");
-        require(metaTxParams.nonce == getNonce(self), "Invalid nonce");
-        require(metaTxParams.handlerContract != address(0), "Invalid handler contract");
-        require(metaTxParams.handlerSelector != bytes4(0), "Invalid handler selector");
-        require(metaTxParams.deadline > block.timestamp, "Deadline must be in the future");
-        require(metaTxParams.signer != address(0), "Invalid signer address");
+        SharedValidationLibrary.validateChainId(metaTxParams.chainId);
+        SharedValidationLibrary.validateNonce(metaTxParams.nonce, getNonce(self));
+        SharedValidationLibrary.validateNotZeroAddress(metaTxParams.handlerContract, "Invalid handler contract");
+        SharedValidationLibrary.validateHandlerSelector(metaTxParams.handlerSelector);
+        SharedValidationLibrary.validateDeadline(metaTxParams.deadline);
+        SharedValidationLibrary.validateNotZeroAddress(metaTxParams.signer, "Invalid signer address");
 
         MetaTransaction memory metaTx = MetaTransaction({
             txRecord: txRecord,
@@ -1121,10 +1123,10 @@ library MultiPhaseSecureOperation {
         uint256 maxGasPrice,
         address signer
     ) public view returns (MetaTxParams memory) {
-        require(handlerContract != address(0), "Invalid handler contract");
-        require(handlerSelector != bytes4(0), "Invalid handler selector");
-        require(deadline > block.timestamp, "Deadline must be in the future");
-        require(signer != address(0), "Invalid signer address");
+        SharedValidationLibrary.validateNotZeroAddress(handlerContract, "Invalid handler contract");
+        SharedValidationLibrary.validateHandlerSelector(handlerSelector);
+        SharedValidationLibrary.validateDeadline(deadline);
+        SharedValidationLibrary.validateNotZeroAddress(signer, "Invalid signer address");
         return MetaTxParams({
             chainId: block.chainid,
             nonce: getNonce(self),
@@ -1151,7 +1153,7 @@ library MultiPhaseSecureOperation {
         bytes32 operationType,
         TxAction[] memory supportedActions
     ) public {
-        require(self.functions[functionSelector].functionSelector == bytes4(0), "Function already exists");
+        SharedValidationLibrary.validateFunctionNew(self.functions[functionSelector].functionSelector);
         self.functions[functionSelector] = FunctionSchema({
             functionName: functionName,
             functionSelector: functionSelector,
@@ -1175,7 +1177,7 @@ library MultiPhaseSecureOperation {
         bool isProtected
     ) public {
         bytes32 roleHash = keccak256(bytes(roleName));
-        require(self.roles[roleHash].roleHash == bytes32(0), "Role already exists");
+        SharedValidationLibrary.validateRoleNew(self.roles[roleHash].roleHash);
         
         // Create the role with empty arrays
         self.roles[roleHash].roleName = roleName;
@@ -1203,14 +1205,15 @@ library MultiPhaseSecureOperation {
      * @param wallet The wallet address to add.
      */
     function addAuthorizedWalletToRole(SecureOperationState storage self, bytes32 role, address wallet) public {
-        require(wallet != address(0), "Cannot add zero address to role");
-        require(getRole(self, role).roleHash != bytes32(0), "Role does not exist");
-        require(getRole(self, role).authorizedWallets.length < getRole(self, role).maxWallets, "Role wallet limit reached");
+        SharedValidationLibrary.validateNotZeroAddress(wallet, "Cannot add zero address to role");
+        SharedValidationLibrary.validateRoleExists(getRole(self, role).roleHash);
+        
+        Role memory roleData = getRole(self, role);
+        SharedValidationLibrary.validateWalletLimit(roleData.authorizedWallets.length, roleData.maxWallets);
         
         // Check if wallet is already in the role
-        for (uint i = 0; i < getRole(self, role).authorizedWallets.length; i++) {
-            require(getRole(self, role).authorizedWallets[i] != wallet, "Wallet already in role");
-        }
+        bool isInRole = isAuthorizedWalletInRole(self, role, wallet);
+        SharedValidationLibrary.validateWalletNotInRole(isInRole);
         
         self.roles[role].authorizedWallets.push(wallet);
     }
@@ -1244,8 +1247,8 @@ library MultiPhaseSecureOperation {
      * @param oldWallet The old wallet address to remove from the role.
      */
     function updateAuthorizedWalletInRole(SecureOperationState storage self, bytes32 role, address newWallet, address oldWallet) public {
-        require(self.roles[role].roleHash != bytes32(0), "Role does not exist");
-        require(newWallet != address(0), "Cannot set role to zero address");
+        SharedValidationLibrary.validateRoleExists(self.roles[role].roleHash);
+        SharedValidationLibrary.validateNotZeroAddress(newWallet, "Cannot set role to zero address");
         
         Role storage roleData = self.roles[role];
     
@@ -1274,18 +1277,23 @@ library MultiPhaseSecureOperation {
         bytes4 functionSelector,
         TxAction grantedAction
     ) public {
-        require(self.roles[roleHash].roleHash != bytes32(0), "Role does not exist");
-        require(self.functions[functionSelector].functionSelector != bytes4(0), "Function does not exist");
+        SharedValidationLibrary.validateRoleExists(self.roles[roleHash].roleHash);
+        SharedValidationLibrary.validateFunctionExists(self.functions[functionSelector].functionSelector);
         
         // Validate that the grantedAction is supported by the function
-        require(isActionSupportedByFunction(self, functionSelector, grantedAction), "Action not supported by function");
+        SharedValidationLibrary.validateActionSupported(isActionSupportedByFunction(self, functionSelector, grantedAction));
         
         Role storage role = self.roles[roleHash];
         
         // Check if permission already exists
+        bool permissionExists = false;
         for (uint i = 0; i < role.functionPermissions.length; i++) {
-            require(role.functionPermissions[i].functionSelector != functionSelector, "Function permission already exists");
+            if (role.functionPermissions[i].functionSelector == functionSelector) {
+                permissionExists = true;
+                break;
+            }
         }
+        SharedValidationLibrary.validatePermissionNew(permissionExists);
         
         // If it doesn't exist, add it
         role.functionPermissions.push(FunctionPermission({

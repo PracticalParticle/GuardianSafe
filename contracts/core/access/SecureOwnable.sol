@@ -9,6 +9,7 @@ import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import "../../lib/MultiPhaseSecureOperation.sol";
 import "../../lib/SecureOwnableDefinitions.sol";
 import "../../lib/IDefinitionContract.sol";
+import "../../lib/SharedValidationLibrary.sol";
 import "./ISecureOwnable.sol";
 
 /**
@@ -35,6 +36,7 @@ import "./ISecureOwnable.sol";
  */
 abstract contract SecureOwnable is ERC165, ISecureOwnable {
     using MultiPhaseSecureOperation for MultiPhaseSecureOperation.SecureOperationState;
+    using SharedValidationLibrary for *;
 
     MultiPhaseSecureOperation.SecureOperationState private _secureState;
 
@@ -53,22 +55,22 @@ abstract contract SecureOwnable is ERC165, ISecureOwnable {
     event TimeLockPeriodUpdated(uint256 oldPeriod, uint256 newPeriod);
 
     modifier onlyOwner() {
-        require(owner() == msg.sender, "Ownable: caller is not the owner");
+        SharedValidationLibrary.validateOwner(owner());
         _;
     }
 
     modifier onlyOwnerOrRecovery() {
-        require(msg.sender == owner() || msg.sender == getRecoveryAddress(), "Restricted to owner or recovery");
+        SharedValidationLibrary.validateOwnerOrRecovery(owner(), getRecoveryAddress());
         _;
     }
     
     modifier onlyRecovery() {
-        require(msg.sender == getRecoveryAddress(), "Restricted to recovery");
+        SharedValidationLibrary.validateRecovery(getRecoveryAddress());
         _;
     }
 
     modifier onlyBroadcaster() {
-        require(msg.sender == getBroadcaster(), "Restricted to Broadcaster");
+        SharedValidationLibrary.validateBroadcaster(getBroadcaster());
         _;
     }
 
@@ -99,7 +101,7 @@ abstract contract SecureOwnable is ERC165, ISecureOwnable {
      * @return The transaction record
      */
     function transferOwnershipRequest() public onlyRecovery returns (MultiPhaseSecureOperation.TxRecord memory) {
-        require(!_hasOpenOwnershipRequest, "Request is already pending");
+        SharedValidationLibrary.validateNoOpenRequest(_hasOpenOwnershipRequest);
         bytes memory executionOptions = MultiPhaseSecureOperation.createStandardExecutionOptions(
             SecureOwnableDefinitions.TRANSFER_OWNERSHIP_SELECTOR,
             abi.encode(getRecoveryAddress())
@@ -186,9 +188,8 @@ abstract contract SecureOwnable is ERC165, ISecureOwnable {
      * @return The execution options
      */
     function updateBroadcasterRequest(address newBroadcaster) public onlyOwner returns (MultiPhaseSecureOperation.TxRecord memory) {
-        require(!_hasOpenBroadcasterRequest, "Request is already pending");
-        _validateNotZeroAddress(newBroadcaster);
-        _validateNewAddress(newBroadcaster, getBroadcaster());
+        SharedValidationLibrary.validateNoOpenRequest(_hasOpenBroadcasterRequest);
+        SharedValidationLibrary.validateAddressUpdate(newBroadcaster, getBroadcaster(), "broadcaster");
         
         bytes memory executionOptions = MultiPhaseSecureOperation.createStandardExecutionOptions(
             SecureOwnableDefinitions.UPDATE_BROADCASTER_SELECTOR,
@@ -278,8 +279,7 @@ abstract contract SecureOwnable is ERC165, ISecureOwnable {
     function updateRecoveryExecutionOptions(
         address newRecoveryAddress
     ) public view returns (bytes memory) {
-        _validateNotZeroAddress(newRecoveryAddress);
-        _validateNewAddress(newRecoveryAddress, getRecoveryAddress());
+        SharedValidationLibrary.validateAddressUpdate(newRecoveryAddress, getRecoveryAddress(), "recovery");
 
         return MultiPhaseSecureOperation.createStandardExecutionOptions(
             SecureOwnableDefinitions.UPDATE_RECOVERY_SELECTOR,
@@ -309,8 +309,7 @@ abstract contract SecureOwnable is ERC165, ISecureOwnable {
     function updateTimeLockExecutionOptions(
         uint256 newTimeLockPeriodInMinutes
     ) public view returns (bytes memory) {
-        require(newTimeLockPeriodInMinutes > 0, "Invalid timelock period");
-        require(newTimeLockPeriodInMinutes != getTimeLockPeriodInMinutes(), "New timelock must be different");
+        SharedValidationLibrary.validateTimeLockUpdate(newTimeLockPeriodInMinutes, getTimeLockPeriodInMinutes());
 
         return MultiPhaseSecureOperation.createStandardExecutionOptions(
             SecureOwnableDefinitions.UPDATE_TIMELOCK_SELECTOR,
@@ -596,7 +595,7 @@ abstract contract SecureOwnable is ERC165, ISecureOwnable {
      * @dev Validates that the function is being called internally by the contract itself
      */
     function _validateInternal() internal view {
-        require(msg.sender == address(this), "Only callable by contract itself");
+        SharedValidationLibrary.validateInternalCall(address(this));
     }
 
     /**
@@ -604,7 +603,7 @@ abstract contract SecureOwnable is ERC165, ISecureOwnable {
      * @param addr The address to validate
      */
     function _validateNotZeroAddress(address addr) internal pure {
-        require(addr != address(0), "Invalid address");
+        SharedValidationLibrary.validateNotZeroAddress(addr);
     }
 
     /**
@@ -613,7 +612,7 @@ abstract contract SecureOwnable is ERC165, ISecureOwnable {
      * @param expectedType The expected operation type to validate against
      */
     function _validateOperationType(bytes32 actualType, bytes32 expectedType) internal pure {
-        require(actualType == expectedType, "Invalid operation type");
+        SharedValidationLibrary.validateOperationType(actualType, expectedType);
     }
 
     /**
@@ -631,7 +630,7 @@ abstract contract SecureOwnable is ERC165, ISecureOwnable {
      * @param currentAddress The current address to compare against
      */
     function _validateNewAddress(address newAddress, address currentAddress) internal pure {
-        require(newAddress != currentAddress, "Not new address");
+        SharedValidationLibrary.validateNewAddress(newAddress, currentAddress);
     }
 
     /**
