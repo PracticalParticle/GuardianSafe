@@ -1,12 +1,20 @@
 const MPS = artifacts.require("MultiPhaseSecureOperation");
+const SOD = artifacts.require("SecureOwnableDefinitions");
 const PAA = artifacts.require("GuardianAccountAbstraction");
 
 module.exports = async function(deployer, network, accounts) {
     // Deploy MultiPhaseSecureOperation first
     let mps = await deployer.deploy(MPS);
     
-    // Link MPS to GuardianAccountAbstraction
+    // Link MPS to SecureOwnableDefinitions
+    await deployer.link(MPS, SOD);
+    
+    // Deploy SecureOwnableDefinitions
+    let sod = await deployer.deploy(SOD);
+    
+    // Link libraries to GuardianAccountAbstraction
     await deployer.link(MPS, PAA);
+    await deployer.link(SOD, PAA);
     
     // Deploy GuardianAccountAbstraction with required parameters
     let currentAccount = accounts[0];
