@@ -220,7 +220,7 @@ library MultiPhaseSecureOperation {
      * @dev Initializes function access control for all supported functions.
      * @param self The SecureOperationState to initialize.
      */
-    function initializeBaseFunctionSchemas(SecureOperationState storage self) public {
+    function initializeBaseFunctionSchemas(SecureOperationState storage self) private {
         // Time-delay functions
         TxAction[] memory timeDelayRequestPerms = new TxAction[](1);
         timeDelayRequestPerms[0] = TxAction.EXECUTE_TIME_DELAY_REQUEST;
@@ -263,7 +263,7 @@ library MultiPhaseSecureOperation {
         address _owner,
         address _broadcaster,
         address _recovery
-    ) public {
+    ) private {
         // Initialize owner role in roles mapping
         createRole(self, "OWNER_ROLE", 1, true);
         addAuthorizedWalletToRole(self, OWNER_ROLE, _owner);
@@ -540,7 +540,7 @@ library MultiPhaseSecureOperation {
      * @param functionSelector The selector of the function to check permissions for.
      * @return True if the caller has permission, false otherwise.
      */
-    function checkPermissionPermissive(SecureOperationState storage self, bytes4 functionSelector) public view returns (bool) {
+    function checkPermissionPermissive(SecureOperationState storage self, bytes4 functionSelector) private view returns (bool) {
         // Check if caller has any role that grants permission for this function
         for (uint i = 0; i < self.supportedRolesList.length; i++) {
             bytes32 roleHash = self.supportedRolesList[i];
@@ -570,7 +570,7 @@ library MultiPhaseSecureOperation {
         SecureOperationState storage self,
         address signer,
         bytes4 functionSelector
-    ) public view returns (bool) {
+    ) private view returns (bool) {
         // Check if signer has any role that grants meta-transaction signing permissions for this function
         for (uint i = 0; i < self.supportedRolesList.length; i++) {
             bytes32 roleHash = self.supportedRolesList[i];
@@ -610,7 +610,7 @@ library MultiPhaseSecureOperation {
      * @param self The SecureOperationState to modify.
      * @param signer The address of the signer.
      */
-    function incrementSignerNonce(SecureOperationState storage self, address signer) public {
+    function incrementSignerNonce(SecureOperationState storage self, address signer) private {
         self.signerNonces[signer]++;
     }
 
@@ -628,7 +628,7 @@ library MultiPhaseSecureOperation {
      * @param self The SecureOperationState to check.
      * @return The next transaction ID.
      */
-    function getNextTxId(SecureOperationState storage self) public view returns (uint256) {
+    function getNextTxId(SecureOperationState storage self) private view returns (uint256) {
         return self.txCounter + 1;
     }
 
@@ -636,7 +636,7 @@ library MultiPhaseSecureOperation {
      * @dev Increments the transaction counter to set the next transaction ID.
      * @param self The SecureOperationState to modify.
      */
-    function setNextTxId(SecureOperationState storage self) public {
+    function setNextTxId(SecureOperationState storage self) private {
         self.txCounter++;
     }
 
@@ -689,7 +689,7 @@ library MultiPhaseSecureOperation {
      * @param metaTx The meta-transaction to generate the hash for
      * @return The generated message hash
      */
-    function generateMessageHash(MetaTransaction memory metaTx) public view returns (bytes32) {
+    function generateMessageHash(MetaTransaction memory metaTx) private view returns (bytes32) {
         bytes32 domainSeparator = keccak256(abi.encode(
             DOMAIN_SEPARATOR_TYPE_HASH,
             keccak256("MultiPhaseSecureOperation"),
@@ -731,7 +731,7 @@ library MultiPhaseSecureOperation {
      * @param signature The signature to recover the address from.
      * @return The address of the signer.
      */
-    function recoverSigner(bytes32 messageHash, bytes memory signature) public pure returns (address) {
+    function recoverSigner(bytes32 messageHash, bytes memory signature) private pure returns (address) {
         SharedValidationLibrary.validateSignatureLength(signature);
 
         bytes32 r;
@@ -1196,7 +1196,7 @@ library MultiPhaseSecureOperation {
         SecureOperationState storage self,
         bytes4 functionSelector,
         TxAction action
-    ) public view returns (bool) {
+    ) private view returns (bool) {
         FunctionSchema memory functionSchema = self.functions[functionSelector];
         if (functionSchema.functionSelector == bytes4(0)) {
             return false; 
@@ -1247,7 +1247,7 @@ library MultiPhaseSecureOperation {
      * @param self The SecureOperationState to modify.
      * @param txId The transaction ID to add to the pending list.
      */
-    function addToPendingTransactionsList(SecureOperationState storage self, uint256 txId) public {
+    function addToPendingTransactionsList(SecureOperationState storage self, uint256 txId) private {
         SharedValidationLibrary.validateTrue(txId > 0, SharedValidationLibrary.ERROR_TRANSACTION_NOT_FOUND);
         SharedValidationLibrary.validatePendingTransaction(uint8(self.txRecords[txId].status));
         
@@ -1264,7 +1264,7 @@ library MultiPhaseSecureOperation {
      * @param self The SecureOperationState to modify.
      * @param txId The transaction ID to remove from the pending list.
      */
-    function removeFromPendingTransactionsList(SecureOperationState storage self, uint256 txId) public {
+    function removeFromPendingTransactionsList(SecureOperationState storage self, uint256 txId) private {
         SharedValidationLibrary.validateTrue(txId > 0, SharedValidationLibrary.ERROR_TRANSACTION_NOT_FOUND);
         
         // Find and remove the transaction ID from the list
@@ -1286,7 +1286,7 @@ library MultiPhaseSecureOperation {
      * @param self The SecureOperationState to check.
      * @return Array of pending transaction IDs.
      */
-    function getPendingTransactionsList(SecureOperationState storage self) public view returns (uint256[] memory) {
+    function getPendingTransactionsList(SecureOperationState storage self) private view returns (uint256[] memory) {
         return self.pendingTransactionsList;
     }
 
