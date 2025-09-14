@@ -15,6 +15,6 @@ interface ISecureOwnable {
     function getTimeLockPeriodInMinutes() external view returns (uint256);
     function getOperationHistory() external view returns (MultiPhaseSecureOperation.TxRecord[] memory);
     function getOperation(uint256 txId) external view returns (MultiPhaseSecureOperation.TxRecord memory);
-    function getSupportedOperationTypes() external view returns (MultiPhaseSecureOperation.ReadableOperationType[] memory);
-    function isOperationTypeSupported(bytes32 operationType) external view returns (bool);
+    function getSupportedOperationTypes() external view returns (bytes32[] memory);
+    // function isOperationTypeSupported(bytes32 operationType) external view returns (bool);
 }

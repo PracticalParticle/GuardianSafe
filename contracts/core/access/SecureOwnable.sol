@@ -470,18 +470,18 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @dev Returns the supported operation types
      * @return The supported operation types
      */
-    function getSupportedOperationTypes() public view override returns (MultiPhaseSecureOperation.ReadableOperationType[] memory) {
+    function getSupportedOperationTypes() public view override returns (bytes32[] memory) {
         return _secureState.getSupportedOperationTypes();
     }
 
-    /**
-     * @dev Checks if an operation type is supported
-     * @param operationType The operation type to check
-     * @return bool True if the operation type is supported
-     */
-    function isOperationTypeSupported(bytes32 operationType) public view override returns (bool) {
-        return _secureState.isOperationTypeSupported(operationType);
-    }
+    // /**
+    //  * @dev Checks if an operation type is supported
+    //  * @param operationType The operation type to check
+    //  * @return bool True if the operation type is supported
+    //  */
+    // function isOperationTypeSupported(bytes32 operationType) public view override returns (bool) {
+    //     return _secureState.isOperationTypeSupported(operationType);
+    // }
 
     /**
      * @dev External function that can only be called by the contract itself to execute ownership transfer

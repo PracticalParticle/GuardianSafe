@@ -155,8 +155,7 @@ library MultiPhaseSecureOperation {
         bytes4[] supportedFunctionsList;
         
         // ============ OPERATION TYPES ============
-        mapping(bytes32 => bool) supportedOperationTypes;
-        mapping(bytes32 => string) operationTypeNames;
+        mapping(bytes32 => ReadableOperationType) supportedOperationTypes;
         bytes32[] supportedOperationTypesList;
         
         // ============ META-TRANSACTION SUPPORT ============
@@ -827,9 +826,8 @@ library MultiPhaseSecureOperation {
         SecureOperationState storage self,
         ReadableOperationType memory readableType
     ) public {
-        SharedValidationLibrary.validateOperationTypeNew(self.supportedOperationTypes[readableType.operationType]);
-        self.supportedOperationTypes[readableType.operationType] = true;
-        self.operationTypeNames[readableType.operationType] = readableType.name;
+        SharedValidationLibrary.validateOperationTypeNew(self.supportedOperationTypes[readableType.operationType].operationType != bytes32(0));
+        self.supportedOperationTypes[readableType.operationType] = readableType;
         self.supportedOperationTypesList.push(readableType.operationType);
     }
 
@@ -840,28 +838,18 @@ library MultiPhaseSecureOperation {
      * @return bool True if the operation type is supported
      */
     function isOperationTypeSupported(SecureOperationState storage self, bytes32 operationType) public view returns (bool) {
-        return self.supportedOperationTypes[operationType];
+        return self.supportedOperationTypes[operationType].operationType != bytes32(0);
     }
 
     /**
-     * @dev Gets all supported operation types with their human-readable names
+     * @dev Gets all supported operation types
      * @param self The SecureOperationState to check
-     * @return Array of ReadableOperationType containing operation type hashes and their names
+     * @return Array of supported operation type hashes
      */
     function getSupportedOperationTypes(
         SecureOperationState storage self
-    ) public view returns (ReadableOperationType[] memory) {
-        bytes32[] memory operationTypes = self.supportedOperationTypesList;
-        ReadableOperationType[] memory readableTypes = new ReadableOperationType[](operationTypes.length);
-        
-        for (uint i = 0; i < operationTypes.length; i++) {
-            readableTypes[i] = ReadableOperationType({
-                operationType: operationTypes[i],
-                name: self.operationTypeNames[operationTypes[i]]
-            });
-        }
-        
-        return readableTypes;
+    ) public view returns (bytes32[] memory) {
+        return self.supportedOperationTypesList;
     }
 
     /**
