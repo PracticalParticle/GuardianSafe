@@ -837,7 +837,7 @@ library MultiPhaseSecureOperation {
      * @param operationType The operation type to check
      * @return bool True if the operation type is supported
      */
-    function isOperationTypeSupported(SecureOperationState storage self, bytes32 operationType) public view returns (bool) {
+    function isOperationTypeSupported(SecureOperationState storage self, bytes32 operationType) private view returns (bool) {
         return self.supportedOperationTypes[operationType].operationType != bytes32(0);
     }
 
