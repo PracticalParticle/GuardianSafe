@@ -7,7 +7,7 @@ const fs = require('fs');
 const path = require('path');
 
 // List of contract names to process
-const contractsToProcess = ['MultiPhaseSecureOperation', 'SecureOwnable'];
+const contractsToProcess = ['MultiPhaseSecureOperation', 'SecureOwnable', 'GuardianAccountAbstraction'];
 
 // Define the source and destination folders
 const sourceFolder = path.join(__dirname, '..', 'build', 'contracts');

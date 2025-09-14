@@ -16,18 +16,20 @@ module.exports = async function(deployer, network, accounts) {
     await deployer.link(MPS, PAA);
     await deployer.link(SOD, PAA);
     
-    // Deploy GuardianAccountAbstraction with required parameters
+    // Deploy GuardianAccountAbstraction (no constructor parameters)
+    let paa = await deployer.deploy(PAA);
+    
+    // Initialize the contract with required parameters
     let currentAccount = accounts[0];
     let recoveryAddress = accounts[1];
     let timeLockPeriod = 60; // 60 minutes timelock period
     let broadcasterAddress = accounts[2];
     
-    await deployer.deploy(
-        PAA,
+    // Call the initialize function
+    await paa.initialize(
         currentAccount,
         broadcasterAddress,
         recoveryAddress,
         timeLockPeriod
     );
-    let paa = await PAA.deployed();
 };
