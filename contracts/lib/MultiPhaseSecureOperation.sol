@@ -151,7 +151,7 @@ library MultiPhaseSecureOperation {
         
         // Frequently accessed values
         uint256 txCounter;
-        uint256 metaTxNonce;
+        mapping(address => uint256) signerNonces; // Per-signer nonce counter for parallel processing
         uint256 timeLockPeriodInMinutes;
         
         // Lists that grow over time
@@ -205,7 +205,6 @@ library MultiPhaseSecureOperation {
 
         self.timeLockPeriodInMinutes = _timeLockPeriodInMinutes;
         self.txCounter = 0;
-        self.metaTxNonce = 0;
 
         // Initialize functions schemas
         initializeBaseFunctionSchemas(self);
@@ -221,7 +220,7 @@ library MultiPhaseSecureOperation {
      * @dev Initializes function access control for all supported functions.
      * @param self The SecureOperationState to initialize.
      */
-    function initializeBaseFunctionSchemas(SecureOperationState storage self) private {
+    function initializeBaseFunctionSchemas(SecureOperationState storage self) public {
         // Time-delay functions
         TxAction[] memory timeDelayRequestPerms = new TxAction[](1);
         timeDelayRequestPerms[0] = TxAction.EXECUTE_TIME_DELAY_REQUEST;
@@ -264,7 +263,7 @@ library MultiPhaseSecureOperation {
         address _owner,
         address _broadcaster,
         address _recovery
-    ) private {
+    ) public {
         // Initialize owner role in roles mapping
         createRole(self, "OWNER_ROLE", 1, true);
         addAuthorizedWalletToRole(self, OWNER_ROLE, _owner);
@@ -413,7 +412,7 @@ library MultiPhaseSecureOperation {
         SharedValidationLibrary.validatePendingTransaction(uint8(self.txRecords[txId].status));
         SharedValidationLibrary.validateTrue(verifySignature(self, metaTx), SharedValidationLibrary.ERROR_INVALID_SIGNATURE);
         
-        self.metaTxNonce++;    
+        incrementSignerNonce(self, metaTx.params.signer);
         self.txRecords[txId].status = TxStatus.CANCELLED;
         
         // Remove from pending transactions list
@@ -436,7 +435,7 @@ library MultiPhaseSecureOperation {
         SharedValidationLibrary.validatePendingTransaction(uint8(self.txRecords[txId].status));
         SharedValidationLibrary.validateTrue(verifySignature(self, metaTx), SharedValidationLibrary.ERROR_INVALID_SIGNATURE);
         
-        self.metaTxNonce++;     
+        incrementSignerNonce(self, metaTx.params.signer);
         (bool success, bytes memory result) = executeTransaction(self.txRecords[txId]);
         
         // Update storage with new status and result
@@ -597,12 +596,22 @@ library MultiPhaseSecureOperation {
     }
 
     /**
-     * @dev Gets the current nonce for the owner.
+     * @dev Gets the current nonce for a specific signer.
      * @param self The SecureOperationState to check.
-     * @return The current nonce.
+     * @param signer The address of the signer.
+     * @return The current nonce for the signer.
      */
-    function getNonce(SecureOperationState storage self) public view returns (uint256) {
-        return self.metaTxNonce;
+    function getSignerNonce(SecureOperationState storage self, address signer) public view returns (uint256) {
+        return self.signerNonces[signer];
+    }
+
+    /**
+     * @dev Increments the nonce for a specific signer.
+     * @param self The SecureOperationState to modify.
+     * @param signer The address of the signer.
+     */
+    function incrementSignerNonce(SecureOperationState storage self, address signer) public {
+        self.signerNonces[signer]++;
     }
 
     /**
@@ -657,8 +666,11 @@ library MultiPhaseSecureOperation {
         // Gas price validation (if applicable)
         // SharedValidationLibrary.validateGasPrice(metaTx.params.maxGasPrice);
         
-        // Check against stored pending nonce instead of current nonce
-        SharedValidationLibrary.validateNonce(metaTx.params.nonce, getNonce(self));
+        // Validate signer-specific nonce
+        SharedValidationLibrary.validateNonce(metaTx.params.nonce, getSignerNonce(self, metaTx.params.signer));
+
+        // Validate txId matches expected next transaction ID
+        SharedValidationLibrary.validateTransactionId(metaTx.txRecord.txId, getNextTxId(self));
         
         // Signature verification
         bytes32 messageHash = generateMessageHash(metaTx);
@@ -908,7 +920,7 @@ library MultiPhaseSecureOperation {
         MetaTxParams memory metaTxParams
     ) private view returns (MetaTransaction memory) {
         SharedValidationLibrary.validateChainId(metaTxParams.chainId);
-        SharedValidationLibrary.validateNonce(metaTxParams.nonce, getNonce(self));
+        SharedValidationLibrary.validateNonce(metaTxParams.nonce, getSignerNonce(self, metaTxParams.signer));
         SharedValidationLibrary.validateNotZeroAddress(metaTxParams.handlerContract, SharedValidationLibrary.ERROR_INVALID_HANDLER_CONTRACT);
         SharedValidationLibrary.validateHandlerSelector(metaTxParams.handlerSelector);
         SharedValidationLibrary.validateDeadline(metaTxParams.deadline);
@@ -1000,7 +1012,7 @@ library MultiPhaseSecureOperation {
         SharedValidationLibrary.validateNotZeroAddress(signer, SharedValidationLibrary.ERROR_INVALID_SIGNER_ADDRESS);
         return MetaTxParams({
             chainId: block.chainid,
-            nonce: getNonce(self),
+            nonce: getSignerNonce(self, signer),
             handlerContract: handlerContract,
             handlerSelector: handlerSelector,
             deadline:  deadline,

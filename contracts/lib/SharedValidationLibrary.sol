@@ -63,6 +63,9 @@ library SharedValidationLibrary {
     string internal constant ERROR_TRANSACTION_NOT_PENDING = "Transaction not in pending state";
     string internal constant ERROR_REQUEST_ALREADY_PENDING = "Request is already pending";
     string internal constant ERROR_ALREADY_INITIALIZED = "Already initialized";
+    string internal constant ERROR_TRANSACTION_ID_MISMATCH = "Transaction ID mismatch - invalid txId";
+    
+    // Signature and meta-transaction errors
     
     // Signature and meta-transaction errors
     string internal constant ERROR_INVALID_SIGNATURE_LENGTH = "Invalid signature length";
@@ -313,6 +316,15 @@ library SharedValidationLibrary {
      */
     function validateHandlerSelector(bytes4 selector) internal pure {
         require(selector != bytes4(0), ERROR_INVALID_HANDLER_SELECTOR);
+    }
+
+    /**
+     * @dev Validates that a transaction ID matches the expected next transaction ID
+     * @param txId The transaction ID to validate
+     * @param expectedTxId The expected next transaction ID
+     */
+    function validateTransactionId(uint256 txId, uint256 expectedTxId) internal pure {
+        require(txId == expectedTxId, ERROR_TRANSACTION_ID_MISMATCH);
     }
     
     /**
