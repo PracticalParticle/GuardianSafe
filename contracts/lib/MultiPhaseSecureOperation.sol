@@ -1074,6 +1074,40 @@ library MultiPhaseSecureOperation {
     }
 
     /**
+     * @dev Removes a role from the system.
+     * @param self The SecureOperationState to modify.
+     * @param roleHash The hash of the role to remove.
+     * @notice Security: Cannot remove protected roles to maintain system integrity.
+     */
+    function removeRole(
+        SecureOperationState storage self,
+        bytes32 roleHash
+    ) public {
+        // Validate that the role exists
+        SharedValidationLibrary.validateRoleExists(self.roles[roleHash].roleHash);
+        
+        // Security check: Prevent removing protected roles
+        Role memory role = self.roles[roleHash];
+        if (role.isProtected) {
+            revert(SharedValidationLibrary.ERROR_CANNOT_REMOVE_PROTECTED_ROLE);
+        }
+        
+        // Remove the role from the supported roles list
+        for (uint i = 0; i < self.supportedRolesList.length; i++) {
+            if (self.supportedRolesList[i] == roleHash) {
+                // Move the last element to the position of the element to delete
+                self.supportedRolesList[i] = self.supportedRolesList[self.supportedRolesList.length - 1];
+                // Remove the last element
+                self.supportedRolesList.pop();
+                break;
+            }
+        }
+        
+        // Clear the role data
+        delete self.roles[roleHash];
+    }
+
+    /**
      * @dev Gets the role by its hash.
      * @param self The SecureOperationState to check.
      * @param role The role to get the hash for.

@@ -88,6 +88,11 @@ library SharedValidationLibrary {
     string internal constant ERROR_ROLE_WALLET_LIMIT_REACHED = "Role wallet limit reached";
     string internal constant ERROR_OLD_WALLET_NOT_FOUND = "Old wallet not found in role";
     string internal constant ERROR_CANNOT_REMOVE_LAST_WALLET = "Cannot remove the last wallet from a role";
+    string internal constant ERROR_ROLE_NAME_EMPTY = "Role name cannot be empty";
+    string internal constant ERROR_MAX_WALLETS_ZERO = "Max wallets must be greater than zero";
+    string internal constant ERROR_CANNOT_MODIFY_PROTECTED_ROLES = "Cannot modify protected roles";
+    string internal constant ERROR_CANNOT_REMOVE_PROTECTED_ROLE = "Cannot remove protected role";
+    string internal constant ERROR_ROLE_EDITING_DISABLED = "Role editing is currently disabled";
     string internal constant ERROR_FUNCTION_PERMISSION_EXISTS = "Function permission already exists";
     string internal constant ERROR_ACTION_NOT_SUPPORTED = "Action not supported by function";
     
@@ -412,6 +417,30 @@ library SharedValidationLibrary {
      */
     function validateActionSupported(bool isSupported) internal pure {
         require(isSupported, ERROR_ACTION_NOT_SUPPORTED);
+    }
+    
+    /**
+     * @dev Validates that a role name is not empty
+     * @param roleName The role name to validate
+     */
+    function validateRoleNameNotEmpty(string memory roleName) internal pure {
+        require(bytes(roleName).length > 0, ERROR_ROLE_NAME_EMPTY);
+    }
+    
+    /**
+     * @dev Validates that a role is not protected
+     * @param isProtected Whether the role is protected
+     */
+    function validateRoleNotProtected(bool isProtected) internal pure {
+        require(!isProtected, ERROR_CANNOT_MODIFY_PROTECTED_ROLES);
+    }
+    
+    /**
+     * @dev Validates that role editing is enabled
+     * @param roleEditingEnabled Whether role editing is enabled
+     */
+    function validateRoleEditingEnabled(bool roleEditingEnabled) internal pure {
+        require(roleEditingEnabled, ERROR_ROLE_EDITING_DISABLED);
     }
     
     // ============ UTILITY FUNCTIONS ============
