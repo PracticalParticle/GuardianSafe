@@ -7,6 +7,7 @@ import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/Mes
 // Local imports
 import "./IDefinitionContract.sol";
 import "./SharedValidationLibrary.sol";
+import "./MultiPhaseSecureOperationDefinitions.sol";
 
 /**
  * @title MultiPhaseSecureOperation
@@ -20,6 +21,10 @@ import "./SharedValidationLibrary.sol";
  * - Role-based access control for different operation types
  * - Multiple execution types (standard function calls or raw transaction data)
  * - Payment handling for both native tokens and ERC20 tokens
+ * 
+ * The library uses MultiPhaseSecureOperationDefinitions for modular configuration,
+ * allowing easy customization of operation types, function schemas, and role permissions
+ * without modifying the core library code.
  * 
  * The library is designed to be used as a building block for secure smart contract systems
  * that require high levels of security and flexibility.
@@ -170,13 +175,6 @@ library MultiPhaseSecureOperation {
     bytes32 private constant TYPE_HASH = keccak256("MetaTransaction(TxRecord txRecord,MetaTxParams params,bytes data)TxRecord(uint256 txId,uint256 releaseTime,uint8 status,TxParams params,bytes32 message,bytes result,PaymentDetails payment)TxParams(address requester,address target,uint256 value,uint256 gasLimit,bytes32 operationType,uint8 executionType,bytes executionOptions)MetaTxParams(uint256 chainId,uint256 nonce,address handlerContract,bytes4 handlerSelector,uint256 deadline,uint256 maxGasPrice,address signer)PaymentDetails(address recipient,uint256 nativeTokenAmount,address erc20TokenAddress,uint256 erc20TokenAmount)");
     bytes32 private constant DOMAIN_SEPARATOR_TYPE_HASH = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
 
-    // Function Selectors
-    bytes4 private constant TX_REQUEST_SELECTOR = bytes4(keccak256("txRequest(address,address,uint256,uint256,bytes32,uint8,bytes)"));
-    bytes4 private constant TX_DELAYED_APPROVAL_SELECTOR = bytes4(keccak256("txDelayedApproval(uint256)"));
-    bytes4 private constant TX_CANCELLATION_SELECTOR = bytes4(keccak256("txCancellation(uint256)"));
-    bytes4 private constant META_TX_APPROVAL_SELECTOR = bytes4(keccak256("txApprovalWithMetaTx((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes,(address,uint256,address,uint256)),(uint256,address,bytes4,uint256,uint256,uint256,address),bytes,bytes)"));
-    bytes4 private constant META_TX_CANCELLATION_SELECTOR = bytes4(keccak256("txCancellationWithMetaTx((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes,(address,uint256,address,uint256)),(uint256,address,bytes4,uint256,uint256,uint256,address),bytes,bytes)"));
-    bytes4 private constant META_TX_REQUEST_AND_APPROVE_SELECTOR = bytes4(keccak256("requestAndApprove((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes,(address,uint256,address,uint256)),(uint256,address,bytes4,uint256,uint256,uint256,address),bytes,bytes)"));
 
     event RequestedTx(uint256 indexed txId, uint256 releaseTime, address target, ExecutionType executionType, bytes executionOptions);
     event TxApproved(uint256 indexed txId);
@@ -207,87 +205,21 @@ library MultiPhaseSecureOperation {
         self.timeLockPeriodInMinutes = _timeLockPeriodInMinutes;
         self.txCounter = 0;
 
-        // Initialize functions schemas
-        initializeBaseFunctionSchemas(self);
+        // Create base roles first
+        createRole(self, "OWNER_ROLE", 1, true);
+        createRole(self, "BROADCASTER_ROLE", 1, true);
+        createRole(self, "RECOVERY_ROLE", 1, true);
         
-        // Initialize base roles
-        initializeBaseRoles(self, _owner, _broadcaster, _recovery);
+        // Add authorized wallets to roles
+        addAuthorizedWalletToRole(self, OWNER_ROLE, _owner);
+        addAuthorizedWalletToRole(self, BROADCASTER_ROLE, _broadcaster);
+        addAuthorizedWalletToRole(self, RECOVERY_ROLE, _recovery);
+
+        // Load all definitions from the definition library
+        MultiPhaseSecureOperationDefinitions.loadDefinitionContract(self);
         
         // Mark as initialized after successful setup
         self.initialized = true;
-    }
-
-    /**
-     * @dev Initializes function access control for all supported functions.
-     * @param self The SecureOperationState to initialize.
-     */
-    function initializeBaseFunctionSchemas(SecureOperationState storage self) private {
-        // Time-delay functions
-        TxAction[] memory timeDelayRequestPerms = new TxAction[](1);
-        timeDelayRequestPerms[0] = TxAction.EXECUTE_TIME_DELAY_REQUEST;
-        createFunctionSchema(self, "txRequest", TX_REQUEST_SELECTOR, bytes32(0), timeDelayRequestPerms);
-        
-        TxAction[] memory timeDelayApprovePerms = new TxAction[](1);
-        timeDelayApprovePerms[0] = TxAction.EXECUTE_TIME_DELAY_APPROVE;
-        createFunctionSchema(self, "txDelayedApproval", TX_DELAYED_APPROVAL_SELECTOR, bytes32(0), timeDelayApprovePerms);
-        
-        TxAction[] memory timeDelayCancelPerms = new TxAction[](1);
-        timeDelayCancelPerms[0] = TxAction.EXECUTE_TIME_DELAY_CANCEL;
-        createFunctionSchema(self, "txCancellation", TX_CANCELLATION_SELECTOR, bytes32(0), timeDelayCancelPerms);
-
-        // Meta Tx Functions 
-        TxAction[] memory metaTxApprovePerms = new TxAction[](2);
-        metaTxApprovePerms[0] = TxAction.SIGN_META_APPROVE;
-        metaTxApprovePerms[1] = TxAction.EXECUTE_META_APPROVE;
-        createFunctionSchema(self, "txApprovalWithMetaTx", META_TX_APPROVAL_SELECTOR, bytes32(0), metaTxApprovePerms);
-        
-        TxAction[] memory metaTxCancelPerms = new TxAction[](2);
-        metaTxCancelPerms[0] = TxAction.SIGN_META_CANCEL;
-        metaTxCancelPerms[1] = TxAction.EXECUTE_META_CANCEL;
-        createFunctionSchema(self, "txCancellationWithMetaTx", META_TX_CANCELLATION_SELECTOR, bytes32(0), metaTxCancelPerms);
-        
-        TxAction[] memory metaTxRequestApprovePerms = new TxAction[](2);
-        metaTxRequestApprovePerms[0] = TxAction.SIGN_META_REQUEST_AND_APPROVE;
-        metaTxRequestApprovePerms[1] = TxAction.EXECUTE_META_REQUEST_AND_APPROVE;
-        createFunctionSchema(self, "requestAndApprove", META_TX_REQUEST_AND_APPROVE_SELECTOR, bytes32(0), metaTxRequestApprovePerms);
-    }
-
-    /**
-     * @dev Initializes the base roles (OWNER, BROADCASTER, RECOVERY) with their function permissions.
-     * @param self The SecureOperationState to initialize.
-     * @param _owner The address of the owner.
-     * @param _broadcaster The address of the broadcaster.
-     * @param _recovery The address of the recovery.
-     */
-    function initializeBaseRoles(
-        SecureOperationState storage self,
-        address _owner,
-        address _broadcaster,
-        address _recovery
-    ) private {
-        // Initialize owner role in roles mapping
-        createRole(self, "OWNER_ROLE", 1, true);
-        addAuthorizedWalletToRole(self, OWNER_ROLE, _owner);
-        addFunctionToRole(self, OWNER_ROLE, TX_REQUEST_SELECTOR, TxAction.EXECUTE_TIME_DELAY_REQUEST);
-        addFunctionToRole(self, OWNER_ROLE, TX_DELAYED_APPROVAL_SELECTOR, TxAction.EXECUTE_TIME_DELAY_APPROVE);
-        addFunctionToRole(self, OWNER_ROLE, TX_CANCELLATION_SELECTOR, TxAction.EXECUTE_TIME_DELAY_CANCEL);
-        addFunctionToRole(self, OWNER_ROLE, META_TX_REQUEST_AND_APPROVE_SELECTOR, TxAction.SIGN_META_REQUEST_AND_APPROVE);
-        addFunctionToRole(self, OWNER_ROLE, META_TX_APPROVAL_SELECTOR, TxAction.SIGN_META_APPROVE);
-        addFunctionToRole(self, OWNER_ROLE, META_TX_CANCELLATION_SELECTOR, TxAction.SIGN_META_CANCEL);
-         
-        // Initialize broadcaster role in roles mapping    
-        createRole(self, "BROADCASTER_ROLE", 1, true);
-        addAuthorizedWalletToRole(self, BROADCASTER_ROLE, _broadcaster);
-        addFunctionToRole(self, BROADCASTER_ROLE, META_TX_REQUEST_AND_APPROVE_SELECTOR, TxAction.EXECUTE_META_REQUEST_AND_APPROVE);
-        addFunctionToRole(self, BROADCASTER_ROLE, META_TX_APPROVAL_SELECTOR, TxAction.EXECUTE_META_APPROVE);
-        addFunctionToRole(self, BROADCASTER_ROLE, META_TX_CANCELLATION_SELECTOR, TxAction.EXECUTE_META_CANCEL);
-        
-        // Initialize recovery role in roles mapping    
-        createRole(self, "RECOVERY_ROLE", 1, true);
-        addAuthorizedWalletToRole(self, RECOVERY_ROLE, _recovery);
-        addFunctionToRole(self, RECOVERY_ROLE, TX_REQUEST_SELECTOR, TxAction.EXECUTE_TIME_DELAY_REQUEST);
-        addFunctionToRole(self, RECOVERY_ROLE, TX_DELAYED_APPROVAL_SELECTOR, TxAction.EXECUTE_TIME_DELAY_APPROVE);
-        addFunctionToRole(self, RECOVERY_ROLE, TX_CANCELLATION_SELECTOR, TxAction.EXECUTE_TIME_DELAY_CANCEL);
     }
 
     /**
@@ -323,7 +255,7 @@ library MultiPhaseSecureOperation {
         bytes memory executionOptions
     ) public returns (TxRecord memory) {
         SharedValidationLibrary.validateTrue(
-            checkPermissionPermissive(self, TX_REQUEST_SELECTOR) || checkPermissionPermissive(self,META_TX_REQUEST_AND_APPROVE_SELECTOR),
+            checkPermissionPermissive(self, MultiPhaseSecureOperationDefinitions.TX_REQUEST_SELECTOR) || checkPermissionPermissive(self, MultiPhaseSecureOperationDefinitions.META_TX_REQUEST_AND_APPROVE_SELECTOR),
             SharedValidationLibrary.ERROR_NO_PERMISSION_EXECUTE
         );
         SharedValidationLibrary.validateNotZeroAddress(target, SharedValidationLibrary.ERROR_INVALID_TARGET_ADDRESS);
@@ -358,7 +290,7 @@ library MultiPhaseSecureOperation {
      * @return The updated TxRecord.
      */
     function txDelayedApproval(SecureOperationState storage self, uint256 txId) public returns (TxRecord memory) {
-        checkPermission(self, TX_DELAYED_APPROVAL_SELECTOR);
+        checkPermission(self, MultiPhaseSecureOperationDefinitions.TX_DELAYED_APPROVAL_SELECTOR);
         SharedValidationLibrary.validatePendingTransaction(uint8(self.txRecords[txId].status));
         SharedValidationLibrary.validateReleaseTime(self.txRecords[txId].releaseTime);
         
@@ -388,7 +320,7 @@ library MultiPhaseSecureOperation {
      * @return The updated TxRecord.
      */
     function txCancellation(SecureOperationState storage self, uint256 txId) public returns (TxRecord memory) {
-        checkPermission(self, TX_CANCELLATION_SELECTOR);
+        checkPermission(self, MultiPhaseSecureOperationDefinitions.TX_CANCELLATION_SELECTOR);
         SharedValidationLibrary.validatePendingTransaction(uint8(self.txRecords[txId].status));
         
         self.txRecords[txId].status = TxStatus.CANCELLED;
@@ -409,7 +341,7 @@ library MultiPhaseSecureOperation {
      */
     function txCancellationWithMetaTx(SecureOperationState storage self, MetaTransaction memory metaTx) public returns (TxRecord memory) {
         uint256 txId = metaTx.txRecord.txId;
-        checkPermission(self, META_TX_CANCELLATION_SELECTOR);
+        checkPermission(self, MultiPhaseSecureOperationDefinitions.META_TX_CANCELLATION_SELECTOR);
         SharedValidationLibrary.validatePendingTransaction(uint8(self.txRecords[txId].status));
         SharedValidationLibrary.validateTrue(verifySignature(self, metaTx), SharedValidationLibrary.ERROR_INVALID_SIGNATURE);
         
@@ -432,7 +364,7 @@ library MultiPhaseSecureOperation {
      */
     function txApprovalWithMetaTx(SecureOperationState storage self, MetaTransaction memory metaTx) public returns (TxRecord memory) {
         uint256 txId = metaTx.txRecord.txId;
-        checkPermission(self, META_TX_APPROVAL_SELECTOR);
+        checkPermission(self, MultiPhaseSecureOperationDefinitions.META_TX_APPROVAL_SELECTOR);
         SharedValidationLibrary.validatePendingTransaction(uint8(self.txRecords[txId].status));
         SharedValidationLibrary.validateTrue(verifySignature(self, metaTx), SharedValidationLibrary.ERROR_INVALID_SIGNATURE);
         
@@ -466,7 +398,7 @@ library MultiPhaseSecureOperation {
         SecureOperationState storage self,
         MetaTransaction memory metaTx
     ) public returns (TxRecord memory) {
-        checkPermission(self, META_TX_REQUEST_AND_APPROVE_SELECTOR);
+        checkPermission(self, MultiPhaseSecureOperationDefinitions.META_TX_REQUEST_AND_APPROVE_SELECTOR);
         
         TxRecord memory txRecord = txRequest(
             self,
