@@ -137,28 +137,30 @@ library MultiPhaseSecureOperation {
     }
 
     struct SecureOperationState {
-        // Initialization flag
+        // ============ SYSTEM STATE ============
         bool initialized;
-        
-        // Frequently accessed mappings
-        mapping(uint256 => TxRecord) txRecords;
-        mapping(bytes32 => Role) roles;
-
-        // Less frequently accessed mappings
-        mapping(bytes4 => FunctionSchema) functions;
-        mapping(bytes32 => bool) supportedOperationTypes;
-        mapping(bytes32 => string) operationTypeNames;
-        
-        // Frequently accessed values
         uint256 txCounter;
-        mapping(address => uint256) signerNonces; // Per-signer nonce counter for parallel processing
         uint256 timeLockPeriodInMinutes;
         
-        // Lists that grow over time
-        bytes32[] supportedOperationTypesList;
-        bytes32[] supportedRolesList;
-        bytes4[] supportedFunctionsList;
+        // ============ TRANSACTION MANAGEMENT ============
+        mapping(uint256 => TxRecord) txRecords;
         uint256[] pendingTransactionsList;
+        
+        // ============ ROLE-BASED ACCESS CONTROL ============
+        mapping(bytes32 => Role) roles;
+        bytes32[] supportedRolesList;
+        
+        // ============ FUNCTION MANAGEMENT ============
+        mapping(bytes4 => FunctionSchema) functions;
+        bytes4[] supportedFunctionsList;
+        
+        // ============ OPERATION TYPES ============
+        mapping(bytes32 => bool) supportedOperationTypes;
+        mapping(bytes32 => string) operationTypeNames;
+        bytes32[] supportedOperationTypesList;
+        
+        // ============ META-TRANSACTION SUPPORT ============
+        mapping(address => uint256) signerNonces;
     }
 
     bytes32 constant OWNER_ROLE = keccak256(bytes("OWNER_ROLE"));
