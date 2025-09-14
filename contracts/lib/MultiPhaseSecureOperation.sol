@@ -546,7 +546,8 @@ library MultiPhaseSecureOperation {
             bytes32 roleHash = self.supportedRolesList[i];
             Role storage role = self.roles[roleHash];
             
-            if (isAuthorizedWalletInRole(self, roleHash, msg.sender)) {
+            (bool hasRole,) = findWalletInRole(self, roleHash, msg.sender);
+            if (hasRole) {
                 // Check if role has permission for this function
                 for (uint j = 0; j < role.functionPermissions.length; j++) {
                     FunctionPermission storage permission = role.functionPermissions[j];
@@ -576,7 +577,8 @@ library MultiPhaseSecureOperation {
             bytes32 roleHash = self.supportedRolesList[i];
             Role storage role = self.roles[roleHash];
             
-            if (isAuthorizedWalletInRole(self, roleHash, signer)) {
+            (bool hasRole,) = findWalletInRole(self, roleHash, signer);
+            if (hasRole) {
                 // Check if role has meta-transaction signing permissions for this function
                 for (uint j = 0; j < role.functionPermissions.length; j++) {
                     FunctionPermission storage permission = role.functionPermissions[j];
@@ -1095,31 +1097,32 @@ library MultiPhaseSecureOperation {
         SharedValidationLibrary.validateWalletLimit(roleData.authorizedWallets.length, roleData.maxWallets);
         
         // Check if wallet is already in the role
-        bool isInRole = isAuthorizedWalletInRole(self, role, wallet);
+        (bool isInRole,) = findWalletInRole(self, role, wallet);
         SharedValidationLibrary.validateWalletNotInRole(isInRole);
         
         self.roles[role].authorizedWallets.push(wallet);
     }
 
     /**
-     * @dev Checks if a specified address has a given role.
+     * @dev Finds a wallet in a role and returns its existence status and position.
      * @param self The SecureOperationState to check.
      * @param role The role to check.
-     * @param wallet The address to check for the role.
-     * @return True if the address has the role, false otherwise.
+     * @param wallet The address to find in the role.
+     * @return found True if the address has the role, false otherwise.
+     * @return index The index of the wallet in the role's authorizedWallets array, or 0 if not found.
      */
-    function isAuthorizedWalletInRole(SecureOperationState storage self, bytes32 role, address wallet) public view returns (bool) {
+    function findWalletInRole(SecureOperationState storage self, bytes32 role, address wallet) public view returns (bool found, uint256 index) {
         Role memory roleData = getRole(self, role);
         if (roleData.roleHash == bytes32(0)) {
-            return false;
+            return (false, 0);
         }
         
         for (uint i = 0; i < roleData.authorizedWallets.length; i++) {
             if (roleData.authorizedWallets[i] == wallet) {
-                return true;
+                return (true, i);
             }
         }
-        return false;
+        return (false, 0);
     }
 
     /**
