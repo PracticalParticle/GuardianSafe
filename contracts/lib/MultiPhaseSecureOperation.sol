@@ -1136,18 +1136,48 @@ library MultiPhaseSecureOperation {
         SharedValidationLibrary.validateRoleExists(self.roles[role].roleHash);
         SharedValidationLibrary.validateNotZeroAddress(newWallet, SharedValidationLibrary.ERROR_CANNOT_SET_ZERO_ADDRESS);
         
-        Role storage roleData = self.roles[role];
-    
-        // Find and replace the old wallet with the new one
-        for (uint i = 0; i < roleData.authorizedWallets.length; i++) {
-            if (roleData.authorizedWallets[i] == oldWallet) {
-                roleData.authorizedWallets[i] = newWallet;
-                return;
-            }
+        // Use findWalletInRole to get the index directly instead of linear search
+        (bool found, uint256 index) = findWalletInRole(self, role, oldWallet);
+        if (!found) {
+            revert(SharedValidationLibrary.ERROR_OLD_WALLET_NOT_FOUND);
         }
         
-        // If old wallet not found, revert
-        revert(SharedValidationLibrary.ERROR_OLD_WALLET_NOT_FOUND);
+        // Update the wallet at the found index
+        self.roles[role].authorizedWallets[index] = newWallet;
+    }
+
+    /**
+     * @dev Removes a wallet from a role.
+     * @param self The SecureOperationState to modify.
+     * @param role The role to remove the wallet from.
+     * @param wallet The wallet address to remove.
+     * @notice Security: Cannot remove the last wallet from a role to prevent empty roles.
+     */
+    function removeWalletFromRole(SecureOperationState storage self, bytes32 role, address wallet) public {
+        SharedValidationLibrary.validateRoleExists(self.roles[role].roleHash);
+        
+        // Use findWalletInRole to get the index directly
+        (bool found, uint256 index) = findWalletInRole(self, role, wallet);
+        if (!found) {
+            revert(SharedValidationLibrary.ERROR_OLD_WALLET_NOT_FOUND);
+        }
+        
+        // Security check: Prevent removing the last wallet from a role
+        address[] storage wallets = self.roles[role].authorizedWallets;
+        if (wallets.length <= 1) {
+            revert(SharedValidationLibrary.ERROR_CANNOT_REMOVE_LAST_WALLET);
+        }
+        
+        // Remove the wallet using efficient array removal (swap with last element and pop)
+        uint256 lastIndex = wallets.length - 1;
+        
+        if (index != lastIndex) {
+            // Move the last element to the position of the element to delete
+            wallets[index] = wallets[lastIndex];
+        }
+        
+        // Remove the last element
+        wallets.pop();
     }
 
     /**

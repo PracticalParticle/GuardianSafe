@@ -87,6 +87,7 @@ library SharedValidationLibrary {
     string internal constant ERROR_WALLET_ALREADY_IN_ROLE = "Wallet already in role";
     string internal constant ERROR_ROLE_WALLET_LIMIT_REACHED = "Role wallet limit reached";
     string internal constant ERROR_OLD_WALLET_NOT_FOUND = "Old wallet not found in role";
+    string internal constant ERROR_CANNOT_REMOVE_LAST_WALLET = "Cannot remove the last wallet from a role";
     string internal constant ERROR_FUNCTION_PERMISSION_EXISTS = "Function permission already exists";
     string internal constant ERROR_ACTION_NOT_SUPPORTED = "Action not supported by function";
     
