@@ -3,6 +3,7 @@ pragma solidity ^0.8.2;
 
 import "./MultiPhaseSecureOperation.sol";
 import "./IDefinitionContract.sol";
+import "./BaseDefinitionLoader.sol";
 
 /**
  * @title DynamicRBACDefinitions
@@ -85,42 +86,11 @@ library DynamicRBACDefinitions {
     function loadDefinitionContract(
         MultiPhaseSecureOperation.SecureOperationState storage secureState
     ) public {
-        // Load operation types
-        OperationTypeDefinition[] memory operationTypes = getOperationTypes();
-        for (uint256 i = 0; i < operationTypes.length; i++) {
-            MultiPhaseSecureOperation.addOperationType(secureState, MultiPhaseSecureOperation.ReadableOperationType({
-                operationType: operationTypes[i].operationType,
-                name: operationTypes[i].name
-            }));
-        }
-        
-        // Load function schemas
-        FunctionSchemaDefinition[] memory functionSchemas = getFunctionSchemas();
-        for (uint256 i = 0; i < functionSchemas.length; i++) {
-            // Convert uint8 array to TxAction array
-            MultiPhaseSecureOperation.TxAction[] memory actions = new MultiPhaseSecureOperation.TxAction[](functionSchemas[i].supportedActions.length);
-            for (uint256 j = 0; j < functionSchemas[i].supportedActions.length; j++) {
-                actions[j] = MultiPhaseSecureOperation.TxAction(functionSchemas[i].supportedActions[j]);
-            }
-            
-            MultiPhaseSecureOperation.createFunctionSchema(
-                secureState,
-                functionSchemas[i].functionName,
-                functionSchemas[i].functionSelector,
-                functionSchemas[i].operationType,
-                actions
-            );
-        }
-        
-        // Load role permissions
-        RolePermissionDefinition[] memory rolePermissions = getRolePermissions();
-        for (uint256 i = 0; i < rolePermissions.length; i++) {
-            MultiPhaseSecureOperation.addFunctionToRole(
-                secureState,
-                rolePermissions[i].roleHash,
-                rolePermissions[i].functionSelector,
-                MultiPhaseSecureOperation.TxAction(rolePermissions[i].grantedAction)
-            );
-        }
+        BaseDefinitionLoader.loadDefinitionContract(
+            secureState,
+            getOperationTypes(),
+            getFunctionSchemas(),
+            getRolePermissions()
+        );
     }
 }
