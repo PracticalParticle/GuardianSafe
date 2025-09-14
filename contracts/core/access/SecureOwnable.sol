@@ -10,7 +10,7 @@ import "../../lib/MultiPhaseSecureOperation.sol";
 import "../../lib/SecureOwnableDefinitions.sol";
 import "../../lib/IDefinitionContract.sol";
 import "../../lib/SharedValidationLibrary.sol";
-import "./ISecureOwnable.sol";
+import "./interface/ISecureOwnable.sol";
 
 /**
  * @title SecureOwnable

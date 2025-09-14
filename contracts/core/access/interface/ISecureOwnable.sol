@@ -2,7 +2,7 @@
 pragma solidity ^0.8.2;
 
 // Contracts imports
-import "../../lib/MultiPhaseSecureOperation.sol";
+import "../../../lib/MultiPhaseSecureOperation.sol";
 
 /**
  * @title ISecureOwnable
