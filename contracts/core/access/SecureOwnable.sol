@@ -118,7 +118,6 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
         );
 
         _hasOpenOwnershipRequest = true;
-        addOperation(txRecord);
         emit OwnershipTransferRequest(owner(), getRecovery());
         return txRecord;
     }
@@ -132,7 +131,6 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txDelayedApproval(txId);
         SharedValidationLibrary.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.OWNERSHIP_TRANSFER);
         _hasOpenOwnershipRequest = false;
-        finalizeOperation(updatedRecord);
         return updatedRecord;
     }
 
@@ -147,7 +145,6 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txApprovalWithMetaTx(metaTx);
         SharedValidationLibrary.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.OWNERSHIP_TRANSFER);
         _hasOpenOwnershipRequest = false;
-        finalizeOperation(updatedRecord);
         return updatedRecord;
     }
 
@@ -160,7 +157,6 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txCancellation(txId);
         SharedValidationLibrary.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.OWNERSHIP_TRANSFER);
         _hasOpenOwnershipRequest = false;
-        finalizeOperation(updatedRecord);
         emit OwnershipTransferCancelled(txId);
         return updatedRecord;
     }
@@ -176,7 +172,6 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txCancellationWithMetaTx(metaTx);
         SharedValidationLibrary.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.OWNERSHIP_TRANSFER);
         _hasOpenOwnershipRequest = false;
-        finalizeOperation(updatedRecord);
         emit OwnershipTransferCancelled(updatedRecord.txId);
         return updatedRecord;
     }
@@ -207,7 +202,6 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
         );
 
         _hasOpenBroadcasterRequest = true;
-        addOperation(txRecord);
         emit BroadcasterUpdateRequest(getBroadcaster(), newBroadcaster);
         return txRecord;
     }
@@ -221,7 +215,6 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txDelayedApproval(txId);
         SharedValidationLibrary.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.BROADCASTER_UPDATE);
         _hasOpenBroadcasterRequest = false;
-        finalizeOperation(updatedRecord);
         return updatedRecord;
     }
 
@@ -236,7 +229,6 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txApprovalWithMetaTx(metaTx);
         SharedValidationLibrary.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.BROADCASTER_UPDATE);
         _hasOpenBroadcasterRequest = false;
-        finalizeOperation(updatedRecord);
         return updatedRecord;
     }
 
@@ -249,7 +241,6 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txCancellation(txId);
         SharedValidationLibrary.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.BROADCASTER_UPDATE);
         _hasOpenBroadcasterRequest = false;
-        finalizeOperation(updatedRecord);
         emit BroadcasterUpdateCancelled(txId);
         return updatedRecord;
     }
@@ -265,7 +256,6 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txCancellationWithMetaTx(metaTx);
         SharedValidationLibrary.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.BROADCASTER_UPDATE);
         _hasOpenBroadcasterRequest = false;
-        finalizeOperation(updatedRecord);
         emit BroadcasterUpdateCancelled(updatedRecord.txId);
         return updatedRecord;
     }
@@ -332,26 +322,35 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
 
     // Getters
     /**
-     * @dev Gets the complete operation history with no filters
-     * @return The complete operation history
+     * @dev Gets transaction history within a specified range
+     * @param fromTxId The starting transaction ID (inclusive)
+     * @param toTxId The ending transaction ID (inclusive)
+     * @return The transaction history within the specified range
      */
-    function getOperationHistory() public view override returns (MultiPhaseSecureOperation.TxRecord[] memory) {
-        uint256 totalTransactions = _secureState.txCounter;
-        MultiPhaseSecureOperation.TxRecord[] memory history = new MultiPhaseSecureOperation.TxRecord[](totalTransactions);
+    function getTransactionHistory(uint256 fromTxId, uint256 toTxId) public view returns (MultiPhaseSecureOperation.TxRecord[] memory) {    
+        // Validate the range
+        fromTxId = fromTxId > 0 ? fromTxId : 1;
+        toTxId = toTxId > _secureState.txCounter ? _secureState.txCounter : toTxId;
         
-        for (uint256 i = 0; i < totalTransactions; i++) {
-            history[i] = _secureState.getTxRecord(i+1);
+        // Validate that fromTxId is less than toTxId
+        SharedValidationLibrary.validateLessThan(fromTxId, toTxId);
+
+        uint256 rangeSize = toTxId - fromTxId + 1;
+        MultiPhaseSecureOperation.TxRecord[] memory history = new MultiPhaseSecureOperation.TxRecord[](rangeSize);
+        
+        for (uint256 i = 0; i < rangeSize; i++) {
+            history[i] = _secureState.getTxRecord(fromTxId + i);
         }
         
         return history;
     }
 
     /**
-     * @dev Gets an operation
+     * @dev Gets a transaction
      * @param txId The transaction ID
-     * @return The operation
+     * @return The transaction record
      */
-    function getOperation(uint256 txId) public view override returns (MultiPhaseSecureOperation.TxRecord memory) {
+    function getTransaction(uint256 txId) public view returns (MultiPhaseSecureOperation.TxRecord memory) {
         return _secureState.getTxRecord(txId);
     }
 
@@ -361,20 +360,6 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      */
     function getPendingTransactions() public view returns (uint256[] memory) {
         return _secureState.pendingTransactionsList;
-    }
-
-    /**
-     * @dev Adds an operation
-     * @param txRecord The transaction record
-     */
-    function addOperation(MultiPhaseSecureOperation.TxRecord memory txRecord) internal virtual {
-    }
-
-    /**
-     * @dev Finalizes an operation
-     * @param opData The operation data
-     */
-    function finalizeOperation(MultiPhaseSecureOperation.TxRecord memory opData) internal virtual {
     }
 
     /**
@@ -508,8 +493,6 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
         MultiPhaseSecureOperation.MetaTransaction memory metaTx
     ) internal returns (MultiPhaseSecureOperation.TxRecord memory) {
         MultiPhaseSecureOperation.TxRecord memory txRecord = _secureState.requestAndApprove(metaTx);
-        addOperation(txRecord);
-        finalizeOperation(txRecord);
         return txRecord;
     }
 
@@ -552,6 +535,22 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      */
     function getSupportedOperationTypes() public view override returns (bytes32[] memory) {
         return _secureState.supportedOperationTypesList;
+    }
+
+    /**
+     * @dev Returns the supported roles list
+     * @return The supported roles list
+     */
+    function getSupportedRoles() public view returns (bytes32[] memory) {
+        return _secureState.supportedRolesList;
+    }
+
+    /**
+     * @dev Returns the supported functions list
+     * @return The supported functions list
+     */
+    function getSupportedFunctions() public view returns (bytes4[] memory) {
+        return _secureState.supportedFunctionsList;
     }
 
     /**

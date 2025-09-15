@@ -95,6 +95,7 @@ library SharedValidationLibrary {
     string internal constant ERROR_ROLE_EDITING_DISABLED = "Role editing is currently disabled";
     string internal constant ERROR_FUNCTION_PERMISSION_EXISTS = "Function permission already exists";
     string internal constant ERROR_ACTION_NOT_SUPPORTED = "Action not supported by function";
+    string internal constant ERROR_INVALID_RANGE = "Invalid range: from must be less than to";
     
     // ============ ADDRESS VALIDATION FUNCTIONS ============
     
@@ -519,5 +520,24 @@ library SharedValidationLibrary {
      */
     function validateFalse(bool condition, string memory errorMessage) internal pure {
         require(!condition, errorMessage);
+    }
+    
+    /**
+     * @dev Validates that the first value is less than the second value
+     * @param from The first value (should be less than 'to')
+     * @param to The second value (should be greater than 'from')
+     * @param errorMessage The error message to use
+     */
+    function validateLessThan(uint256 from, uint256 to, string memory errorMessage) internal pure {
+        require(from < to, errorMessage);
+    }
+    
+    /**
+     * @dev Validates that the first value is less than the second value using default error message
+     * @param from The first value (should be less than 'to')
+     * @param to The second value (should be greater than 'from')
+     */
+    function validateLessThan(uint256 from, uint256 to) internal pure {
+        validateLessThan(from, to, ERROR_INVALID_RANGE);
     }
 }

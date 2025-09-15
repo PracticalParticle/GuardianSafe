@@ -13,8 +13,8 @@ interface ISecureOwnable {
     function getBroadcaster() external view returns (address);
     function getRecovery() external view returns (address);
     function getTimeLockPeriodInMinutes() external view returns (uint256);
-    function getOperationHistory() external view returns (MultiPhaseSecureOperation.TxRecord[] memory);
-    function getOperation(uint256 txId) external view returns (MultiPhaseSecureOperation.TxRecord memory);
+    function getTransactionHistory(uint256 fromTxId, uint256 toTxId) external view returns (MultiPhaseSecureOperation.TxRecord[] memory);
+    function getTransaction(uint256 txId) external view returns (MultiPhaseSecureOperation.TxRecord memory);
     function getSupportedOperationTypes() external view returns (bytes32[] memory);
     // function isOperationTypeSupported(bytes32 operationType) external view returns (bool);
 }
