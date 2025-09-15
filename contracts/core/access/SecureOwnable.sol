@@ -359,7 +359,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @return Array of pending transaction IDs
      */
     function getPendingTransactions() public view returns (uint256[] memory) {
-        return _secureState.pendingTransactionsList;
+        return _secureState.getPendingTransactionsList();
     }
 
     /**
@@ -502,7 +502,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @return The owner of the contract
      */
     function owner() public view virtual override returns (address) {
-        return _secureState.getRole(MultiPhaseSecureOperation.OWNER_ROLE).authorizedWallets[0];
+        return _secureState.getAuthorizedWalletAt(MultiPhaseSecureOperation.OWNER_ROLE, 0);
     }
 
     /**
@@ -510,7 +510,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @return The broadcaster address
      */
     function getBroadcaster() public view virtual override returns (address) {
-        return _secureState.getRole(MultiPhaseSecureOperation.BROADCASTER_ROLE).authorizedWallets[0];
+        return _secureState.getAuthorizedWalletAt(MultiPhaseSecureOperation.BROADCASTER_ROLE, 0);
     }
 
     /**
@@ -518,7 +518,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @return The recovery address
      */
     function getRecovery() public view virtual override returns (address) {
-        return _secureState.getRole(MultiPhaseSecureOperation.RECOVERY_ROLE).authorizedWallets[0];
+        return _secureState.getAuthorizedWalletAt(MultiPhaseSecureOperation.RECOVERY_ROLE, 0);
     }
 
     /**
@@ -534,7 +534,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @return The supported operation types
      */
     function getSupportedOperationTypes() public view override returns (bytes32[] memory) {
-        return _secureState.supportedOperationTypesList;
+        return _secureState.getSupportedOperationTypesList();
     }
 
     /**
@@ -542,7 +542,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @return The supported roles list
      */
     function getSupportedRoles() public view returns (bytes32[] memory) {
-        return _secureState.supportedRolesList;
+        return _secureState.getSupportedRolesList();
     }
 
     /**
@@ -550,7 +550,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @return The supported functions list
      */
     function getSupportedFunctions() public view returns (bytes4[] memory) {
-        return _secureState.supportedFunctionsList;
+        return _secureState.getSupportedFunctionsList();
     }
 
     /**

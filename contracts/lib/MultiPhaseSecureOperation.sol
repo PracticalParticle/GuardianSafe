@@ -3,6 +3,7 @@ pragma solidity ^0.8.2;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 // Local imports
 import "./IDefinitionContract.sol";
@@ -32,6 +33,9 @@ import "./MultiPhaseSecureOperationDefinitions.sol";
 library MultiPhaseSecureOperation {
     using MessageHashUtils for bytes32;
     using SharedValidationLibrary for *;
+    using EnumerableSet for EnumerableSet.UintSet;
+    using EnumerableSet for EnumerableSet.Bytes32Set;
+    using EnumerableSet for EnumerableSet.AddressSet;
 
     enum TxStatus {
         UNDEFINED,
@@ -118,7 +122,7 @@ library MultiPhaseSecureOperation {
     struct Role {
         string roleName;
         bytes32 roleHash;
-        address[] authorizedWallets;
+        EnumerableSet.AddressSet authorizedWallets;
         FunctionPermission[] functionPermissions;
         uint256 maxWallets;
         bool isProtected;
@@ -126,7 +130,7 @@ library MultiPhaseSecureOperation {
 
     struct FunctionPermission {
         bytes4 functionSelector;
-        TxAction grantedAction;
+        TxAction[] grantedActions;
     }
 
     struct FunctionSchema {
@@ -149,19 +153,19 @@ library MultiPhaseSecureOperation {
         
         // ============ TRANSACTION MANAGEMENT ============
         mapping(uint256 => TxRecord) txRecords;
-        uint256[] pendingTransactionsList;
+        EnumerableSet.UintSet pendingTransactionsSet;
         
         // ============ ROLE-BASED ACCESS CONTROL ============
         mapping(bytes32 => Role) roles;
-        bytes32[] supportedRolesList;
+        EnumerableSet.Bytes32Set supportedRolesSet;
         
         // ============ FUNCTION MANAGEMENT ============
         mapping(bytes4 => FunctionSchema) functions;
-        bytes4[] supportedFunctionsList;
+        EnumerableSet.Bytes32Set supportedFunctionsSet; // Using Bytes32Set for bytes4 selectors
         
         // ============ OPERATION TYPES ============
         mapping(bytes32 => ReadableOperationType) supportedOperationTypes;
-        bytes32[] supportedOperationTypesList;
+        EnumerableSet.Bytes32Set supportedOperationTypesSet;
         
         // ============ META-TRANSACTION SUPPORT ============
         mapping(address => uint256) signerNonces;
@@ -611,42 +615,32 @@ library MultiPhaseSecureOperation {
     }
 
     /**
-     * @dev Adds a transaction ID to the pending transactions list.
+     * @dev Adds a transaction ID to the pending transactions set.
      * @param self The SecureOperationState to modify.
-     * @param txId The transaction ID to add to the pending list.
+     * @param txId The transaction ID to add to the pending set.
      */
     function addToPendingTransactionsList(SecureOperationState storage self, uint256 txId) private {
         SharedValidationLibrary.validateTrue(txId > 0, SharedValidationLibrary.ERROR_TRANSACTION_NOT_FOUND);
         SharedValidationLibrary.validatePendingTransaction(uint8(self.txRecords[txId].status));
         
-        // Check if transaction ID is already in the list
-        for (uint i = 0; i < self.pendingTransactionsList.length; i++) {
-            SharedValidationLibrary.validateTrue(self.pendingTransactionsList[i] != txId, SharedValidationLibrary.ERROR_REQUEST_ALREADY_PENDING);
-        }
+        // Check if transaction ID is already in the set (O(1) operation)
+        SharedValidationLibrary.validateTrue(!self.pendingTransactionsSet.contains(txId), SharedValidationLibrary.ERROR_REQUEST_ALREADY_PENDING);
         
-        self.pendingTransactionsList.push(txId);
+        self.pendingTransactionsSet.add(txId);
     }
 
     /**
-     * @dev Removes a transaction ID from the pending transactions list.
+     * @dev Removes a transaction ID from the pending transactions set.
      * @param self The SecureOperationState to modify.
-     * @param txId The transaction ID to remove from the pending list.
+     * @param txId The transaction ID to remove from the pending set.
      */
     function removeFromPendingTransactionsList(SecureOperationState storage self, uint256 txId) private {
         SharedValidationLibrary.validateTrue(txId > 0, SharedValidationLibrary.ERROR_TRANSACTION_NOT_FOUND);
         
-        // Find and remove the transaction ID from the list
-        for (uint i = 0; i < self.pendingTransactionsList.length; i++) {
-            if (self.pendingTransactionsList[i] == txId) {
-                // Move the last element to the position of the element to delete
-                self.pendingTransactionsList[i] = self.pendingTransactionsList[self.pendingTransactionsList.length - 1];
-                // Remove the last element
-                self.pendingTransactionsList.pop();
-                return;
-            }
+        // Remove the transaction ID from the set (O(1) operation)
+        if (!self.pendingTransactionsSet.remove(txId)) {
+            revert(SharedValidationLibrary.ERROR_TRANSACTION_NOT_FOUND);
         }
-        
-        revert(SharedValidationLibrary.ERROR_TRANSACTION_NOT_FOUND);
     }
 
     // ============ PAYMENT MANAGEMENT FUNCTIONS ============
@@ -679,7 +673,7 @@ library MultiPhaseSecureOperation {
      * @param role The role to get the hash for.
      * @return The role associated with the hash, or Role(0) if the role doesn't exist.
      */
-    function getRole(SecureOperationState storage self, bytes32 role) public view returns (Role memory) {
+    function getRole(SecureOperationState storage self, bytes32 role) public view returns (Role storage) {
         return self.roles[role];
     }
 
@@ -705,7 +699,7 @@ library MultiPhaseSecureOperation {
         self.roles[roleHash].maxWallets = maxWallets;
         self.roles[roleHash].isProtected = isProtected;
         
-        self.supportedRolesList.push(roleHash);
+        self.supportedRolesSet.add(roleHash);
     }
 
     /**
@@ -722,21 +716,12 @@ library MultiPhaseSecureOperation {
         SharedValidationLibrary.validateRoleExists(self.roles[roleHash].roleHash);
         
         // Security check: Prevent removing protected roles
-        Role memory role = self.roles[roleHash];
-        if (role.isProtected) {
+        if (self.roles[roleHash].isProtected) {
             revert(SharedValidationLibrary.ERROR_CANNOT_REMOVE_PROTECTED_ROLE);
         }
         
-        // Remove the role from the supported roles list
-        for (uint i = 0; i < self.supportedRolesList.length; i++) {
-            if (self.supportedRolesList[i] == roleHash) {
-                // Move the last element to the position of the element to delete
-                self.supportedRolesList[i] = self.supportedRolesList[self.supportedRolesList.length - 1];
-                // Remove the last element
-                self.supportedRolesList.pop();
-                break;
-            }
-        }
+        // Remove the role from the supported roles set (O(1) operation)
+        self.supportedRolesSet.remove(roleHash);
         
         // Clear the role data
         delete self.roles[roleHash];
@@ -750,38 +735,15 @@ library MultiPhaseSecureOperation {
      */
     function addAuthorizedWalletToRole(SecureOperationState storage self, bytes32 role, address wallet) public {
         SharedValidationLibrary.validateNotZeroAddress(wallet, SharedValidationLibrary.ERROR_CANNOT_ADD_ZERO_ADDRESS);
-        SharedValidationLibrary.validateRoleExists(getRole(self, role).roleHash);
+        SharedValidationLibrary.validateRoleExists(self.roles[role].roleHash);
         
-        Role memory roleData = getRole(self, role);
-        SharedValidationLibrary.validateWalletLimit(roleData.authorizedWallets.length, roleData.maxWallets);
+        Role storage roleData = self.roles[role];
+        SharedValidationLibrary.validateWalletLimit(roleData.authorizedWallets.length(), roleData.maxWallets);
         
-        // Check if wallet is already in the role
-        (bool isInRole,) = findWalletInRole(self, role, wallet);
-        SharedValidationLibrary.validateWalletNotInRole(isInRole);
+        // Check if wallet is already in the role (O(1) operation)
+        SharedValidationLibrary.validateWalletNotInRole(roleData.authorizedWallets.contains(wallet));
         
-        self.roles[role].authorizedWallets.push(wallet);
-    }
-
-    /**
-     * @dev Finds a wallet in a role and returns its existence status and position.
-     * @param self The SecureOperationState to check.
-     * @param role The role to check.
-     * @param wallet The address to find in the role.
-     * @return found True if the address has the role, false otherwise.
-     * @return index The index of the wallet in the role's authorizedWallets array, or 0 if not found.
-     */
-    function findWalletInRole(SecureOperationState storage self, bytes32 role, address wallet) public view returns (bool found, uint256 index) {
-        Role memory roleData = getRole(self, role);
-        if (roleData.roleHash == bytes32(0)) {
-            return (false, 0);
-        }
-        
-        for (uint i = 0; i < roleData.authorizedWallets.length; i++) {
-            if (roleData.authorizedWallets[i] == wallet) {
-                return (true, i);
-            }
-        }
-        return (false, 0);
+        roleData.authorizedWallets.add(wallet);
     }
 
     /**
@@ -795,14 +757,15 @@ library MultiPhaseSecureOperation {
         SharedValidationLibrary.validateRoleExists(self.roles[role].roleHash);
         SharedValidationLibrary.validateNotZeroAddress(newWallet, SharedValidationLibrary.ERROR_CANNOT_SET_ZERO_ADDRESS);
         
-        // Use findWalletInRole to get the index directly instead of linear search
-        (bool found, uint256 index) = findWalletInRole(self, role, oldWallet);
-        if (!found) {
+        // Check if old wallet exists in the role
+        Role storage roleData = self.roles[role];
+        if (!roleData.authorizedWallets.contains(oldWallet)) {
             revert(SharedValidationLibrary.ERROR_OLD_WALLET_NOT_FOUND);
         }
         
-        // Update the wallet at the found index
-        self.roles[role].authorizedWallets[index] = newWallet;
+        // Remove old wallet and add new wallet (O(1) operations)
+        roleData.authorizedWallets.remove(oldWallet);
+        roleData.authorizedWallets.add(newWallet);
     }
 
     /**
@@ -815,28 +778,19 @@ library MultiPhaseSecureOperation {
     function removeWalletFromRole(SecureOperationState storage self, bytes32 role, address wallet) public {
         SharedValidationLibrary.validateRoleExists(self.roles[role].roleHash);
         
-        // Use findWalletInRole to get the index directly
-        (bool found, uint256 index) = findWalletInRole(self, role, wallet);
-        if (!found) {
+        // Check if wallet exists in the role
+        Role storage roleData = self.roles[role];
+        if (!roleData.authorizedWallets.contains(wallet)) {
             revert(SharedValidationLibrary.ERROR_OLD_WALLET_NOT_FOUND);
         }
         
         // Security check: Prevent removing the last wallet from a role
-        address[] storage wallets = self.roles[role].authorizedWallets;
-        if (wallets.length <= 1) {
+        if (roleData.authorizedWallets.length() <= 1) {
             revert(SharedValidationLibrary.ERROR_CANNOT_REMOVE_LAST_WALLET);
         }
         
-        // Remove the wallet using efficient array removal (swap with last element and pop)
-        uint256 lastIndex = wallets.length - 1;
-        
-        if (index != lastIndex) {
-            // Move the last element to the position of the element to delete
-            wallets[index] = wallets[lastIndex];
-        }
-        
-        // Remove the last element
-        wallets.pop();
+        // Remove the wallet (O(1) operation)
+        roleData.authorizedWallets.remove(wallet);
     }
 
     /**
@@ -844,19 +798,21 @@ library MultiPhaseSecureOperation {
      * @param self The SecureOperationState to modify.
      * @param roleHash The role hash to add the function permission to.
      * @param functionSelector The function selector to add permission for.
-     * @param grantedAction The action granted for this function selector.
+     * @param grantedActions The actions granted for this function selector.
      */
     function addFunctionToRole(
         SecureOperationState storage self,
         bytes32 roleHash,
         bytes4 functionSelector,
-        TxAction grantedAction
+        TxAction[] memory grantedActions
     ) public {
         SharedValidationLibrary.validateRoleExists(self.roles[roleHash].roleHash);
         SharedValidationLibrary.validateFunctionExists(self.functions[functionSelector].functionSelector);
         
-        // Validate that the grantedAction is supported by the function
-        SharedValidationLibrary.validateActionSupported(isActionSupportedByFunction(self, functionSelector, grantedAction));
+        // Validate that all grantedActions are supported by the function
+        for (uint i = 0; i < grantedActions.length; i++) {
+            SharedValidationLibrary.validateActionSupported(isActionSupportedByFunction(self, functionSelector, grantedActions[i]));
+        }
         
         Role storage role = self.roles[roleHash];
         
@@ -873,7 +829,7 @@ library MultiPhaseSecureOperation {
         // If it doesn't exist, add it
         role.functionPermissions.push(FunctionPermission({
             functionSelector: functionSelector,
-            grantedAction: grantedAction
+            grantedActions: grantedActions
         }));
     }
 
@@ -895,12 +851,12 @@ library MultiPhaseSecureOperation {
      */
     function checkPermissionPermissive(SecureOperationState storage self, bytes4 functionSelector) private view returns (bool) {
         // Check if caller has any role that grants permission for this function
-        for (uint i = 0; i < self.supportedRolesList.length; i++) {
-            bytes32 roleHash = self.supportedRolesList[i];
+        uint256 rolesLength = self.supportedRolesSet.length();
+        for (uint i = 0; i < rolesLength; i++) {
+            bytes32 roleHash = self.supportedRolesSet.at(i);
             Role storage role = self.roles[roleHash];
             
-            (bool hasRole,) = findWalletInRole(self, roleHash, msg.sender);
-            if (hasRole) {
+            if (role.authorizedWallets.contains(msg.sender)) {
                 // Check if role has permission for this function
                 for (uint j = 0; j < role.functionPermissions.length; j++) {
                     FunctionPermission storage permission = role.functionPermissions[j];
@@ -928,20 +884,21 @@ library MultiPhaseSecureOperation {
         TxAction requestedAction
     ) private view returns (bool) {
         // Check if signer has any role that grants meta-transaction signing permissions for this function
-        for (uint i = 0; i < self.supportedRolesList.length; i++) {
-            bytes32 roleHash = self.supportedRolesList[i];
+        uint256 rolesLength = self.supportedRolesSet.length();
+        for (uint i = 0; i < rolesLength; i++) {
+            bytes32 roleHash = self.supportedRolesSet.at(i);
             Role storage role = self.roles[roleHash];
             
-            (bool hasRole,) = findWalletInRole(self, roleHash, signer);
-            if (hasRole) {
+            if (role.authorizedWallets.contains(signer)) {
                 // Check if role has meta-transaction signing permissions for this function
                 for (uint j = 0; j < role.functionPermissions.length; j++) {
                     FunctionPermission storage permission = role.functionPermissions[j];
                     if (permission.functionSelector == functionSelector) {
-                        // Check if the granted action matches the requested action
-                        TxAction grantedAction = permission.grantedAction;
-                        if (grantedAction == requestedAction) {
-                            return true;
+                        // Check if any of the granted actions matches the requested action
+                        for (uint k = 0; k < permission.grantedActions.length; k++) {
+                            if (permission.grantedActions[k] == requestedAction) {
+                                return true;
+                            }
                         }
                     }
                 }
@@ -974,7 +931,7 @@ library MultiPhaseSecureOperation {
             operationType: operationType,
             supportedActions: supportedActions
         });
-        self.supportedFunctionsList.push(functionSelector);
+        self.supportedFunctionsSet.add(bytes32(functionSelector));
     }
 
     /**
@@ -1015,7 +972,7 @@ library MultiPhaseSecureOperation {
     ) public {
         SharedValidationLibrary.validateOperationTypeNew(self.supportedOperationTypes[readableType.operationType].operationType != bytes32(0));
         self.supportedOperationTypes[readableType.operationType] = readableType;
-        self.supportedOperationTypesList.push(readableType.operationType);
+        self.supportedOperationTypesSet.add(readableType.operationType);
     }
 
     /**
@@ -1026,6 +983,77 @@ library MultiPhaseSecureOperation {
      */
     function isOperationTypeSupported(SecureOperationState storage self, bytes32 operationType) private view returns (bool) {
         return self.supportedOperationTypes[operationType].operationType != bytes32(0);
+    }
+
+    // ============ BACKWARD COMPATIBILITY FUNCTIONS ============
+
+    /**
+     * @dev Gets all pending transaction IDs as an array for backward compatibility
+     * @param self The SecureOperationState to check
+     * @return Array of pending transaction IDs
+     */
+    function getPendingTransactionsList(SecureOperationState storage self) public view returns (uint256[] memory) {
+        uint256 length = self.pendingTransactionsSet.length();
+        uint256[] memory result = new uint256[](length);
+        for (uint256 i = 0; i < length; i++) {
+            result[i] = self.pendingTransactionsSet.at(i);
+        }
+        return result;
+    }
+
+    /**
+     * @dev Gets all supported roles as an array for backward compatibility
+     * @param self The SecureOperationState to check
+     * @return Array of supported role hashes
+     */
+    function getSupportedRolesList(SecureOperationState storage self) public view returns (bytes32[] memory) {
+        uint256 length = self.supportedRolesSet.length();
+        bytes32[] memory result = new bytes32[](length);
+        for (uint256 i = 0; i < length; i++) {
+            result[i] = self.supportedRolesSet.at(i);
+        }
+        return result;
+    }
+
+    /**
+     * @dev Gets all supported function selectors as an array for backward compatibility
+     * @param self The SecureOperationState to check
+     * @return Array of supported function selectors
+     */
+    function getSupportedFunctionsList(SecureOperationState storage self) public view returns (bytes4[] memory) {
+        uint256 length = self.supportedFunctionsSet.length();
+        bytes4[] memory result = new bytes4[](length);
+        for (uint256 i = 0; i < length; i++) {
+            result[i] = bytes4(self.supportedFunctionsSet.at(i));
+        }
+        return result;
+    }
+
+    /**
+     * @dev Gets all supported operation types as an array for backward compatibility
+     * @param self The SecureOperationState to check
+     * @return Array of supported operation type hashes
+     */
+    function getSupportedOperationTypesList(SecureOperationState storage self) public view returns (bytes32[] memory) {
+        uint256 length = self.supportedOperationTypesSet.length();
+        bytes32[] memory result = new bytes32[](length);
+        for (uint256 i = 0; i < length; i++) {
+            result[i] = self.supportedOperationTypesSet.at(i);
+        }
+        return result;
+    }
+
+    /**
+     * @dev Gets the authorized wallet at a specific index from a role
+     * @param self The SecureOperationState to check
+     * @param roleHash The role hash to get the wallet from
+     * @param index The index position of the wallet to retrieve
+     * @return The authorized wallet address at the specified index
+     */
+    function getAuthorizedWalletAt(SecureOperationState storage self, bytes32 roleHash, uint256 index) public view returns (address) {
+        Role storage role = self.roles[roleHash];
+        require(role.authorizedWallets.length() > index, "Index out of bounds or role has no authorized wallets");
+        return role.authorizedWallets.at(index);
     }
 
     // ============ META-TRANSACTION SUPPORT FUNCTIONS ============

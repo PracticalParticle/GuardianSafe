@@ -133,78 +133,114 @@ library MultiPhaseSecureOperationDefinitions {
         RolePermissionDefinition[] memory permissions = new RolePermissionDefinition[](12);
         
         // Owner role permissions (matching initializeBaseRoles exactly)
+        uint8[] memory ownerTxRequestActions = new uint8[](1);
+        ownerTxRequestActions[0] = uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_REQUEST);
+        
+        uint8[] memory ownerTxApproveActions = new uint8[](1);
+        ownerTxApproveActions[0] = uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_APPROVE);
+        
+        uint8[] memory ownerTxCancelActions = new uint8[](1);
+        ownerTxCancelActions[0] = uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_CANCEL);
+        
+        uint8[] memory ownerMetaTxRequestApproveActions = new uint8[](1);
+        ownerMetaTxRequestApproveActions[0] = uint8(MultiPhaseSecureOperation.TxAction.SIGN_META_REQUEST_AND_APPROVE);
+        
+        uint8[] memory ownerMetaTxApproveActions = new uint8[](1);
+        ownerMetaTxApproveActions[0] = uint8(MultiPhaseSecureOperation.TxAction.SIGN_META_APPROVE);
+        
+        uint8[] memory ownerMetaTxCancelActions = new uint8[](1);
+        ownerMetaTxCancelActions[0] = uint8(MultiPhaseSecureOperation.TxAction.SIGN_META_CANCEL);
+        
         permissions[0] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.OWNER_ROLE,
             functionSelector: TX_REQUEST_SELECTOR,
-            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_REQUEST)
+            grantedActions: ownerTxRequestActions
         });
         
         permissions[1] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.OWNER_ROLE,
             functionSelector: TX_DELAYED_APPROVAL_SELECTOR,
-            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_APPROVE)
+            grantedActions: ownerTxApproveActions
         });
         
         permissions[2] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.OWNER_ROLE,
             functionSelector: TX_CANCELLATION_SELECTOR,
-            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_CANCEL)
+            grantedActions: ownerTxCancelActions
         });
         
         permissions[3] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.OWNER_ROLE,
             functionSelector: META_TX_REQUEST_AND_APPROVE_SELECTOR,
-            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.SIGN_META_REQUEST_AND_APPROVE)
+            grantedActions: ownerMetaTxRequestApproveActions
         });
         
         permissions[4] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.OWNER_ROLE,
             functionSelector: META_TX_APPROVAL_SELECTOR,
-            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.SIGN_META_APPROVE)
+            grantedActions: ownerMetaTxApproveActions
         });
         
         permissions[5] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.OWNER_ROLE,
             functionSelector: META_TX_CANCELLATION_SELECTOR,
-            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.SIGN_META_CANCEL)
+            grantedActions: ownerMetaTxCancelActions
         });
         
         // Broadcaster role permissions (matching initializeBaseRoles exactly)
+        uint8[] memory broadcasterMetaTxRequestApproveActions = new uint8[](1);
+        broadcasterMetaTxRequestApproveActions[0] = uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_META_REQUEST_AND_APPROVE);
+        
+        uint8[] memory broadcasterMetaTxApproveActions = new uint8[](1);
+        broadcasterMetaTxApproveActions[0] = uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_META_APPROVE);
+        
+        uint8[] memory broadcasterMetaTxCancelActions = new uint8[](1);
+        broadcasterMetaTxCancelActions[0] = uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_META_CANCEL);
+        
         permissions[6] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.BROADCASTER_ROLE,
             functionSelector: META_TX_REQUEST_AND_APPROVE_SELECTOR,
-            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_META_REQUEST_AND_APPROVE)
+            grantedActions: broadcasterMetaTxRequestApproveActions
         });
         
         permissions[7] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.BROADCASTER_ROLE,
             functionSelector: META_TX_APPROVAL_SELECTOR,
-            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_META_APPROVE)
+            grantedActions: broadcasterMetaTxApproveActions
         });
         
         permissions[8] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.BROADCASTER_ROLE,
             functionSelector: META_TX_CANCELLATION_SELECTOR,
-            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_META_CANCEL)
+            grantedActions: broadcasterMetaTxCancelActions
         });
         
         // Recovery role permissions (matching initializeBaseRoles exactly)
+        uint8[] memory recoveryTxRequestActions = new uint8[](1);
+        recoveryTxRequestActions[0] = uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_REQUEST);
+        
+        uint8[] memory recoveryTxApproveActions = new uint8[](1);
+        recoveryTxApproveActions[0] = uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_APPROVE);
+        
+        uint8[] memory recoveryTxCancelActions = new uint8[](1);
+        recoveryTxCancelActions[0] = uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_CANCEL);
+        
         permissions[9] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.RECOVERY_ROLE,
             functionSelector: TX_REQUEST_SELECTOR,
-            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_REQUEST)
+            grantedActions: recoveryTxRequestActions
         });
         
         permissions[10] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.RECOVERY_ROLE,
             functionSelector: TX_DELAYED_APPROVAL_SELECTOR,
-            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_APPROVE)
+            grantedActions: recoveryTxApproveActions
         });
         
         permissions[11] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.RECOVERY_ROLE,
             functionSelector: TX_CANCELLATION_SELECTOR,
-            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_CANCEL)
+            grantedActions: recoveryTxCancelActions
         });
         
         return permissions;

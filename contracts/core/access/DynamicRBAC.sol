@@ -125,7 +125,7 @@ abstract contract DynamicRBAC is Initializable, SecureOwnable {
                 _getSecureState(), 
                 roleHash, 
                 functionPermissions[i].functionSelector, 
-                functionPermissions[i].grantedAction
+                functionPermissions[i].grantedActions
             );
         }
         
@@ -143,8 +143,7 @@ abstract contract DynamicRBAC is Initializable, SecureOwnable {
         SharedValidationLibrary.validateRoleEditingEnabled(roleEditingEnabled);
         
         // Validate that the role is not protected
-        MultiPhaseSecureOperation.Role memory role = _getSecureState().getRole(roleHash);
-        SharedValidationLibrary.validateRoleNotProtected(role.isProtected);
+        SharedValidationLibrary.validateRoleNotProtected(_getSecureState().getRole(roleHash).isProtected);
         
         // MultiPhaseSecureOperation.addAuthorizedWalletToRole already validates:
         // - wallet is not zero address
@@ -166,8 +165,7 @@ abstract contract DynamicRBAC is Initializable, SecureOwnable {
         SharedValidationLibrary.validateRoleEditingEnabled(roleEditingEnabled);
         
         // Validate that the role is not protected
-        MultiPhaseSecureOperation.Role memory role = _getSecureState().getRole(roleHash);
-        SharedValidationLibrary.validateRoleNotProtected(role.isProtected);
+        SharedValidationLibrary.validateRoleNotProtected(_getSecureState().getRole(roleHash).isProtected);
         
         // MultiPhaseSecureOperation.removeWalletFromRole already validates:
         // - role exists
@@ -185,17 +183,6 @@ abstract contract DynamicRBAC is Initializable, SecureOwnable {
      */
     function roleExists(bytes32 roleHash) external view returns (bool) {
         return _getSecureState().getRole(roleHash).roleHash != bytes32(0);
-    }
-
-    /**
-     * @dev Gets the index of a wallet in a role's authorized wallets array
-     * @param roleHash The hash of the role
-     * @param wallet The wallet address to find
-     * @return found True if the wallet has the role, false otherwise
-     * @return index The index of the wallet in the role's array, or 0 if not found
-     */
-    function getWalletIndexInRole(bytes32 roleHash, address wallet) external view returns (bool found, uint256 index) {
-        return MultiPhaseSecureOperation.findWalletInRole(_getSecureState(), roleHash, wallet);
     }
 
     /**

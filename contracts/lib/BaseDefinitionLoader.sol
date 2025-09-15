@@ -54,11 +54,17 @@ library BaseDefinitionLoader {
         
         // Load role permissions
         for (uint256 i = 0; i < rolePermissions.length; i++) {
+            // Convert uint8 array to TxAction array
+            MultiPhaseSecureOperation.TxAction[] memory actions = new MultiPhaseSecureOperation.TxAction[](rolePermissions[i].grantedActions.length);
+            for (uint256 j = 0; j < rolePermissions[i].grantedActions.length; j++) {
+                actions[j] = MultiPhaseSecureOperation.TxAction(rolePermissions[i].grantedActions[j]);
+            }
+            
             MultiPhaseSecureOperation.addFunctionToRole(
                 secureState,
                 rolePermissions[i].roleHash,
                 rolePermissions[i].functionSelector,
-                MultiPhaseSecureOperation.TxAction(rolePermissions[i].grantedAction)
+                actions
             );
         }
     }

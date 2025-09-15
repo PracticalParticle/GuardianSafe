@@ -56,5 +56,5 @@ struct FunctionSchemaDefinition {
 struct RolePermissionDefinition {
     bytes32 roleHash;
     bytes4 functionSelector;
-    uint8 grantedAction; // Using uint8 instead of enum to avoid circular dependency
+    uint8[] grantedActions; // Using uint8 array instead of enum array to avoid circular dependency
 }

@@ -69,10 +69,13 @@ library DynamicRBACDefinitions {
         RolePermissionDefinition[] memory permissions = new RolePermissionDefinition[](1);
         
         // Role editing toggle permission (only broadcaster can execute)
+        uint8[] memory broadcasterActions = new uint8[](1);
+        broadcasterActions[0] = uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_META_REQUEST_AND_APPROVE);
+        
         permissions[0] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.BROADCASTER_ROLE,
             functionSelector: ROLE_EDITING_TOGGLE_META_SELECTOR,
-            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_META_REQUEST_AND_APPROVE)
+            grantedActions: broadcasterActions
         });
         
         return permissions;

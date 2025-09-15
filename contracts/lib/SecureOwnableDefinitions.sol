@@ -200,96 +200,123 @@ library SecureOwnableDefinitions {
         RolePermissionDefinition[] memory permissions = new RolePermissionDefinition[](18);
         
         // Broadcaster role permissions
+        uint8[] memory broadcasterMetaApproveActions = new uint8[](1);
+        broadcasterMetaApproveActions[0] = uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_META_APPROVE);
+        
+        uint8[] memory broadcasterMetaCancelActions = new uint8[](1);
+        broadcasterMetaCancelActions[0] = uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_META_CANCEL);
+        
+        uint8[] memory broadcasterMetaRequestApproveActions = new uint8[](1);
+        broadcasterMetaRequestApproveActions[0] = uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_META_REQUEST_AND_APPROVE);
+        
         permissions[0] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.BROADCASTER_ROLE,
             functionSelector: TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR,
-            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_META_APPROVE)
+            grantedActions: broadcasterMetaApproveActions
         });
         
         permissions[1] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.BROADCASTER_ROLE,
             functionSelector: TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR,
-            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_META_CANCEL)
+            grantedActions: broadcasterMetaCancelActions
         });
         
         permissions[2] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.BROADCASTER_ROLE,
             functionSelector: UPDATE_BROADCASTER_APPROVE_META_SELECTOR,
-            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_META_APPROVE)
+            grantedActions: broadcasterMetaApproveActions
         });
         
         permissions[3] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.BROADCASTER_ROLE,
             functionSelector: UPDATE_BROADCASTER_CANCEL_META_SELECTOR,
-            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_META_CANCEL)
+            grantedActions: broadcasterMetaCancelActions
         });
         
         permissions[4] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.BROADCASTER_ROLE,
             functionSelector: UPDATE_RECOVERY_META_SELECTOR,
-            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_META_REQUEST_AND_APPROVE)
+            grantedActions: broadcasterMetaRequestApproveActions
         });
         
         permissions[5] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.BROADCASTER_ROLE,
             functionSelector: UPDATE_TIMELOCK_META_SELECTOR,
-            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_META_REQUEST_AND_APPROVE)
+            grantedActions: broadcasterMetaRequestApproveActions
         });
         
         // Owner role permissions
+        uint8[] memory ownerTimeDelayRequestActions = new uint8[](1);
+        ownerTimeDelayRequestActions[0] = uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_REQUEST);
+        
+        uint8[] memory ownerTimeDelayApproveActions = new uint8[](1);
+        ownerTimeDelayApproveActions[0] = uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_APPROVE);
+        
+        uint8[] memory ownerTimeDelayCancelActions = new uint8[](1);
+        ownerTimeDelayCancelActions[0] = uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_CANCEL);
+        
         permissions[6] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.OWNER_ROLE,
             functionSelector: TRANSFER_OWNERSHIP_REQUEST_SELECTOR,
-            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_REQUEST)
+            grantedActions: ownerTimeDelayRequestActions
         });
         
         permissions[7] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.OWNER_ROLE,
             functionSelector: TRANSFER_OWNERSHIP_DELAYED_APPROVAL_SELECTOR,
-            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_APPROVE)
+            grantedActions: ownerTimeDelayApproveActions
         });
         
         permissions[8] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.OWNER_ROLE,
             functionSelector: TRANSFER_OWNERSHIP_CANCELLATION_SELECTOR,
-            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_CANCEL)
+            grantedActions: ownerTimeDelayCancelActions
         });
         
         permissions[9] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.OWNER_ROLE,
             functionSelector: UPDATE_BROADCASTER_REQUEST_SELECTOR,
-            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_REQUEST)
+            grantedActions: ownerTimeDelayRequestActions
         });
         
         permissions[10] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.OWNER_ROLE,
             functionSelector: UPDATE_BROADCASTER_DELAYED_APPROVAL_SELECTOR,
-            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_APPROVE)
+            grantedActions: ownerTimeDelayApproveActions
         });
         
         permissions[11] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.OWNER_ROLE,
             functionSelector: UPDATE_BROADCASTER_CANCELLATION_SELECTOR,
-            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_CANCEL)
+            grantedActions: ownerTimeDelayCancelActions
         });
         
         // Recovery role permissions
+        uint8[] memory recoveryTimeDelayRequestActions = new uint8[](1);
+        recoveryTimeDelayRequestActions[0] = uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_REQUEST);
+        
+        uint8[] memory recoveryTimeDelayApproveActions = new uint8[](1);
+        recoveryTimeDelayApproveActions[0] = uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_APPROVE);
+        
+        uint8[] memory recoveryTimeDelayCancelActions = new uint8[](1);
+        recoveryTimeDelayCancelActions[0] = uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_CANCEL);
+        
         permissions[12] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.RECOVERY_ROLE,
             functionSelector: TRANSFER_OWNERSHIP_REQUEST_SELECTOR,
-            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_REQUEST)
+            grantedActions: recoveryTimeDelayRequestActions
         });
         
         permissions[13] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.RECOVERY_ROLE,
             functionSelector: TRANSFER_OWNERSHIP_DELAYED_APPROVAL_SELECTOR,
-            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_APPROVE)
+            grantedActions: recoveryTimeDelayApproveActions
         });
         
         permissions[14] = RolePermissionDefinition({
             roleHash: MultiPhaseSecureOperation.RECOVERY_ROLE,
             functionSelector: TRANSFER_OWNERSHIP_CANCELLATION_SELECTOR,
-            grantedAction: uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_CANCEL)
+            grantedActions: recoveryTimeDelayCancelActions
         });
         
         return permissions;
