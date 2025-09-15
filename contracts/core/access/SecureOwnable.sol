@@ -373,6 +373,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @dev Creates meta-transaction parameters with specified values
      * @param handlerContract The contract that will handle the meta-transaction
      * @param handlerSelector The function selector for the handler
+     * @param action The transaction action type
      * @param deadline The timestamp after which the meta-transaction expires
      * @param maxGasPrice The maximum gas price allowed for execution
      * @param signer The address that will sign the meta-transaction
@@ -381,6 +382,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
     function createMetaTxParams(
         address handlerContract,
         bytes4 handlerSelector,
+        MultiPhaseSecureOperation.TxAction action,
         uint256 deadline,
         uint256 maxGasPrice,
         address signer
@@ -388,6 +390,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
         return _secureState.createMetaTxParams(
             handlerContract,
             handlerSelector,
+            action,
             block.timestamp + (deadline * 1 hours),
             maxGasPrice,
             signer

@@ -1,7 +1,7 @@
 import { Address, Hex } from 'viem';
 import { TransactionResult, TransactionOptions } from '../interfaces/base.index';
 import { TxRecord, MetaTransaction, MetaTxParams } from '../interfaces/lib.index';
-import { ExecutionType } from '../types/lib.index';
+import { ExecutionType, TxAction } from '../types/lib.index';
 
 /**
  * Interface for SecureOwnable contract events
@@ -85,6 +85,7 @@ export interface ISecureOwnable {
   createMetaTxParams(
     handlerContract: Address,
     handlerSelector: Hex,
+    action: TxAction,
     deadline: bigint,
     maxGasPrice: bigint,
     signer: Address

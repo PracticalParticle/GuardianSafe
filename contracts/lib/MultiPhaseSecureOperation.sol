@@ -84,7 +84,7 @@ library MultiPhaseSecureOperation {
         uint256 nonce;
         address handlerContract;
         bytes4 handlerSelector;
-        // TODO: add requested TXAction 
+        TxAction action;
         uint256 deadline;
         uint256 maxGasPrice;
         address signer;
@@ -172,7 +172,7 @@ library MultiPhaseSecureOperation {
     bytes32 constant RECOVERY_ROLE = keccak256(bytes("RECOVERY_ROLE"));
 
     // EIP-712 Type Hashes
-    bytes32 private constant TYPE_HASH = keccak256("MetaTransaction(TxRecord txRecord,MetaTxParams params,bytes data)TxRecord(uint256 txId,uint256 releaseTime,uint8 status,TxParams params,bytes32 message,bytes result,PaymentDetails payment)TxParams(address requester,address target,uint256 value,uint256 gasLimit,bytes32 operationType,uint8 executionType,bytes executionOptions)MetaTxParams(uint256 chainId,uint256 nonce,address handlerContract,bytes4 handlerSelector,uint256 deadline,uint256 maxGasPrice,address signer)PaymentDetails(address recipient,uint256 nativeTokenAmount,address erc20TokenAddress,uint256 erc20TokenAmount)");
+    bytes32 private constant TYPE_HASH = keccak256("MetaTransaction(TxRecord txRecord,MetaTxParams params,bytes data)TxRecord(uint256 txId,uint256 releaseTime,uint8 status,TxParams params,bytes32 message,bytes result,PaymentDetails payment)TxParams(address requester,address target,uint256 value,uint256 gasLimit,bytes32 operationType,uint8 executionType,bytes executionOptions)MetaTxParams(uint256 chainId,uint256 nonce,address handlerContract,bytes4 handlerSelector,uint8 action,uint256 deadline,uint256 maxGasPrice,address signer)PaymentDetails(address recipient,uint256 nativeTokenAmount,address erc20TokenAddress,uint256 erc20TokenAmount)");
     bytes32 private constant DOMAIN_SEPARATOR_TYPE_HASH = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
 
 
@@ -494,16 +494,18 @@ library MultiPhaseSecureOperation {
     }
 
     /**
-     * @dev Checks if a signer has meta-transaction signing permissions for a specific function selector.
+     * @dev Checks if a signer has meta-transaction signing permissions for a specific function selector and action.
      * @param self The SecureOperationState to check.
      * @param signer The address of the signer to check.
      * @param functionSelector The function selector to check permissions for.
-     * @return True if the signer has meta-transaction signing permissions for the function, false otherwise.
+     * @param requestedAction The specific action being requested in the meta-transaction.
+     * @return True if the signer has meta-transaction signing permissions for the function and action, false otherwise.
      */
     function hasMetaTxSigningPermission(
         SecureOperationState storage self,
         address signer,
-        bytes4 functionSelector
+        bytes4 functionSelector,
+        TxAction requestedAction
     ) private view returns (bool) {
         // Check if signer has any role that grants meta-transaction signing permissions for this function
         for (uint i = 0; i < self.supportedRolesList.length; i++) {
@@ -516,11 +518,9 @@ library MultiPhaseSecureOperation {
                 for (uint j = 0; j < role.functionPermissions.length; j++) {
                     FunctionPermission storage permission = role.functionPermissions[j];
                     if (permission.functionSelector == functionSelector) {
-                        // Check if the granted action is a meta-transaction signing action
-                        TxAction action = permission.grantedAction;
-                        if (action == TxAction.SIGN_META_REQUEST_AND_APPROVE ||
-                            action == TxAction.SIGN_META_APPROVE ||
-                            action == TxAction.SIGN_META_CANCEL) {
+                        // Check if the granted action matches the requested action
+                        TxAction grantedAction = permission.grantedAction;
+                        if (grantedAction == requestedAction) {
                             return true;
                         }
                     }
@@ -612,8 +612,8 @@ library MultiPhaseSecureOperation {
         address recoveredSigner = recoverSigner(messageHash, metaTx.signature);
         require(recoveredSigner == metaTx.params.signer, SharedValidationLibrary.ERROR_INVALID_SIGNATURE);
 
-        // Authorization check - verify signer has meta-transaction signing permissions for the function
-        bool isAuthorized = hasMetaTxSigningPermission(self, metaTx.params.signer, metaTx.params.handlerSelector);
+        // Authorization check - verify signer has meta-transaction signing permissions for the function and action
+        bool isAuthorized = hasMetaTxSigningPermission(self, metaTx.params.signer, metaTx.params.handlerSelector, metaTx.params.action);
         SharedValidationLibrary.validateTrue(isAuthorized, SharedValidationLibrary.ERROR_SIGNER_NOT_AUTHORIZED);
         
         return true;
@@ -649,6 +649,7 @@ library MultiPhaseSecureOperation {
             metaTx.params.nonce,
             metaTx.params.handlerContract,
             metaTx.params.handlerSelector,
+            uint8(metaTx.params.action),
             metaTx.params.deadline,
             metaTx.params.maxGasPrice
         ));
@@ -917,6 +918,7 @@ library MultiPhaseSecureOperation {
      * @dev Helper function to create properly formatted MetaTxParams
      * @param handlerContract The contract that will handle the meta-transaction
      * @param handlerSelector The function selector for the handler
+     * @param action The transaction action type
      * @param deadline The timestamp after which the meta-transaction expires
      * @param maxGasPrice The maximum gas price allowed for execution
      * @param signer The address that will sign the meta-transaction
@@ -926,6 +928,7 @@ library MultiPhaseSecureOperation {
         SecureOperationState storage self,
         address handlerContract,
         bytes4 handlerSelector,
+        TxAction action,
         uint256 deadline,
         uint256 maxGasPrice,
         address signer
@@ -939,6 +942,7 @@ library MultiPhaseSecureOperation {
             nonce: getSignerNonce(self, signer),
             handlerContract: handlerContract,
             handlerSelector: handlerSelector,
+            action: action,
             deadline:  deadline,
             maxGasPrice: maxGasPrice,
             signer: signer

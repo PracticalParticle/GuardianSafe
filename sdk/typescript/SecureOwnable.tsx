@@ -3,7 +3,7 @@ import SecureOwnableABIJson from '../../abi/SecureOwnable.abi.json';
 import { TransactionOptions, TransactionResult } from './interfaces/base.index';
 import { ISecureOwnable } from './interfaces/core.access.index';
 import { TxRecord, MetaTransaction, MetaTxParams } from './interfaces/lib.index';
-import { ExecutionType } from './types/lib.index';
+import { ExecutionType, TxAction } from './types/lib.index';
 
 /**
  * @title SecureOwnable
@@ -263,6 +263,7 @@ export class SecureOwnable implements ISecureOwnable {
   async createMetaTxParams(
     handlerContract: Address,
     handlerSelector: Hex,
+    action: TxAction,
     deadline: bigint,
     maxGasPrice: bigint,
     signer: Address
@@ -271,7 +272,7 @@ export class SecureOwnable implements ISecureOwnable {
       address: this.contractAddress,
       abi: SecureOwnableABIJson,
       functionName: 'createMetaTxParams',
-      args: [handlerContract, handlerSelector, deadline, maxGasPrice, signer]
+      args: [handlerContract, handlerSelector, action, deadline, maxGasPrice, signer]
     }) as MetaTxParams;
   }
 
