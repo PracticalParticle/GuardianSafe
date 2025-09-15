@@ -482,7 +482,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @return The supported operation types
      */
     function getSupportedOperationTypes() public view override returns (bytes32[] memory) {
-        return _secureState.getSupportedOperationTypes();
+        return _secureState.supportedOperationTypesList;
     }
 
     // /**

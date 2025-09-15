@@ -591,77 +591,15 @@ library MultiPhaseSecureOperation {
 
     // ============ ROLE-BASED ACCESS CONTROL FUNCTIONS ============
 
-    /**
-     * @dev Checks if the caller has permission to execute a function.
-     * @param self The SecureOperationState to check.
-     * @param functionSelector The selector of the function to check permissions for.
-     */
-    function checkPermission(SecureOperationState storage self, bytes4 functionSelector) public view {
-        bool hasPermission = checkPermissionPermissive(self,functionSelector);       
-        SharedValidationLibrary.validateTrue(hasPermission, SharedValidationLibrary.ERROR_NO_PERMISSION);
-    }
 
     /**
-     * @dev Checks if the caller has permission to execute a function.
+     * @dev Gets the role by its hash.
      * @param self The SecureOperationState to check.
-     * @param functionSelector The selector of the function to check permissions for.
-     * @return True if the caller has permission, false otherwise.
+     * @param role The role to get the hash for.
+     * @return The role associated with the hash, or Role(0) if the role doesn't exist.
      */
-    function checkPermissionPermissive(SecureOperationState storage self, bytes4 functionSelector) private view returns (bool) {
-        // Check if caller has any role that grants permission for this function
-        for (uint i = 0; i < self.supportedRolesList.length; i++) {
-            bytes32 roleHash = self.supportedRolesList[i];
-            Role storage role = self.roles[roleHash];
-            
-            (bool hasRole,) = findWalletInRole(self, roleHash, msg.sender);
-            if (hasRole) {
-                // Check if role has permission for this function
-                for (uint j = 0; j < role.functionPermissions.length; j++) {
-                    FunctionPermission storage permission = role.functionPermissions[j];
-                    if (permission.functionSelector == functionSelector) {
-                        return true; // Role has permission for this function
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    /**
-     * @dev Checks if a signer has meta-transaction signing permissions for a specific function selector and action.
-     * @param self The SecureOperationState to check.
-     * @param signer The address of the signer to check.
-     * @param functionSelector The function selector to check permissions for.
-     * @param requestedAction The specific action being requested in the meta-transaction.
-     * @return True if the signer has meta-transaction signing permissions for the function and action, false otherwise.
-     */
-    function hasMetaTxSigningPermission(
-        SecureOperationState storage self,
-        address signer,
-        bytes4 functionSelector,
-        TxAction requestedAction
-    ) private view returns (bool) {
-        // Check if signer has any role that grants meta-transaction signing permissions for this function
-        for (uint i = 0; i < self.supportedRolesList.length; i++) {
-            bytes32 roleHash = self.supportedRolesList[i];
-            Role storage role = self.roles[roleHash];
-            
-            (bool hasRole,) = findWalletInRole(self, roleHash, signer);
-            if (hasRole) {
-                // Check if role has meta-transaction signing permissions for this function
-                for (uint j = 0; j < role.functionPermissions.length; j++) {
-                    FunctionPermission storage permission = role.functionPermissions[j];
-                    if (permission.functionSelector == functionSelector) {
-                        // Check if the granted action matches the requested action
-                        TxAction grantedAction = permission.grantedAction;
-                        if (grantedAction == requestedAction) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        return false;
+    function getRole(SecureOperationState storage self, bytes32 role) public view returns (Role memory) {
+        return self.roles[role];
     }
 
     /**
@@ -721,16 +659,6 @@ library MultiPhaseSecureOperation {
         
         // Clear the role data
         delete self.roles[roleHash];
-    }
-
-    /**
-     * @dev Gets the role by its hash.
-     * @param self The SecureOperationState to check.
-     * @param role The role to get the hash for.
-     * @return The role associated with the hash, or Role(0) if the role doesn't exist.
-     */
-    function getRole(SecureOperationState storage self, bytes32 role) public view returns (Role memory) {
-        return self.roles[role];
     }
 
     /**
@@ -868,6 +796,79 @@ library MultiPhaseSecureOperation {
         }));
     }
 
+    /**
+     * @dev Checks if the caller has permission to execute a function.
+     * @param self The SecureOperationState to check.
+     * @param functionSelector The selector of the function to check permissions for.
+     */
+    function checkPermission(SecureOperationState storage self, bytes4 functionSelector) public view {
+        bool hasPermission = checkPermissionPermissive(self,functionSelector);       
+        SharedValidationLibrary.validateTrue(hasPermission, SharedValidationLibrary.ERROR_NO_PERMISSION);
+    }
+
+    /**
+     * @dev Checks if the caller has permission to execute a function.
+     * @param self The SecureOperationState to check.
+     * @param functionSelector The selector of the function to check permissions for.
+     * @return True if the caller has permission, false otherwise.
+     */
+    function checkPermissionPermissive(SecureOperationState storage self, bytes4 functionSelector) private view returns (bool) {
+        // Check if caller has any role that grants permission for this function
+        for (uint i = 0; i < self.supportedRolesList.length; i++) {
+            bytes32 roleHash = self.supportedRolesList[i];
+            Role storage role = self.roles[roleHash];
+            
+            (bool hasRole,) = findWalletInRole(self, roleHash, msg.sender);
+            if (hasRole) {
+                // Check if role has permission for this function
+                for (uint j = 0; j < role.functionPermissions.length; j++) {
+                    FunctionPermission storage permission = role.functionPermissions[j];
+                    if (permission.functionSelector == functionSelector) {
+                        return true; // Role has permission for this function
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @dev Checks if a signer has meta-transaction signing permissions for a specific function selector and action.
+     * @param self The SecureOperationState to check.
+     * @param signer The address of the signer to check.
+     * @param functionSelector The function selector to check permissions for.
+     * @param requestedAction The specific action being requested in the meta-transaction.
+     * @return True if the signer has meta-transaction signing permissions for the function and action, false otherwise.
+     */
+    function hasMetaTxSigningPermission(
+        SecureOperationState storage self,
+        address signer,
+        bytes4 functionSelector,
+        TxAction requestedAction
+    ) private view returns (bool) {
+        // Check if signer has any role that grants meta-transaction signing permissions for this function
+        for (uint i = 0; i < self.supportedRolesList.length; i++) {
+            bytes32 roleHash = self.supportedRolesList[i];
+            Role storage role = self.roles[roleHash];
+            
+            (bool hasRole,) = findWalletInRole(self, roleHash, signer);
+            if (hasRole) {
+                // Check if role has meta-transaction signing permissions for this function
+                for (uint j = 0; j < role.functionPermissions.length; j++) {
+                    FunctionPermission storage permission = role.functionPermissions[j];
+                    if (permission.functionSelector == functionSelector) {
+                        // Check if the granted action matches the requested action
+                        TxAction grantedAction = permission.grantedAction;
+                        if (grantedAction == requestedAction) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     // ============ FUNCTION MANAGEMENT FUNCTIONS ============
 
     /**
@@ -944,17 +945,6 @@ library MultiPhaseSecureOperation {
      */
     function isOperationTypeSupported(SecureOperationState storage self, bytes32 operationType) private view returns (bool) {
         return self.supportedOperationTypes[operationType].operationType != bytes32(0);
-    }
-
-    /**
-     * @dev Gets all supported operation types
-     * @param self The SecureOperationState to check
-     * @return Array of supported operation type hashes
-     */
-    function getSupportedOperationTypes(
-        SecureOperationState storage self
-    ) public view returns (bytes32[] memory) {
-        return self.supportedOperationTypesList;
     }
 
     // ============ META-TRANSACTION SUPPORT FUNCTIONS ============

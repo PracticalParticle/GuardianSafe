@@ -40,11 +40,6 @@ abstract contract DynamicRBAC is Initializable, SecureOwnable {
     event WalletRemovedFromRole(bytes32 indexed roleHash, address indexed wallet);
     event RoleEditingToggled(bool enabled);
 
-    // Struct for function permissions
-    struct FunctionPermission {
-        bytes4 functionSelector;
-        MultiPhaseSecureOperation.TxAction action;
-    }
 
 
     /**
@@ -110,7 +105,7 @@ abstract contract DynamicRBAC is Initializable, SecureOwnable {
     function createNewRole(
         string memory roleName,
         uint256 maxWallets,
-        FunctionPermission[] memory functionPermissions
+        MultiPhaseSecureOperation.FunctionPermission[] memory functionPermissions
     ) external onlyOwner returns (bytes32) {
         // Validate that role editing is enabled
         SharedValidationLibrary.validateRoleEditingEnabled(roleEditingEnabled);
@@ -130,7 +125,7 @@ abstract contract DynamicRBAC is Initializable, SecureOwnable {
                 _getSecureState(), 
                 roleHash, 
                 functionPermissions[i].functionSelector, 
-                functionPermissions[i].action
+                functionPermissions[i].grantedAction
             );
         }
         
