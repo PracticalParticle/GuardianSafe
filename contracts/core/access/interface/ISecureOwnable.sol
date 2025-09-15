@@ -11,7 +11,7 @@ import "../../../lib/MultiPhaseSecureOperation.sol";
 interface ISecureOwnable {    
     function owner() external view returns (address);
     function getBroadcaster() external view returns (address);
-    function getRecoveryAddress() external view returns (address);
+    function getRecovery() external view returns (address);
     function getTimeLockPeriodInMinutes() external view returns (uint256);
     function getOperationHistory() external view returns (MultiPhaseSecureOperation.TxRecord[] memory);
     function getOperation(uint256 txId) external view returns (MultiPhaseSecureOperation.TxRecord memory);

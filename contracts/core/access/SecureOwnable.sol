@@ -60,12 +60,12 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
     }
 
     modifier onlyOwnerOrRecovery() {
-        SharedValidationLibrary.validateOwnerOrRecovery(owner(), getRecoveryAddress());
+        SharedValidationLibrary.validateOwnerOrRecovery(owner(), getRecovery());
         _;
     }
     
     modifier onlyRecovery() {
-        SharedValidationLibrary.validateRecovery(getRecoveryAddress());
+        SharedValidationLibrary.validateRecovery(getRecovery());
         _;
     }
 
@@ -104,7 +104,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
         SharedValidationLibrary.validateNoOpenRequest(_hasOpenOwnershipRequest);
         bytes memory executionOptions = MultiPhaseSecureOperation.createStandardExecutionOptions(
             SecureOwnableDefinitions.TRANSFER_OWNERSHIP_SELECTOR,
-            abi.encode(getRecoveryAddress())
+            abi.encode(getRecovery())
         );
 
         MultiPhaseSecureOperation.TxRecord memory txRecord = _secureState.txRequest(
@@ -119,7 +119,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
 
         _hasOpenOwnershipRequest = true;
         addOperation(txRecord);
-        emit OwnershipTransferRequest(owner(), getRecoveryAddress());
+        emit OwnershipTransferRequest(owner(), getRecovery());
         return txRecord;
     }
 
@@ -130,7 +130,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      */
     function transferOwnershipDelayedApproval(uint256 txId) public onlyOwnerOrRecovery returns (MultiPhaseSecureOperation.TxRecord memory) {
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txDelayedApproval(txId);
-        _validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.OWNERSHIP_TRANSFER);
+        SharedValidationLibrary.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.OWNERSHIP_TRANSFER);
         _hasOpenOwnershipRequest = false;
         finalizeOperation(updatedRecord);
         return updatedRecord;
@@ -143,9 +143,9 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      */
     function transferOwnershipApprovalWithMetaTx(MultiPhaseSecureOperation.MetaTransaction memory metaTx) public onlyBroadcaster returns (MultiPhaseSecureOperation.TxRecord memory) {
         _secureState.checkPermission(SecureOwnableDefinitions.TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR);
-        _validateHandlerSelector(metaTx.params.handlerSelector, SecureOwnableDefinitions.TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR);
+        SharedValidationLibrary.validateHandlerSelectorMatch(metaTx.params.handlerSelector, SecureOwnableDefinitions.TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR);
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txApprovalWithMetaTx(metaTx);
-        _validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.OWNERSHIP_TRANSFER);
+        SharedValidationLibrary.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.OWNERSHIP_TRANSFER);
         _hasOpenOwnershipRequest = false;
         finalizeOperation(updatedRecord);
         return updatedRecord;
@@ -158,7 +158,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      */
     function transferOwnershipCancellation(uint256 txId) public onlyRecovery returns (MultiPhaseSecureOperation.TxRecord memory) {
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txCancellation(txId);
-        _validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.OWNERSHIP_TRANSFER);
+        SharedValidationLibrary.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.OWNERSHIP_TRANSFER);
         _hasOpenOwnershipRequest = false;
         finalizeOperation(updatedRecord);
         emit OwnershipTransferCancelled(txId);
@@ -172,9 +172,9 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      */
     function transferOwnershipCancellationWithMetaTx(MultiPhaseSecureOperation.MetaTransaction memory metaTx) public onlyBroadcaster returns (MultiPhaseSecureOperation.TxRecord memory) {
         _secureState.checkPermission(SecureOwnableDefinitions.TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR);
-        _validateHandlerSelector(metaTx.params.handlerSelector, SecureOwnableDefinitions.TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR);
+        SharedValidationLibrary.validateHandlerSelectorMatch(metaTx.params.handlerSelector, SecureOwnableDefinitions.TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR);
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txCancellationWithMetaTx(metaTx);
-        _validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.OWNERSHIP_TRANSFER);
+        SharedValidationLibrary.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.OWNERSHIP_TRANSFER);
         _hasOpenOwnershipRequest = false;
         finalizeOperation(updatedRecord);
         emit OwnershipTransferCancelled(updatedRecord.txId);
@@ -219,7 +219,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      */
     function updateBroadcasterDelayedApproval(uint256 txId) public onlyOwner returns (MultiPhaseSecureOperation.TxRecord memory) {
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txDelayedApproval(txId);
-        _validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.BROADCASTER_UPDATE);
+        SharedValidationLibrary.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.BROADCASTER_UPDATE);
         _hasOpenBroadcasterRequest = false;
         finalizeOperation(updatedRecord);
         return updatedRecord;
@@ -232,9 +232,9 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      */
     function updateBroadcasterApprovalWithMetaTx(MultiPhaseSecureOperation.MetaTransaction memory metaTx) public onlyBroadcaster returns (MultiPhaseSecureOperation.TxRecord memory) {
         _secureState.checkPermission(SecureOwnableDefinitions.UPDATE_BROADCASTER_APPROVE_META_SELECTOR);
-        _validateHandlerSelector(metaTx.params.handlerSelector, SecureOwnableDefinitions.UPDATE_BROADCASTER_APPROVE_META_SELECTOR);
+        SharedValidationLibrary.validateHandlerSelectorMatch(metaTx.params.handlerSelector, SecureOwnableDefinitions.UPDATE_BROADCASTER_APPROVE_META_SELECTOR);
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txApprovalWithMetaTx(metaTx);
-        _validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.BROADCASTER_UPDATE);
+        SharedValidationLibrary.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.BROADCASTER_UPDATE);
         _hasOpenBroadcasterRequest = false;
         finalizeOperation(updatedRecord);
         return updatedRecord;
@@ -247,7 +247,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      */
     function updateBroadcasterCancellation(uint256 txId) public onlyOwner returns (MultiPhaseSecureOperation.TxRecord memory) {
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txCancellation(txId);
-        _validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.BROADCASTER_UPDATE);
+        SharedValidationLibrary.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.BROADCASTER_UPDATE);
         _hasOpenBroadcasterRequest = false;
         finalizeOperation(updatedRecord);
         emit BroadcasterUpdateCancelled(txId);
@@ -261,9 +261,9 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      */
     function updateBroadcasterCancellationWithMetaTx(MultiPhaseSecureOperation.MetaTransaction memory metaTx) public onlyBroadcaster returns (MultiPhaseSecureOperation.TxRecord memory) {
         _secureState.checkPermission(SecureOwnableDefinitions.UPDATE_BROADCASTER_CANCEL_META_SELECTOR);
-        _validateHandlerSelector(metaTx.params.handlerSelector, SecureOwnableDefinitions.UPDATE_BROADCASTER_CANCEL_META_SELECTOR);
+        SharedValidationLibrary.validateHandlerSelectorMatch(metaTx.params.handlerSelector, SecureOwnableDefinitions.UPDATE_BROADCASTER_CANCEL_META_SELECTOR);
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txCancellationWithMetaTx(metaTx);
-        _validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.BROADCASTER_UPDATE);
+        SharedValidationLibrary.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.BROADCASTER_UPDATE);
         _hasOpenBroadcasterRequest = false;
         finalizeOperation(updatedRecord);
         emit BroadcasterUpdateCancelled(updatedRecord.txId);
@@ -279,7 +279,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
     function updateRecoveryExecutionOptions(
         address newRecoveryAddress
     ) public view returns (bytes memory) {
-        SharedValidationLibrary.validateAddressUpdate(newRecoveryAddress, getRecoveryAddress(), "recovery");
+        SharedValidationLibrary.validateAddressUpdate(newRecoveryAddress, getRecovery(), "recovery");
 
         return MultiPhaseSecureOperation.createStandardExecutionOptions(
             SecureOwnableDefinitions.UPDATE_RECOVERY_SELECTOR,
@@ -453,38 +453,6 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
         return _secureState.generateUnsignedForExistingMetaTx(txId, metaTxParams);
     }
 
-    /**
-     * @dev Returns the broadcaster address
-     * @return The broadcaster address
-     */
-    function getBroadcaster() public view virtual override returns (address) {
-        return _secureState.getRole(MultiPhaseSecureOperation.BROADCASTER_ROLE).authorizedWallets[0];
-    }
-
-    /**
-     * @dev Returns the recovery address
-     * @return The recovery address
-     */
-    function getRecoveryAddress() public view virtual override returns (address) {
-        return _secureState.getRole(MultiPhaseSecureOperation.RECOVERY_ROLE).authorizedWallets[0];
-    }
-
-    /**
-     * @dev Returns the time lock period
-     * @return The time lock period in minutes
-     */
-    function getTimeLockPeriodInMinutes() public view virtual override returns (uint256) {
-        return _secureState.timeLockPeriodInMinutes;
-    }
-
-    /**
-     * @dev Returns the supported operation types
-     * @return The supported operation types
-     */
-    function getSupportedOperationTypes() public view override returns (bytes32[] memory) {
-        return _secureState.supportedOperationTypesList;
-    }
-
     // /**
     //  * @dev Checks if an operation type is supported
     //  * @param operationType The operation type to check
@@ -499,7 +467,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @param newOwner The new owner address
      */
     function executeTransferOwnership(address newOwner) external {
-        _validateInternal();
+        SharedValidationLibrary.validateInternalCall(address(this));
         _transferOwnership(newOwner);
     }
 
@@ -508,7 +476,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @param newBroadcaster The new broadcaster address
      */
     function executeBroadcasterUpdate(address newBroadcaster) external {
-        _validateInternal();
+        SharedValidationLibrary.validateInternalCall(address(this));
         _updateBroadcaster(newBroadcaster);
     }
 
@@ -517,7 +485,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @param newRecoveryAddress The new recovery address
      */
     function executeRecoveryUpdate(address newRecoveryAddress) external {
-        _validateInternal();
+        SharedValidationLibrary.validateInternalCall(address(this));
         _updateRecoveryAddress(newRecoveryAddress);
     }
 
@@ -526,7 +494,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @param newTimeLockPeriodInMinutes The new timelock period in minutes
      */
     function executeTimeLockUpdate(uint256 newTimeLockPeriodInMinutes) external {
-        _validateInternal();
+        SharedValidationLibrary.validateInternalCall(address(this));
         _updateTimeLockPeriod(newTimeLockPeriodInMinutes);
     }
 
@@ -552,6 +520,38 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      */
     function owner() public view virtual override returns (address) {
         return _secureState.getRole(MultiPhaseSecureOperation.OWNER_ROLE).authorizedWallets[0];
+    }
+
+    /**
+     * @dev Returns the broadcaster address
+     * @return The broadcaster address
+     */
+    function getBroadcaster() public view virtual override returns (address) {
+        return _secureState.getRole(MultiPhaseSecureOperation.BROADCASTER_ROLE).authorizedWallets[0];
+    }
+
+    /**
+     * @dev Returns the recovery address
+     * @return The recovery address
+     */
+    function getRecovery() public view virtual override returns (address) {
+        return _secureState.getRole(MultiPhaseSecureOperation.RECOVERY_ROLE).authorizedWallets[0];
+    }
+
+    /**
+     * @dev Returns the time lock period
+     * @return The time lock period in minutes
+     */
+    function getTimeLockPeriodInMinutes() public view virtual override returns (uint256) {
+        return _secureState.timeLockPeriodInMinutes;
+    }
+
+    /**
+     * @dev Returns the supported operation types
+     * @return The supported operation types
+     */
+    function getSupportedOperationTypes() public view override returns (bytes32[] memory) {
+        return _secureState.supportedOperationTypesList;
     }
 
     /**
@@ -587,7 +587,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @param newRecoveryAddress The new recovery address
      */
     function _updateRecoveryAddress(address newRecoveryAddress) internal virtual {
-        address oldRecovery = getRecoveryAddress();
+        address oldRecovery = getRecovery();
         _secureState.updateAuthorizedWalletInRole(MultiPhaseSecureOperation.RECOVERY_ROLE, newRecoveryAddress, oldRecovery);
         emit RecoveryAddressUpdated(oldRecovery, newRecoveryAddress);
     }
@@ -600,48 +600,6 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
         uint256 oldPeriod = getTimeLockPeriodInMinutes();
         _secureState.updateTimeLockPeriod(newTimeLockPeriodInMinutes);
         emit TimeLockPeriodUpdated(oldPeriod, newTimeLockPeriodInMinutes);
-    }
-
-    /**
-     * @dev Validates that the function is being called internally by the contract itself
-     */
-    function _validateInternal() internal view {
-        SharedValidationLibrary.validateInternalCall(address(this));
-    }
-
-    /**
-     * @dev Validates that an address is not the zero address
-     * @param addr The address to validate
-     */
-    function _validateNotZeroAddress(address addr) internal pure {
-        SharedValidationLibrary.validateNotZeroAddress(addr);
-    }
-
-    /**
-     * @dev Validates that the operation type matches the expected type
-     * @param actualType The actual operation type from the record
-     * @param expectedType The expected operation type to validate against
-     */
-    function _validateOperationType(bytes32 actualType, bytes32 expectedType) internal pure {
-        SharedValidationLibrary.validateOperationType(actualType, expectedType);
-    }
-
-    /**
-     * @dev Validates that the handler selector matches the expected selector
-     * @param actualSelector The actual handler selector from the meta transaction
-     * @param expectedSelector The expected handler selector to validate against
-     */
-    function _validateHandlerSelector(bytes4 actualSelector, bytes4 expectedSelector) internal pure {
-        require(actualSelector == expectedSelector, "Invalid handler selector");
-    }
-
-    /**
-     * @dev Validates that the new address is different from the current address
-     * @param newAddress The proposed new address
-     * @param currentAddress The current address to compare against
-     */
-    function _validateNewAddress(address newAddress, address currentAddress) internal pure {
-        SharedValidationLibrary.validateNewAddress(newAddress, currentAddress);
     }
 
     /**

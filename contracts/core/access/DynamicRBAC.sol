@@ -203,7 +203,7 @@ abstract contract DynamicRBAC is Initializable, SecureOwnable {
      * @param enabled True to enable role editing, false to disable
      */
     function executeRoleEditingToggle(bool enabled) external {
-        _validateInternal();
+        SharedValidationLibrary.validateInternalCall(address(this));
         _toggleRoleEditing(enabled);
     }
 

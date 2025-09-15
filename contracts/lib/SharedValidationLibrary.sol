@@ -325,6 +325,15 @@ library SharedValidationLibrary {
     }
 
     /**
+     * @dev Validates that a handler selector matches the expected selector
+     * @param actualSelector The actual handler selector from the meta transaction
+     * @param expectedSelector The expected handler selector to validate against
+     */
+    function validateHandlerSelectorMatch(bytes4 actualSelector, bytes4 expectedSelector) internal pure {
+        require(actualSelector == expectedSelector, ERROR_INVALID_HANDLER_SELECTOR);
+    }
+
+    /**
      * @dev Validates that a transaction ID matches the expected next transaction ID
      * @param txId The transaction ID to validate
      * @param expectedTxId The expected next transaction ID
