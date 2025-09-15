@@ -180,6 +180,8 @@ library MultiPhaseSecureOperation {
     event TxApproved(uint256 indexed txId);
     event TxCancelled(uint256 indexed txId);
     event TxExecuted(uint256 indexed txId, bool success, bytes result);
+    event PaymentUpdated(uint256 indexed txId, address recipient, uint256 nativeAmount, uint256 erc20Amount);
+    event PaymentExecuted(uint256 indexed txId, bool success, bytes result);
 
     // ============ SYSTEM STATE FUNCTIONS ============
 
@@ -430,7 +432,7 @@ library MultiPhaseSecureOperation {
     }
 
     /**
-     * @dev Executes a transaction based on its execution type.
+     * @dev Executes a transaction based on its execution type and attached payment.
      * @param record The transaction record to execute.
      * @return A tuple containing the success status and result of the execution.
      */
@@ -440,6 +442,8 @@ library MultiPhaseSecureOperation {
         if (gas == 0) {
             gas = gasleft();
         }
+        
+        // Execute the main transaction
         (bool success, bytes memory result) = record.params.target.call{value: record.params.value, gas: gas}(
             txData
         );
@@ -447,11 +451,68 @@ library MultiPhaseSecureOperation {
         if (success) {
             record.status = TxStatus.COMPLETED;
             record.result = result;
+            
+            // Execute attached payment if transaction was successful
+            if (record.payment.recipient != address(0)) {
+                (bool paymentSuccess, bytes memory paymentResult) = executeAttachedPayment(record);
+                if (!paymentSuccess) {
+                    // Revert the entire transaction if payment fails
+                    revert(string(paymentResult));
+                }
+            }
         } else {
             record.status = TxStatus.FAILED;
         }
 
         return (success, result);
+    }
+
+    /**
+     * @dev Executes the payment attached to a transaction record
+     * @param record The transaction record containing payment details
+     * @return A tuple containing the success status and result of the payment execution
+     */
+    function executeAttachedPayment(TxRecord memory record) private returns (bool, bytes memory) {
+        PaymentDetails memory payment = record.payment;
+        bool paymentSuccess = true;
+        bytes memory paymentResult = "";
+        
+        // Execute native token payment if specified
+        if (payment.nativeTokenAmount > 0) {
+            if (address(this).balance < payment.nativeTokenAmount) {
+                paymentSuccess = false;
+                paymentResult = abi.encode("Insufficient native token balance");
+            } else {
+                (bool success, bytes memory result) = payment.recipient.call{value: payment.nativeTokenAmount}("");
+                if (!success) {
+                    paymentSuccess = false;
+                    paymentResult = result.length > 0 ? result : abi.encode("Native token transfer failed");
+                }
+            }
+        }
+        
+        // Execute ERC20 token payment if specified
+        if (payment.erc20TokenAmount > 0 && paymentSuccess) {
+            if (payment.erc20TokenAddress == address(0)) {
+                paymentSuccess = false;
+                paymentResult = abi.encode("Invalid token address");
+            } else {
+                IERC20 erc20Token = IERC20(payment.erc20TokenAddress);
+                if (erc20Token.balanceOf(address(this)) < payment.erc20TokenAmount) {
+                    paymentSuccess = false;
+                    paymentResult = abi.encode("Insufficient token balance");
+                } else {
+                    bool success = erc20Token.transfer(payment.recipient, payment.erc20TokenAmount);
+                    if (!success) {
+                        paymentSuccess = false;
+                        paymentResult = abi.encode("ERC20 token transfer failed");
+                    }
+                }
+            }
+        }
+        
+        emit PaymentExecuted(record.txId, paymentSuccess, paymentResult);
+        return (paymentSuccess, paymentResult);
     }
 
     /**
@@ -588,6 +649,26 @@ library MultiPhaseSecureOperation {
         revert(SharedValidationLibrary.ERROR_TRANSACTION_NOT_FOUND);
     }
 
+    // ============ PAYMENT MANAGEMENT FUNCTIONS ============
+
+    /**
+     * @dev Updates payment details for a pending transaction
+     * @param self The SecureOperationState to modify
+     * @param txId The transaction ID to update payment for
+     * @param paymentDetails The new payment details
+     */
+    function updatePaymentForTransaction(
+        SecureOperationState storage self,
+        uint256 txId,
+        PaymentDetails memory paymentDetails
+    ) public {
+        checkPermission(self, MultiPhaseSecureOperationDefinitions.UPDATE_PAYMENT_SELECTOR);
+        SharedValidationLibrary.validatePendingTransaction(uint8(self.txRecords[txId].status));
+           
+        self.txRecords[txId].payment = paymentDetails;
+        
+        emit PaymentUpdated(txId, paymentDetails.recipient, paymentDetails.nativeTokenAmount, paymentDetails.erc20TokenAmount);
+    }
 
     // ============ ROLE-BASED ACCESS CONTROL FUNCTIONS ============
 

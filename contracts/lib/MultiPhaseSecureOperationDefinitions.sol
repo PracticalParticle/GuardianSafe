@@ -27,6 +27,9 @@ library MultiPhaseSecureOperationDefinitions {
     bytes4 public constant META_TX_CANCELLATION_SELECTOR = bytes4(keccak256("txCancellationWithMetaTx((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes,(address,uint256,address,uint256)),(uint256,address,bytes4,uint256,uint256,uint256,address),bytes,bytes)"));
     bytes4 public constant META_TX_REQUEST_AND_APPROVE_SELECTOR = bytes4(keccak256("requestAndApprove((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes,(address,uint256,address,uint256)),(uint256,address,bytes4,uint256,uint256,uint256,address),bytes,bytes)"));
     
+    // Payment-related function selectors
+    bytes4 public constant UPDATE_PAYMENT_SELECTOR = bytes4(keccak256("updatePaymentForTransaction(uint256,(address,uint256,address,uint256))"));
+    
     
     /**
      * @dev Returns predefined operation types
@@ -43,7 +46,7 @@ library MultiPhaseSecureOperationDefinitions {
      * @return Array of function schema definitions
      */
     function getFunctionSchemas() public pure returns (FunctionSchemaDefinition[] memory) {
-        FunctionSchemaDefinition[] memory schemas = new FunctionSchemaDefinition[](6);
+        FunctionSchemaDefinition[] memory schemas = new FunctionSchemaDefinition[](7);
         
         // Time-delay function schemas (matching initializeBaseFunctionSchemas)
         uint8[] memory timeDelayRequestActions = new uint8[](1);
@@ -109,6 +112,14 @@ library MultiPhaseSecureOperationDefinitions {
             functionSelector: META_TX_REQUEST_AND_APPROVE_SELECTOR,
             operationType: bytes32(0),
             supportedActions: metaTxRequestApproveActions
+        });
+        
+        // Payment function schemas
+        schemas[6] = FunctionSchemaDefinition({
+            functionName: "updatePaymentForTransaction",
+            functionSelector: UPDATE_PAYMENT_SELECTOR,
+            operationType: bytes32(0),
+            supportedActions: timeDelayRequestActions
         });
         
         return schemas;
