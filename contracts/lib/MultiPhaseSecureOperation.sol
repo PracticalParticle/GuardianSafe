@@ -181,6 +181,8 @@ library MultiPhaseSecureOperation {
     event TxCancelled(uint256 indexed txId);
     event TxExecuted(uint256 indexed txId, bool success, bytes result);
 
+    // ============ SYSTEM STATE FUNCTIONS ============
+
     /**
      * @dev Initializes the SecureOperationState with the specified time lock period and roles.
      * @param self The SecureOperationState to initialize.
@@ -221,6 +223,53 @@ library MultiPhaseSecureOperation {
         // Mark as initialized after successful setup
         self.initialized = true;
     }
+
+    /**
+     * @dev Updates the time lock period for the SecureOperationState.
+     * @param self The SecureOperationState to modify.
+     * @param _newTimeLockPeriodInMinutes The new time lock period in minutes.
+     */
+    function updateTimeLockPeriod(SecureOperationState storage self, uint256 _newTimeLockPeriodInMinutes) public {
+        SharedValidationLibrary.validateTimeLockPeriod(_newTimeLockPeriodInMinutes);
+        self.timeLockPeriodInMinutes = _newTimeLockPeriodInMinutes;
+    }
+
+    /**
+     * @dev Gets the current time lock period for the SecureOperationState.
+     * @param self The SecureOperationState to check.
+     * @return The current time lock period in minutes.
+     */
+    function getTimeLockPeriod(SecureOperationState storage self) public view returns (uint256) {
+        return self.timeLockPeriodInMinutes;
+    }
+
+    /**
+     * @dev Gets the current transaction ID.
+     * @param self The SecureOperationState to check.
+     * @return The current transaction ID.
+     */
+    function getCurrentTxId(SecureOperationState storage self) public view returns (uint256) {
+        return self.txCounter;
+    }
+
+    /**
+     * @dev Gets the next transaction ID.
+     * @param self The SecureOperationState to check.
+     * @return The next transaction ID.
+     */
+    function getNextTxId(SecureOperationState storage self) private view returns (uint256) {
+        return self.txCounter + 1;
+    }
+
+    /**
+     * @dev Increments the transaction counter to set the next transaction ID.
+     * @param self The SecureOperationState to modify.
+     */
+    function setNextTxId(SecureOperationState storage self) private {
+        self.txCounter++;
+    }
+
+    // ============ TRANSACTION MANAGEMENT FUNCTIONS ============
 
     /**
      * @dev Gets the transaction record by its ID.
@@ -458,6 +507,134 @@ library MultiPhaseSecureOperation {
     }
 
     /**
+     * @dev Creates StandardExecutionOptions with proper encoding
+     * @param functionSelector The function selector to call
+     * @param params The encoded parameters for the function
+     * @return Encoded execution options ready for use in a transaction
+     */
+    function createStandardExecutionOptions(
+        bytes4 functionSelector,
+        bytes memory params
+    ) public pure returns (bytes memory) {
+        StandardExecutionOptions memory options = StandardExecutionOptions({
+            functionSelector: functionSelector,
+            params: params
+        });
+        return abi.encode(options);
+    }
+
+    /**
+     * @dev Creates RawExecutionOptions with proper encoding
+     * @param rawTxData The raw transaction data
+     * @return Encoded execution options ready for use in a transaction
+     */
+    function createRawExecutionOptions(
+        bytes memory rawTxData
+    ) public pure returns (bytes memory) {
+        RawExecutionOptions memory options = RawExecutionOptions({
+            rawTxData: rawTxData
+        });
+        return abi.encode(options);
+    }
+
+    /**
+     * @notice Creates a new transaction record with basic fields populated
+     * @dev Initializes a TxRecord struct with the provided parameters and default values
+     * @param self The SecureOperationState to reference for txId and timelock
+     * @param requester The address initiating the transaction
+     * @param target The contract address that will receive the transaction
+     * @param value The amount of native tokens to send with the transaction
+     * @param gasLimit The maximum gas allowed for the transaction
+     * @param operationType The type of operation being performed
+     * @param executionType The method of execution (STANDARD or RAW)
+     * @param executionOptions The encoded parameters for the execution
+     * @return TxRecord A new transaction record with populated fields
+     */
+    function createNewTxRecord(
+        SecureOperationState storage self,
+        address requester,
+        address target,
+        uint256 value,
+        uint256 gasLimit,
+        bytes32 operationType,
+        ExecutionType executionType,
+        bytes memory executionOptions
+    ) private view returns (TxRecord memory) {        
+        return TxRecord({
+            txId: getNextTxId(self),
+            releaseTime: block.timestamp + (self.timeLockPeriodInMinutes * 1 minutes),
+            status: TxStatus.PENDING,
+            params: TxParams({
+                requester: requester,
+                target: target,
+                value: value,
+                gasLimit: gasLimit,
+                operationType: operationType,
+                executionType: executionType,
+                executionOptions: executionOptions
+            }),
+            message: bytes32(0),
+            result: new bytes(0),
+            payment: PaymentDetails({
+                recipient: address(0),
+                nativeTokenAmount: 0,
+                erc20TokenAddress: address(0),
+                erc20TokenAmount: 0
+            })
+        });
+    }
+
+    /**
+     * @dev Adds a transaction ID to the pending transactions list.
+     * @param self The SecureOperationState to modify.
+     * @param txId The transaction ID to add to the pending list.
+     */
+    function addToPendingTransactionsList(SecureOperationState storage self, uint256 txId) private {
+        SharedValidationLibrary.validateTrue(txId > 0, SharedValidationLibrary.ERROR_TRANSACTION_NOT_FOUND);
+        SharedValidationLibrary.validatePendingTransaction(uint8(self.txRecords[txId].status));
+        
+        // Check if transaction ID is already in the list
+        for (uint i = 0; i < self.pendingTransactionsList.length; i++) {
+            SharedValidationLibrary.validateTrue(self.pendingTransactionsList[i] != txId, SharedValidationLibrary.ERROR_REQUEST_ALREADY_PENDING);
+        }
+        
+        self.pendingTransactionsList.push(txId);
+    }
+
+    /**
+     * @dev Removes a transaction ID from the pending transactions list.
+     * @param self The SecureOperationState to modify.
+     * @param txId The transaction ID to remove from the pending list.
+     */
+    function removeFromPendingTransactionsList(SecureOperationState storage self, uint256 txId) private {
+        SharedValidationLibrary.validateTrue(txId > 0, SharedValidationLibrary.ERROR_TRANSACTION_NOT_FOUND);
+        
+        // Find and remove the transaction ID from the list
+        for (uint i = 0; i < self.pendingTransactionsList.length; i++) {
+            if (self.pendingTransactionsList[i] == txId) {
+                // Move the last element to the position of the element to delete
+                self.pendingTransactionsList[i] = self.pendingTransactionsList[self.pendingTransactionsList.length - 1];
+                // Remove the last element
+                self.pendingTransactionsList.pop();
+                return;
+            }
+        }
+        
+        revert(SharedValidationLibrary.ERROR_TRANSACTION_NOT_FOUND);
+    }
+
+    /**
+     * @dev Gets all pending transaction IDs.
+     * @param self The SecureOperationState to check.
+     * @return Array of pending transaction IDs.
+     */
+    function getPendingTransactionsList(SecureOperationState storage self) private view returns (uint256[] memory) {
+        return self.pendingTransactionsList;
+    }
+
+    // ============ ROLE-BASED ACCESS CONTROL FUNCTIONS ============
+
+    /**
      * @dev Checks if the caller has permission to execute a function.
      * @param self The SecureOperationState to check.
      * @param functionSelector The selector of the function to check permissions for.
@@ -528,450 +705,6 @@ library MultiPhaseSecureOperation {
             }
         }
         return false;
-    }
-
-    /**
-     * @dev Gets the current nonce for a specific signer.
-     * @param self The SecureOperationState to check.
-     * @param signer The address of the signer.
-     * @return The current nonce for the signer.
-     */
-    function getSignerNonce(SecureOperationState storage self, address signer) public view returns (uint256) {
-        return self.signerNonces[signer];
-    }
-
-    /**
-     * @dev Increments the nonce for a specific signer.
-     * @param self The SecureOperationState to modify.
-     * @param signer The address of the signer.
-     */
-    function incrementSignerNonce(SecureOperationState storage self, address signer) private {
-        self.signerNonces[signer]++;
-    }
-
-    /**
-     * @dev Gets the next transaction ID.
-     * @param self The SecureOperationState to check.
-     * @return The next transaction ID.
-     */
-    function getCurrentTxId(SecureOperationState storage self) public view returns (uint256) {
-        return self.txCounter;
-    }
-
-    /**
-     * @dev Gets the next transaction ID.
-     * @param self The SecureOperationState to check.
-     * @return The next transaction ID.
-     */
-    function getNextTxId(SecureOperationState storage self) private view returns (uint256) {
-        return self.txCounter + 1;
-    }
-
-    /**
-     * @dev Increments the transaction counter to set the next transaction ID.
-     * @param self The SecureOperationState to modify.
-     */
-    function setNextTxId(SecureOperationState storage self) private {
-        self.txCounter++;
-    }
-
-    /**
-     * @dev Verifies the signature of a meta-transaction with detailed error reporting
-     * @param self The SecureOperationState to check against
-     * @param metaTx The meta-transaction containing the signature to verify
-     * @return True if the signature is valid, false otherwise
-     */
-    function verifySignature(
-        SecureOperationState storage self,
-        MetaTransaction memory metaTx
-    ) public view returns (bool) {
-        // Basic validation
-        SharedValidationLibrary.validateSignatureLength(metaTx.signature);
-        SharedValidationLibrary.validatePendingTransaction(uint8(metaTx.txRecord.status));
-        
-        // Transaction parameters validation
-        SharedValidationLibrary.validateNotZeroAddress(metaTx.txRecord.params.requester, SharedValidationLibrary.ERROR_INVALID_REQUESTER_ADDRESS);
-        SharedValidationLibrary.validateOperationSupported(isOperationTypeSupported(self, metaTx.txRecord.params.operationType));
-        
-        // Meta-transaction parameters validation
-        SharedValidationLibrary.validateChainId(metaTx.params.chainId);
-        SharedValidationLibrary.validateHandlerContract(metaTx.params.handlerContract, metaTx.txRecord.params.target);
-        SharedValidationLibrary.validateMetaTxDeadline(metaTx.params.deadline);
-        
-        // Gas price validation (if applicable)
-        // SharedValidationLibrary.validateGasPrice(metaTx.params.maxGasPrice);
-        
-        // Validate signer-specific nonce
-        SharedValidationLibrary.validateNonce(metaTx.params.nonce, getSignerNonce(self, metaTx.params.signer));
-
-        // Validate txId matches expected next transaction ID
-        SharedValidationLibrary.validateTransactionId(metaTx.txRecord.txId, getNextTxId(self));
-        
-        // Signature verification
-        bytes32 messageHash = generateMessageHash(metaTx);
-        address recoveredSigner = recoverSigner(messageHash, metaTx.signature);
-        require(recoveredSigner == metaTx.params.signer, SharedValidationLibrary.ERROR_INVALID_SIGNATURE);
-
-        // Authorization check - verify signer has meta-transaction signing permissions for the function and action
-        bool isAuthorized = hasMetaTxSigningPermission(self, metaTx.params.signer, metaTx.params.handlerSelector, metaTx.params.action);
-        SharedValidationLibrary.validateTrue(isAuthorized, SharedValidationLibrary.ERROR_SIGNER_NOT_AUTHORIZED);
-        
-        return true;
-    }
-
-    /**
-     * @dev Generates a message hash for the specified meta-transaction following EIP-712
-     * @param metaTx The meta-transaction to generate the hash for
-     * @return The generated message hash
-     */
-    function generateMessageHash(MetaTransaction memory metaTx) private view returns (bytes32) {
-        bytes32 domainSeparator = keccak256(abi.encode(
-            DOMAIN_SEPARATOR_TYPE_HASH,
-            keccak256("MultiPhaseSecureOperation"),
-            keccak256("1"),
-            block.chainid,
-            address(this)
-        ));
-
-        bytes32 structHash = keccak256(abi.encode(
-            TYPE_HASH,
-            keccak256(abi.encode(
-                metaTx.txRecord.txId,
-                metaTx.txRecord.params.requester,
-                metaTx.txRecord.params.target,
-                metaTx.txRecord.params.value,
-                metaTx.txRecord.params.gasLimit,
-                metaTx.txRecord.params.operationType,
-                uint8(metaTx.txRecord.params.executionType),
-                keccak256(metaTx.txRecord.params.executionOptions)
-            )),
-            metaTx.params.chainId,
-            metaTx.params.nonce,
-            metaTx.params.handlerContract,
-            metaTx.params.handlerSelector,
-            uint8(metaTx.params.action),
-            metaTx.params.deadline,
-            metaTx.params.maxGasPrice
-        ));
-
-        return keccak256(abi.encodePacked(
-            "\x19\x01",
-            domainSeparator,
-            structHash
-        ));
-    }
-
-    /**
-     * @dev Recovers the signer address from a message hash and signature.
-     * @param messageHash The hash of the message that was signed.
-     * @param signature The signature to recover the address from.
-     * @return The address of the signer.
-     */
-    function recoverSigner(bytes32 messageHash, bytes memory signature) private pure returns (address) {
-        SharedValidationLibrary.validateSignatureLength(signature);
-
-        bytes32 r;
-        bytes32 s;
-        uint8 v;
-
-        // More efficient assembly block with better memory safety
-        assembly {
-            // First 32 bytes stores the length of the signature
-            // add(signature, 32) = pointer of sig + 32
-            // effectively, skips first 32 bytes of signature
-            r := mload(add(signature, 0x20))
-            // add(signature, 64) = pointer of sig + 64
-            // effectively, skips first 64 bytes of signature
-            s := mload(add(signature, 0x40))
-            // add(signature, 96) = pointer of sig + 96
-            // effectively, skips first 96 bytes of signature
-            // byte(0, mload(add(signature, 96))) = first byte of the next 32 bytes
-            v := byte(0, mload(add(signature, 0x60)))
-        }
-
-        // EIP-2 still allows signature malleability for ecrecover(). Remove this possibility and make the signature
-        // unique. Appendix F in the Ethereum Yellow paper (https://ethereum.github.io/yellowpaper/paper.pdf), defines
-        // the valid range for s in (301): 0 < s < secp256k1n ÷ 2 + 1, and for v in (302): v ∈ {27, 28}
-        SharedValidationLibrary.validateSignatureParams(s, v);
-
-        address signer = ecrecover(messageHash.toEthSignedMessageHash(), v, r, s);
-        SharedValidationLibrary.validateRecoveredSigner(signer);
-
-        return signer;
-    }
-
-    /**
-     * @dev Updates the time lock period for the SecureOperationState.
-     * @param self The SecureOperationState to modify.
-     * @param _newTimeLockPeriodInMinutes The new time lock period in minutes.
-     */
-    function updateTimeLockPeriod(SecureOperationState storage self, uint256 _newTimeLockPeriodInMinutes) public {
-        SharedValidationLibrary.validateTimeLockPeriod(_newTimeLockPeriodInMinutes);
-        self.timeLockPeriodInMinutes = _newTimeLockPeriodInMinutes;
-    }
-
-    /**
-     * @dev Gets the current time lock period for the SecureOperationState.
-     * @param self The SecureOperationState to check.
-     * @return The current time lock period in minutes.
-     */
-    function getTimeLockPeriod(SecureOperationState storage self) public view returns (uint256) {
-        return self.timeLockPeriodInMinutes;
-    }
-
-    /**
-     * @dev Creates StandardExecutionOptions with proper encoding
-     * @param functionSelector The function selector to call
-     * @param params The encoded parameters for the function
-     * @return Encoded execution options ready for use in a transaction
-     */
-    function createStandardExecutionOptions(
-        bytes4 functionSelector,
-        bytes memory params
-    ) public pure returns (bytes memory) {
-        StandardExecutionOptions memory options = StandardExecutionOptions({
-            functionSelector: functionSelector,
-            params: params
-        });
-        return abi.encode(options);
-    }
-
-    /**
-     * @dev Creates RawExecutionOptions with proper encoding
-     * @param rawTxData The raw transaction data
-     * @return Encoded execution options ready for use in a transaction
-     */
-    function createRawExecutionOptions(
-        bytes memory rawTxData
-    ) public pure returns (bytes memory) {
-        RawExecutionOptions memory options = RawExecutionOptions({
-            rawTxData: rawTxData
-        });
-        return abi.encode(options);
-    }
-
-    /**
-    * @dev Registers a new operation type with a human-readable name
-    * @param self The SecureOperationState to modify
-    * @param readableType The operation type with its human-readable name
-    */
-    function addOperationType(
-        SecureOperationState storage self,
-        ReadableOperationType memory readableType
-    ) public {
-        SharedValidationLibrary.validateOperationTypeNew(self.supportedOperationTypes[readableType.operationType].operationType != bytes32(0));
-        self.supportedOperationTypes[readableType.operationType] = readableType;
-        self.supportedOperationTypesList.push(readableType.operationType);
-    }
-
-    /**
-     * @dev Checks if an operation type is supported
-     * @param self The SecureOperationState to check
-     * @param operationType The operation type to check
-     * @return bool True if the operation type is supported
-     */
-    function isOperationTypeSupported(SecureOperationState storage self, bytes32 operationType) private view returns (bool) {
-        return self.supportedOperationTypes[operationType].operationType != bytes32(0);
-    }
-
-    /**
-     * @dev Gets all supported operation types
-     * @param self The SecureOperationState to check
-     * @return Array of supported operation type hashes
-     */
-    function getSupportedOperationTypes(
-        SecureOperationState storage self
-    ) public view returns (bytes32[] memory) {
-        return self.supportedOperationTypesList;
-    }
-
-    /**
-     * @dev Creates a meta-transaction for a new operation
-     */
-    function generateUnsignedForNewMetaTx(
-        SecureOperationState storage self,
-        TxParams memory txParams,
-        MetaTxParams memory metaTxParams
-    ) public view returns (MetaTransaction memory) {
-        SharedValidationLibrary.validateOperationSupported(isOperationTypeSupported(self, txParams.operationType));
-        SharedValidationLibrary.validateNotZeroAddress(txParams.target, SharedValidationLibrary.ERROR_INVALID_TARGET_ADDRESS);
-        
-        TxRecord memory txRecord = createNewTxRecord(
-            self,
-            txParams.requester,
-            txParams.target,
-            txParams.value,
-            txParams.gasLimit,
-            txParams.operationType,
-            txParams.executionType,
-            txParams.executionOptions
-        );
-
-         MetaTransaction memory res = generateMetaTransaction(self, txRecord, metaTxParams);
-         return res;
-    }
-
-    /**
-     * @dev Creates a meta-transaction for an existing transaction
-     */
-    function generateUnsignedForExistingMetaTx(
-        SecureOperationState storage self,
-        uint256 txId,
-        MetaTxParams memory metaTxParams
-    ) public view returns (MetaTransaction memory) {
-        TxRecord memory txRecord = getTxRecord(self, txId);
-        require(txRecord.txId == txId, SharedValidationLibrary.ERROR_TRANSACTION_NOT_FOUND);
-        
-        return generateMetaTransaction(self, txRecord, metaTxParams);
-    }
-
-    /**
-     * @notice Creates a meta-transaction structure with default parameters
-     * @dev Initializes a MetaTransaction with transaction record data and empty signature fields.
-     *      The caller is responsible for filling in the following fields:
-     *      - handlerContract: The contract that will handle the meta-transaction
-     *      - handlerSelector: The function selector for the handler
-     *      - deadline: The timestamp after which the meta-transaction expires
-     *      - maxGasPrice: The maximum gas price allowed for execution
-     *      - signer: The address that will sign the meta-transaction
-     * @param self The SecureOperationState to reference for nonce
-     * @param txRecord The transaction record to include in the meta-transaction
-     * @param metaTxParams The meta-transaction parameters to include in the meta-transaction
-     * @return MetaTransaction A new meta-transaction structure with default values
-     */
-    function generateMetaTransaction(
-        SecureOperationState storage self,
-        TxRecord memory txRecord,
-        MetaTxParams memory metaTxParams
-    ) private view returns (MetaTransaction memory) {
-        SharedValidationLibrary.validateChainId(metaTxParams.chainId);
-        SharedValidationLibrary.validateNonce(metaTxParams.nonce, getSignerNonce(self, metaTxParams.signer));
-        SharedValidationLibrary.validateNotZeroAddress(metaTxParams.handlerContract, SharedValidationLibrary.ERROR_INVALID_HANDLER_CONTRACT);
-        SharedValidationLibrary.validateHandlerSelector(metaTxParams.handlerSelector);
-        SharedValidationLibrary.validateDeadline(metaTxParams.deadline);
-        SharedValidationLibrary.validateNotZeroAddress(metaTxParams.signer, SharedValidationLibrary.ERROR_INVALID_SIGNER_ADDRESS);
-
-        MetaTransaction memory metaTx = MetaTransaction({
-            txRecord: txRecord,
-            params: metaTxParams,
-            message: bytes32(0),
-            signature: new bytes(0),
-            data: prepareTransactionData(txRecord)
-        });
-
-        // Generate the message hash for ready to sign meta-transaction
-        bytes32 msgHash = generateMessageHash(metaTx);
-        metaTx.message = msgHash;
-
-        return metaTx;
-    }
-
-    /**
-     * @notice Creates a new transaction record with basic fields populated
-     * @dev Initializes a TxRecord struct with the provided parameters and default values
-     * @param self The SecureOperationState to reference for txId and timelock
-     * @param requester The address initiating the transaction
-     * @param target The contract address that will receive the transaction
-     * @param value The amount of native tokens to send with the transaction
-     * @param gasLimit The maximum gas allowed for the transaction
-     * @param operationType The type of operation being performed
-     * @param executionType The method of execution (STANDARD or RAW)
-     * @param executionOptions The encoded parameters for the execution
-     * @return TxRecord A new transaction record with populated fields
-     */
-    function createNewTxRecord(
-        SecureOperationState storage self,
-        address requester,
-        address target,
-        uint256 value,
-        uint256 gasLimit,
-        bytes32 operationType,
-        ExecutionType executionType,
-        bytes memory executionOptions
-    ) private view returns (TxRecord memory) {        
-        return TxRecord({
-            txId: getNextTxId(self),
-            releaseTime: block.timestamp + (self.timeLockPeriodInMinutes * 1 minutes),
-            status: TxStatus.PENDING,
-            params: TxParams({
-                requester: requester,
-                target: target,
-                value: value,
-                gasLimit: gasLimit,
-                operationType: operationType,
-                executionType: executionType,
-                executionOptions: executionOptions
-            }),
-            message: bytes32(0),
-            result: new bytes(0),
-            payment: PaymentDetails({
-                recipient: address(0),
-                nativeTokenAmount: 0,
-                erc20TokenAddress: address(0),
-                erc20TokenAmount: 0
-            })
-        });
-    }
-
-    /**
-     * @notice Creates meta-transaction parameters with specified values
-     * @dev Helper function to create properly formatted MetaTxParams
-     * @param handlerContract The contract that will handle the meta-transaction
-     * @param handlerSelector The function selector for the handler
-     * @param action The transaction action type
-     * @param deadline The timestamp after which the meta-transaction expires
-     * @param maxGasPrice The maximum gas price allowed for execution
-     * @param signer The address that will sign the meta-transaction
-     * @return MetaTxParams The formatted meta-transaction parameters
-     */
-    function createMetaTxParams(
-        SecureOperationState storage self,
-        address handlerContract,
-        bytes4 handlerSelector,
-        TxAction action,
-        uint256 deadline,
-        uint256 maxGasPrice,
-        address signer
-    ) public view returns (MetaTxParams memory) {
-        SharedValidationLibrary.validateNotZeroAddress(handlerContract, SharedValidationLibrary.ERROR_INVALID_HANDLER_CONTRACT);
-        SharedValidationLibrary.validateHandlerSelector(handlerSelector);
-        SharedValidationLibrary.validateDeadline(deadline);
-        SharedValidationLibrary.validateNotZeroAddress(signer, SharedValidationLibrary.ERROR_INVALID_SIGNER_ADDRESS);
-        return MetaTxParams({
-            chainId: block.chainid,
-            nonce: getSignerNonce(self, signer),
-            handlerContract: handlerContract,
-            handlerSelector: handlerSelector,
-            action: action,
-            deadline:  deadline,
-            maxGasPrice: maxGasPrice,
-            signer: signer
-        });
-    }
-
-    /**
-     * @dev Creates a function access control with specified permissions.
-     * @param self The SecureOperationState to check.
-     * @param functionName Name of the function.
-     * @param functionSelector Hash identifier for the function.
-     * @param operationType The operation type this function belongs to.
-     * @param supportedActions Array of permissions required to execute this function.
-     */
-    function createFunctionSchema(
-        SecureOperationState storage self,
-        string memory functionName,
-        bytes4 functionSelector,
-        bytes32 operationType,
-        TxAction[] memory supportedActions
-    ) public {
-        SharedValidationLibrary.validateFunctionNew(self.functions[functionSelector].functionSelector);
-        self.functions[functionSelector] = FunctionSchema({
-            functionName: functionName,
-            functionSelector: functionSelector,
-            operationType: operationType,
-            supportedActions: supportedActions
-        });
-        self.supportedFunctionsList.push(functionSelector);
     }
 
     /**
@@ -1178,6 +911,33 @@ library MultiPhaseSecureOperation {
         }));
     }
 
+    // ============ FUNCTION MANAGEMENT FUNCTIONS ============
+
+    /**
+     * @dev Creates a function access control with specified permissions.
+     * @param self The SecureOperationState to check.
+     * @param functionName Name of the function.
+     * @param functionSelector Hash identifier for the function.
+     * @param operationType The operation type this function belongs to.
+     * @param supportedActions Array of permissions required to execute this function.
+     */
+    function createFunctionSchema(
+        SecureOperationState storage self,
+        string memory functionName,
+        bytes4 functionSelector,
+        bytes32 operationType,
+        TxAction[] memory supportedActions
+    ) public {
+        SharedValidationLibrary.validateFunctionNew(self.functions[functionSelector].functionSelector);
+        self.functions[functionSelector] = FunctionSchema({
+            functionName: functionName,
+            functionSelector: functionSelector,
+            operationType: operationType,
+            supportedActions: supportedActions
+        });
+        self.supportedFunctionsList.push(functionSelector);
+    }
+
     /**
      * @dev Checks if a specific action is supported by a function.
      * @param self The SecureOperationState to check.
@@ -1201,6 +961,307 @@ library MultiPhaseSecureOperation {
             }
         }
         return false;
+    }
+
+    // ============ OPERATION TYPES FUNCTIONS ============
+
+    /**
+    * @dev Registers a new operation type with a human-readable name
+    * @param self The SecureOperationState to modify
+    * @param readableType The operation type with its human-readable name
+    */
+    function addOperationType(
+        SecureOperationState storage self,
+        ReadableOperationType memory readableType
+    ) public {
+        SharedValidationLibrary.validateOperationTypeNew(self.supportedOperationTypes[readableType.operationType].operationType != bytes32(0));
+        self.supportedOperationTypes[readableType.operationType] = readableType;
+        self.supportedOperationTypesList.push(readableType.operationType);
+    }
+
+    /**
+     * @dev Checks if an operation type is supported
+     * @param self The SecureOperationState to check
+     * @param operationType The operation type to check
+     * @return bool True if the operation type is supported
+     */
+    function isOperationTypeSupported(SecureOperationState storage self, bytes32 operationType) private view returns (bool) {
+        return self.supportedOperationTypes[operationType].operationType != bytes32(0);
+    }
+
+    /**
+     * @dev Gets all supported operation types
+     * @param self The SecureOperationState to check
+     * @return Array of supported operation type hashes
+     */
+    function getSupportedOperationTypes(
+        SecureOperationState storage self
+    ) public view returns (bytes32[] memory) {
+        return self.supportedOperationTypesList;
+    }
+
+    // ============ META-TRANSACTION SUPPORT FUNCTIONS ============
+
+    /**
+     * @dev Gets the current nonce for a specific signer.
+     * @param self The SecureOperationState to check.
+     * @param signer The address of the signer.
+     * @return The current nonce for the signer.
+     */
+    function getSignerNonce(SecureOperationState storage self, address signer) public view returns (uint256) {
+        return self.signerNonces[signer];
+    }
+
+    /**
+     * @dev Increments the nonce for a specific signer.
+     * @param self The SecureOperationState to modify.
+     * @param signer The address of the signer.
+     */
+    function incrementSignerNonce(SecureOperationState storage self, address signer) private {
+        self.signerNonces[signer]++;
+    }
+
+    /**
+     * @dev Verifies the signature of a meta-transaction with detailed error reporting
+     * @param self The SecureOperationState to check against
+     * @param metaTx The meta-transaction containing the signature to verify
+     * @return True if the signature is valid, false otherwise
+     */
+    function verifySignature(
+        SecureOperationState storage self,
+        MetaTransaction memory metaTx
+    ) public view returns (bool) {
+        // Basic validation
+        SharedValidationLibrary.validateSignatureLength(metaTx.signature);
+        SharedValidationLibrary.validatePendingTransaction(uint8(metaTx.txRecord.status));
+        
+        // Transaction parameters validation
+        SharedValidationLibrary.validateNotZeroAddress(metaTx.txRecord.params.requester, SharedValidationLibrary.ERROR_INVALID_REQUESTER_ADDRESS);
+        SharedValidationLibrary.validateOperationSupported(isOperationTypeSupported(self, metaTx.txRecord.params.operationType));
+        
+        // Meta-transaction parameters validation
+        SharedValidationLibrary.validateChainId(metaTx.params.chainId);
+        SharedValidationLibrary.validateHandlerContract(metaTx.params.handlerContract, metaTx.txRecord.params.target);
+        SharedValidationLibrary.validateMetaTxDeadline(metaTx.params.deadline);
+        
+        // Gas price validation (if applicable)
+        // SharedValidationLibrary.validateGasPrice(metaTx.params.maxGasPrice);
+        
+        // Validate signer-specific nonce
+        SharedValidationLibrary.validateNonce(metaTx.params.nonce, getSignerNonce(self, metaTx.params.signer));
+
+        // Validate txId matches expected next transaction ID
+        SharedValidationLibrary.validateTransactionId(metaTx.txRecord.txId, getNextTxId(self));
+        
+        // Signature verification
+        bytes32 messageHash = generateMessageHash(metaTx);
+        address recoveredSigner = recoverSigner(messageHash, metaTx.signature);
+        require(recoveredSigner == metaTx.params.signer, SharedValidationLibrary.ERROR_INVALID_SIGNATURE);
+
+        // Authorization check - verify signer has meta-transaction signing permissions for the function and action
+        bool isAuthorized = hasMetaTxSigningPermission(self, metaTx.params.signer, metaTx.params.handlerSelector, metaTx.params.action);
+        SharedValidationLibrary.validateTrue(isAuthorized, SharedValidationLibrary.ERROR_SIGNER_NOT_AUTHORIZED);
+        
+        return true;
+    }
+
+    /**
+     * @dev Generates a message hash for the specified meta-transaction following EIP-712
+     * @param metaTx The meta-transaction to generate the hash for
+     * @return The generated message hash
+     */
+    function generateMessageHash(MetaTransaction memory metaTx) private view returns (bytes32) {
+        bytes32 domainSeparator = keccak256(abi.encode(
+            DOMAIN_SEPARATOR_TYPE_HASH,
+            keccak256("MultiPhaseSecureOperation"),
+            keccak256("1"),
+            block.chainid,
+            address(this)
+        ));
+
+        bytes32 structHash = keccak256(abi.encode(
+            TYPE_HASH,
+            keccak256(abi.encode(
+                metaTx.txRecord.txId,
+                metaTx.txRecord.params.requester,
+                metaTx.txRecord.params.target,
+                metaTx.txRecord.params.value,
+                metaTx.txRecord.params.gasLimit,
+                metaTx.txRecord.params.operationType,
+                uint8(metaTx.txRecord.params.executionType),
+                keccak256(metaTx.txRecord.params.executionOptions)
+            )),
+            metaTx.params.chainId,
+            metaTx.params.nonce,
+            metaTx.params.handlerContract,
+            metaTx.params.handlerSelector,
+            uint8(metaTx.params.action),
+            metaTx.params.deadline,
+            metaTx.params.maxGasPrice
+        ));
+
+        return keccak256(abi.encodePacked(
+            "\x19\x01",
+            domainSeparator,
+            structHash
+        ));
+    }
+
+    /**
+     * @dev Recovers the signer address from a message hash and signature.
+     * @param messageHash The hash of the message that was signed.
+     * @param signature The signature to recover the address from.
+     * @return The address of the signer.
+     */
+    function recoverSigner(bytes32 messageHash, bytes memory signature) private pure returns (address) {
+        SharedValidationLibrary.validateSignatureLength(signature);
+
+        bytes32 r;
+        bytes32 s;
+        uint8 v;
+
+        // More efficient assembly block with better memory safety
+        assembly {
+            // First 32 bytes stores the length of the signature
+            // add(signature, 32) = pointer of sig + 32
+            // effectively, skips first 32 bytes of signature
+            r := mload(add(signature, 0x20))
+            // add(signature, 64) = pointer of sig + 64
+            // effectively, skips first 64 bytes of signature
+            s := mload(add(signature, 0x40))
+            // add(signature, 96) = pointer of sig + 96
+            // effectively, skips first 96 bytes of signature
+            // byte(0, mload(add(signature, 96))) = first byte of the next 32 bytes
+            v := byte(0, mload(add(signature, 0x60)))
+        }
+
+        // EIP-2 still allows signature malleability for ecrecover(). Remove this possibility and make the signature
+        // unique. Appendix F in the Ethereum Yellow paper (https://ethereum.github.io/yellowpaper/paper.pdf), defines
+        // the valid range for s in (301): 0 < s < secp256k1n ÷ 2 + 1, and for v in (302): v ∈ {27, 28}
+        SharedValidationLibrary.validateSignatureParams(s, v);
+
+        address signer = ecrecover(messageHash.toEthSignedMessageHash(), v, r, s);
+        SharedValidationLibrary.validateRecoveredSigner(signer);
+
+        return signer;
+    }
+
+
+    /**
+     * @dev Creates a meta-transaction for a new operation
+     */
+    function generateUnsignedForNewMetaTx(
+        SecureOperationState storage self,
+        TxParams memory txParams,
+        MetaTxParams memory metaTxParams
+    ) public view returns (MetaTransaction memory) {
+        SharedValidationLibrary.validateOperationSupported(isOperationTypeSupported(self, txParams.operationType));
+        SharedValidationLibrary.validateNotZeroAddress(txParams.target, SharedValidationLibrary.ERROR_INVALID_TARGET_ADDRESS);
+        
+        TxRecord memory txRecord = createNewTxRecord(
+            self,
+            txParams.requester,
+            txParams.target,
+            txParams.value,
+            txParams.gasLimit,
+            txParams.operationType,
+            txParams.executionType,
+            txParams.executionOptions
+        );
+
+         MetaTransaction memory res = generateMetaTransaction(self, txRecord, metaTxParams);
+         return res;
+    }
+
+    /**
+     * @dev Creates a meta-transaction for an existing transaction
+     */
+    function generateUnsignedForExistingMetaTx(
+        SecureOperationState storage self,
+        uint256 txId,
+        MetaTxParams memory metaTxParams
+    ) public view returns (MetaTransaction memory) {
+        TxRecord memory txRecord = getTxRecord(self, txId);
+        require(txRecord.txId == txId, SharedValidationLibrary.ERROR_TRANSACTION_NOT_FOUND);
+        
+        return generateMetaTransaction(self, txRecord, metaTxParams);
+    }
+
+    /**
+     * @notice Creates a meta-transaction structure with default parameters
+     * @dev Initializes a MetaTransaction with transaction record data and empty signature fields.
+     *      The caller is responsible for filling in the following fields:
+     *      - handlerContract: The contract that will handle the meta-transaction
+     *      - handlerSelector: The function selector for the handler
+     *      - deadline: The timestamp after which the meta-transaction expires
+     *      - maxGasPrice: The maximum gas price allowed for execution
+     *      - signer: The address that will sign the meta-transaction
+     * @param self The SecureOperationState to reference for nonce
+     * @param txRecord The transaction record to include in the meta-transaction
+     * @param metaTxParams The meta-transaction parameters to include in the meta-transaction
+     * @return MetaTransaction A new meta-transaction structure with default values
+     */
+    function generateMetaTransaction(
+        SecureOperationState storage self,
+        TxRecord memory txRecord,
+        MetaTxParams memory metaTxParams
+    ) private view returns (MetaTransaction memory) {
+        SharedValidationLibrary.validateChainId(metaTxParams.chainId);
+        SharedValidationLibrary.validateNonce(metaTxParams.nonce, getSignerNonce(self, metaTxParams.signer));
+        SharedValidationLibrary.validateNotZeroAddress(metaTxParams.handlerContract, SharedValidationLibrary.ERROR_INVALID_HANDLER_CONTRACT);
+        SharedValidationLibrary.validateHandlerSelector(metaTxParams.handlerSelector);
+        SharedValidationLibrary.validateDeadline(metaTxParams.deadline);
+        SharedValidationLibrary.validateNotZeroAddress(metaTxParams.signer, SharedValidationLibrary.ERROR_INVALID_SIGNER_ADDRESS);
+
+        MetaTransaction memory metaTx = MetaTransaction({
+            txRecord: txRecord,
+            params: metaTxParams,
+            message: bytes32(0),
+            signature: new bytes(0),
+            data: prepareTransactionData(txRecord)
+        });
+
+        // Generate the message hash for ready to sign meta-transaction
+        bytes32 msgHash = generateMessageHash(metaTx);
+        metaTx.message = msgHash;
+
+        return metaTx;
+    }
+
+    /**
+     * @notice Creates meta-transaction parameters with specified values
+     * @dev Helper function to create properly formatted MetaTxParams
+     * @param handlerContract The contract that will handle the meta-transaction
+     * @param handlerSelector The function selector for the handler
+     * @param action The transaction action type
+     * @param deadline The timestamp after which the meta-transaction expires
+     * @param maxGasPrice The maximum gas price allowed for execution
+     * @param signer The address that will sign the meta-transaction
+     * @return MetaTxParams The formatted meta-transaction parameters
+     */
+    function createMetaTxParams(
+        SecureOperationState storage self,
+        address handlerContract,
+        bytes4 handlerSelector,
+        TxAction action,
+        uint256 deadline,
+        uint256 maxGasPrice,
+        address signer
+    ) public view returns (MetaTxParams memory) {
+        SharedValidationLibrary.validateNotZeroAddress(handlerContract, SharedValidationLibrary.ERROR_INVALID_HANDLER_CONTRACT);
+        SharedValidationLibrary.validateHandlerSelector(handlerSelector);
+        SharedValidationLibrary.validateDeadline(deadline);
+        SharedValidationLibrary.validateNotZeroAddress(signer, SharedValidationLibrary.ERROR_INVALID_SIGNER_ADDRESS);
+        return MetaTxParams({
+            chainId: block.chainid,
+            nonce: getSignerNonce(self, signer),
+            handlerContract: handlerContract,
+            handlerSelector: handlerSelector,
+            action: action,
+            deadline:  deadline,
+            maxGasPrice: maxGasPrice,
+            signer: signer
+        });
     }
 
     // /**
@@ -1234,53 +1295,5 @@ library MultiPhaseSecureOperation {
 
     //     self.txRecords[metaTx.txRecord.txId].payment = payment;
     // }
-
-    /**
-     * @dev Adds a transaction ID to the pending transactions list.
-     * @param self The SecureOperationState to modify.
-     * @param txId The transaction ID to add to the pending list.
-     */
-    function addToPendingTransactionsList(SecureOperationState storage self, uint256 txId) private {
-        SharedValidationLibrary.validateTrue(txId > 0, SharedValidationLibrary.ERROR_TRANSACTION_NOT_FOUND);
-        SharedValidationLibrary.validatePendingTransaction(uint8(self.txRecords[txId].status));
-        
-        // Check if transaction ID is already in the list
-        for (uint i = 0; i < self.pendingTransactionsList.length; i++) {
-            SharedValidationLibrary.validateTrue(self.pendingTransactionsList[i] != txId, SharedValidationLibrary.ERROR_REQUEST_ALREADY_PENDING);
-        }
-        
-        self.pendingTransactionsList.push(txId);
-    }
-
-    /**
-     * @dev Removes a transaction ID from the pending transactions list.
-     * @param self The SecureOperationState to modify.
-     * @param txId The transaction ID to remove from the pending list.
-     */
-    function removeFromPendingTransactionsList(SecureOperationState storage self, uint256 txId) private {
-        SharedValidationLibrary.validateTrue(txId > 0, SharedValidationLibrary.ERROR_TRANSACTION_NOT_FOUND);
-        
-        // Find and remove the transaction ID from the list
-        for (uint i = 0; i < self.pendingTransactionsList.length; i++) {
-            if (self.pendingTransactionsList[i] == txId) {
-                // Move the last element to the position of the element to delete
-                self.pendingTransactionsList[i] = self.pendingTransactionsList[self.pendingTransactionsList.length - 1];
-                // Remove the last element
-                self.pendingTransactionsList.pop();
-                return;
-            }
-        }
-        
-        revert(SharedValidationLibrary.ERROR_TRANSACTION_NOT_FOUND);
-    }
-
-    /**
-     * @dev Gets all pending transaction IDs.
-     * @param self The SecureOperationState to check.
-     * @return Array of pending transaction IDs.
-     */
-    function getPendingTransactionsList(SecureOperationState storage self) private view returns (uint256[] memory) {
-        return self.pendingTransactionsList;
-    }
 
 }
