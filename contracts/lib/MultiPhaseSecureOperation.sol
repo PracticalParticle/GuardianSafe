@@ -234,41 +234,6 @@ library MultiPhaseSecureOperation {
         self.timeLockPeriodInMinutes = _newTimeLockPeriodInMinutes;
     }
 
-    /**
-     * @dev Gets the current time lock period for the SecureOperationState.
-     * @param self The SecureOperationState to check.
-     * @return The current time lock period in minutes.
-     */
-    function getTimeLockPeriod(SecureOperationState storage self) public view returns (uint256) {
-        return self.timeLockPeriodInMinutes;
-    }
-
-    /**
-     * @dev Gets the current transaction ID.
-     * @param self The SecureOperationState to check.
-     * @return The current transaction ID.
-     */
-    function getCurrentTxId(SecureOperationState storage self) public view returns (uint256) {
-        return self.txCounter;
-    }
-
-    /**
-     * @dev Gets the next transaction ID.
-     * @param self The SecureOperationState to check.
-     * @return The next transaction ID.
-     */
-    function getNextTxId(SecureOperationState storage self) private view returns (uint256) {
-        return self.txCounter + 1;
-    }
-
-    /**
-     * @dev Increments the transaction counter to set the next transaction ID.
-     * @param self The SecureOperationState to modify.
-     */
-    function setNextTxId(SecureOperationState storage self) private {
-        self.txCounter++;
-    }
-
     // ============ TRANSACTION MANAGEMENT FUNCTIONS ============
 
     /**
@@ -322,7 +287,7 @@ library MultiPhaseSecureOperation {
         );
     
         self.txRecords[txRequestRecord.txId] = txRequestRecord;
-        setNextTxId(self);
+        self.txCounter++;
 
         // Add to pending transactions list
         addToPendingTransactionsList(self, txRequestRecord.txId);
@@ -561,7 +526,7 @@ library MultiPhaseSecureOperation {
         bytes memory executionOptions
     ) private view returns (TxRecord memory) {        
         return TxRecord({
-            txId: getNextTxId(self),
+            txId: self.txCounter + 1,
             releaseTime: block.timestamp + (self.timeLockPeriodInMinutes * 1 minutes),
             status: TxStatus.PENDING,
             params: TxParams({
@@ -623,14 +588,6 @@ library MultiPhaseSecureOperation {
         revert(SharedValidationLibrary.ERROR_TRANSACTION_NOT_FOUND);
     }
 
-    /**
-     * @dev Gets all pending transaction IDs.
-     * @param self The SecureOperationState to check.
-     * @return Array of pending transaction IDs.
-     */
-    function getPendingTransactionsList(SecureOperationState storage self) private view returns (uint256[] memory) {
-        return self.pendingTransactionsList;
-    }
 
     // ============ ROLE-BASED ACCESS CONTROL FUNCTIONS ============
 
@@ -1051,7 +1008,7 @@ library MultiPhaseSecureOperation {
         SharedValidationLibrary.validateNonce(metaTx.params.nonce, getSignerNonce(self, metaTx.params.signer));
 
         // Validate txId matches expected next transaction ID
-        SharedValidationLibrary.validateTransactionId(metaTx.txRecord.txId, getNextTxId(self));
+        SharedValidationLibrary.validateTransactionId(metaTx.txRecord.txId, self.txCounter + 1);
         
         // Signature verification
         bytes32 messageHash = generateMessageHash(metaTx);

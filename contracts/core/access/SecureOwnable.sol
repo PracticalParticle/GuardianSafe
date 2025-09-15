@@ -336,7 +336,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @return The complete operation history
      */
     function getOperationHistory() public view override returns (MultiPhaseSecureOperation.TxRecord[] memory) {
-        uint256 totalTransactions = _secureState.getCurrentTxId();
+        uint256 totalTransactions = _secureState.txCounter;
         MultiPhaseSecureOperation.TxRecord[] memory history = new MultiPhaseSecureOperation.TxRecord[](totalTransactions);
         
         for (uint256 i = 0; i < totalTransactions; i++) {
@@ -353,6 +353,14 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      */
     function getOperation(uint256 txId) public view override returns (MultiPhaseSecureOperation.TxRecord memory) {
         return _secureState.getTxRecord(txId);
+    }
+
+    /**
+     * @dev Gets all pending transaction IDs
+     * @return Array of pending transaction IDs
+     */
+    function getPendingTransactions() public view returns (uint256[] memory) {
+        return _secureState.pendingTransactionsList;
     }
 
     /**
@@ -466,7 +474,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @return The time lock period in minutes
      */
     function getTimeLockPeriodInMinutes() public view virtual override returns (uint256) {
-        return _secureState.getTimeLockPeriod();
+        return _secureState.timeLockPeriodInMinutes;
     }
 
     /**
