@@ -108,10 +108,10 @@ abstract contract DynamicRBAC is Initializable, SecureOwnable {
         MultiPhaseSecureOperation.FunctionPermission[] memory functionPermissions
     ) external onlyOwner returns (bytes32) {
         // Validate that role editing is enabled
-        SharedValidationLibrary.validateRoleEditingEnabled(roleEditingEnabled);
+        if (!roleEditingEnabled) revert SharedValidationLibrary.RoleEditingDisabled();
         
         SharedValidationLibrary.validateRoleNameNotEmpty(roleName);
-        SharedValidationLibrary.validateGreaterThanZero(maxWallets, SharedValidationLibrary.ERROR_MAX_WALLETS_ZERO);
+        SharedValidationLibrary.validateMaxWalletsGreaterThanZero(maxWallets);
         
         bytes32 roleHash = keccak256(bytes(roleName));
         
@@ -140,10 +140,10 @@ abstract contract DynamicRBAC is Initializable, SecureOwnable {
      */
     function addWalletToRole(bytes32 roleHash, address wallet) external onlyOwner {
         // Validate that role editing is enabled
-        SharedValidationLibrary.validateRoleEditingEnabled(roleEditingEnabled);
+        if (!roleEditingEnabled) revert SharedValidationLibrary.RoleEditingDisabled();
         
         // Validate that the role is not protected
-        SharedValidationLibrary.validateRoleNotProtected(_getSecureState().getRole(roleHash).isProtected);
+        if (_getSecureState().getRole(roleHash).isProtected) revert SharedValidationLibrary.CannotModifyProtectedRoles("role");
         
         // MultiPhaseSecureOperation.addAuthorizedWalletToRole already validates:
         // - wallet is not zero address
@@ -162,10 +162,10 @@ abstract contract DynamicRBAC is Initializable, SecureOwnable {
      */
     function removeWalletFromRole(bytes32 roleHash, address wallet) external onlyOwner {
         // Validate that role editing is enabled
-        SharedValidationLibrary.validateRoleEditingEnabled(roleEditingEnabled);
+        if (!roleEditingEnabled) revert SharedValidationLibrary.RoleEditingDisabled();
         
         // Validate that the role is not protected
-        SharedValidationLibrary.validateRoleNotProtected(_getSecureState().getRole(roleHash).isProtected);
+        if (_getSecureState().getRole(roleHash).isProtected) revert SharedValidationLibrary.CannotModifyProtectedRoles("role");
         
         // MultiPhaseSecureOperation.removeWalletFromRole already validates:
         // - role exists

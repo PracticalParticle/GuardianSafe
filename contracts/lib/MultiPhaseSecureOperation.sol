@@ -204,10 +204,10 @@ library MultiPhaseSecureOperation {
         address _recovery,
         uint256 _timeLockPeriodInMinutes
     ) public {
-        SharedValidationLibrary.validateTrue(!self.initialized, SharedValidationLibrary.ERROR_ALREADY_INITIALIZED); 
-        SharedValidationLibrary.validateNotZeroAddress(_owner, SharedValidationLibrary.ERROR_INVALID_ROLE_ADDRESS);
-        SharedValidationLibrary.validateNotZeroAddress(_broadcaster, SharedValidationLibrary.ERROR_INVALID_ROLE_ADDRESS);
-        SharedValidationLibrary.validateNotZeroAddress(_recovery, SharedValidationLibrary.ERROR_INVALID_ROLE_ADDRESS);
+        if (self.initialized) revert SharedValidationLibrary.AlreadyInitialized();
+        SharedValidationLibrary.validateNotZeroAddress(_owner, "owner");
+        SharedValidationLibrary.validateNotZeroAddress(_broadcaster, "broadcaster");
+        SharedValidationLibrary.validateNotZeroAddress(_recovery, "recovery");
         SharedValidationLibrary.validateTimeLockPeriod(_timeLockPeriodInMinutes);
 
         self.timeLockPeriodInMinutes = _timeLockPeriodInMinutes;
@@ -274,12 +274,11 @@ library MultiPhaseSecureOperation {
         ExecutionType executionType,
         bytes memory executionOptions
     ) public returns (TxRecord memory) {
-        SharedValidationLibrary.validateTrue(
-            checkPermissionPermissive(self, MultiPhaseSecureOperationDefinitions.TX_REQUEST_SELECTOR) || checkPermissionPermissive(self, MultiPhaseSecureOperationDefinitions.META_TX_REQUEST_AND_APPROVE_SELECTOR),
-            SharedValidationLibrary.ERROR_NO_PERMISSION_EXECUTE
-        );
-        SharedValidationLibrary.validateNotZeroAddress(target, SharedValidationLibrary.ERROR_INVALID_TARGET_ADDRESS);
-        SharedValidationLibrary.validateOperationSupported(isOperationTypeSupported(self, operationType));
+        if (!checkPermissionPermissive(self, MultiPhaseSecureOperationDefinitions.TX_REQUEST_SELECTOR) && !checkPermissionPermissive(self, MultiPhaseSecureOperationDefinitions.META_TX_REQUEST_AND_APPROVE_SELECTOR)) {
+            revert SharedValidationLibrary.NoPermissionExecute(msg.sender, "execute");
+        }
+        SharedValidationLibrary.validateTargetAddress(target);
+        if (!isOperationTypeSupported(self, operationType)) revert SharedValidationLibrary.OperationNotSupported("unsupported operation");
 
         TxRecord memory txRequestRecord = createNewTxRecord(
             self,
@@ -363,7 +362,7 @@ library MultiPhaseSecureOperation {
         uint256 txId = metaTx.txRecord.txId;
         checkPermission(self, MultiPhaseSecureOperationDefinitions.META_TX_CANCELLATION_SELECTOR);
         SharedValidationLibrary.validatePendingTransaction(uint8(self.txRecords[txId].status));
-        SharedValidationLibrary.validateTrue(verifySignature(self, metaTx), SharedValidationLibrary.ERROR_INVALID_SIGNATURE);
+        if (!verifySignature(self, metaTx)) revert SharedValidationLibrary.InvalidSignature(metaTx.signature);
         
         incrementSignerNonce(self, metaTx.params.signer);
         self.txRecords[txId].status = TxStatus.CANCELLED;
@@ -386,7 +385,7 @@ library MultiPhaseSecureOperation {
         uint256 txId = metaTx.txRecord.txId;
         checkPermission(self, MultiPhaseSecureOperationDefinitions.META_TX_APPROVAL_SELECTOR);
         SharedValidationLibrary.validatePendingTransaction(uint8(self.txRecords[txId].status));
-        SharedValidationLibrary.validateTrue(verifySignature(self, metaTx), SharedValidationLibrary.ERROR_INVALID_SIGNATURE);
+        if (!verifySignature(self, metaTx)) revert SharedValidationLibrary.InvalidSignature(metaTx.signature);
         
         incrementSignerNonce(self, metaTx.params.signer);
         (bool success, bytes memory result) = executeTransaction(self.txRecords[txId]);
@@ -532,7 +531,7 @@ library MultiPhaseSecureOperation {
             RawExecutionOptions memory options = abi.decode(record.params.executionOptions, (RawExecutionOptions));
             return options.rawTxData;
         } else {
-            revert(SharedValidationLibrary.ERROR_OPERATION_NOT_SUPPORTED);
+            revert SharedValidationLibrary.OperationNotSupported("unsupported operation");
         }
     }
 
@@ -620,11 +619,11 @@ library MultiPhaseSecureOperation {
      * @param txId The transaction ID to add to the pending set.
      */
     function addToPendingTransactionsList(SecureOperationState storage self, uint256 txId) private {
-        SharedValidationLibrary.validateTrue(txId > 0, SharedValidationLibrary.ERROR_TRANSACTION_NOT_FOUND);
+        SharedValidationLibrary.validateTransactionExists(txId);
         SharedValidationLibrary.validatePendingTransaction(uint8(self.txRecords[txId].status));
         
         // Check if transaction ID is already in the set (O(1) operation)
-        SharedValidationLibrary.validateTrue(!self.pendingTransactionsSet.contains(txId), SharedValidationLibrary.ERROR_REQUEST_ALREADY_PENDING);
+        if (self.pendingTransactionsSet.contains(txId)) revert SharedValidationLibrary.RequestAlreadyPending(txId);
         
         self.pendingTransactionsSet.add(txId);
     }
@@ -635,11 +634,11 @@ library MultiPhaseSecureOperation {
      * @param txId The transaction ID to remove from the pending set.
      */
     function removeFromPendingTransactionsList(SecureOperationState storage self, uint256 txId) private {
-        SharedValidationLibrary.validateTrue(txId > 0, SharedValidationLibrary.ERROR_TRANSACTION_NOT_FOUND);
+        SharedValidationLibrary.validateTransactionExists(txId);
         
         // Remove the transaction ID from the set (O(1) operation)
         if (!self.pendingTransactionsSet.remove(txId)) {
-            revert(SharedValidationLibrary.ERROR_TRANSACTION_NOT_FOUND);
+            revert SharedValidationLibrary.TransactionNotFound(txId);
         }
     }
 
@@ -691,7 +690,7 @@ library MultiPhaseSecureOperation {
         bool isProtected
     ) public {
         bytes32 roleHash = keccak256(bytes(roleName));
-        SharedValidationLibrary.validateRoleNew(self.roles[roleHash].roleHash);
+        if (self.roles[roleHash].roleHash != bytes32(0)) revert SharedValidationLibrary.RoleAlreadyExists("role");
         
         // Create the role with empty arrays
         self.roles[roleHash].roleName = roleName;
@@ -713,11 +712,11 @@ library MultiPhaseSecureOperation {
         bytes32 roleHash
     ) public {
         // Validate that the role exists
-        SharedValidationLibrary.validateRoleExists(self.roles[roleHash].roleHash);
+        if (self.roles[roleHash].roleHash == bytes32(0)) revert SharedValidationLibrary.RoleDoesNotExist("role");
         
         // Security check: Prevent removing protected roles
         if (self.roles[roleHash].isProtected) {
-            revert(SharedValidationLibrary.ERROR_CANNOT_REMOVE_PROTECTED_ROLE);
+            revert SharedValidationLibrary.CannotRemoveProtectedRole("protected role");
         }
         
         // Remove the role from the supported roles set (O(1) operation)
@@ -734,14 +733,14 @@ library MultiPhaseSecureOperation {
      * @param wallet The wallet address to add.
      */
     function addAuthorizedWalletToRole(SecureOperationState storage self, bytes32 role, address wallet) public {
-        SharedValidationLibrary.validateNotZeroAddress(wallet, SharedValidationLibrary.ERROR_CANNOT_ADD_ZERO_ADDRESS);
-        SharedValidationLibrary.validateRoleExists(self.roles[role].roleHash);
+        SharedValidationLibrary.validateNotZeroAddress(wallet, "wallet");
+        if (self.roles[role].roleHash == bytes32(0)) revert SharedValidationLibrary.RoleDoesNotExist("role");
         
         Role storage roleData = self.roles[role];
-        SharedValidationLibrary.validateWalletLimit(roleData.authorizedWallets.length(), roleData.maxWallets);
+        SharedValidationLibrary.validateWalletLimit(roleData.authorizedWallets.length(), roleData.maxWallets, "role");
         
         // Check if wallet is already in the role (O(1) operation)
-        SharedValidationLibrary.validateWalletNotInRole(roleData.authorizedWallets.contains(wallet));
+        if (roleData.authorizedWallets.contains(wallet)) revert SharedValidationLibrary.WalletAlreadyInRole(wallet, "role");
         
         roleData.authorizedWallets.add(wallet);
     }
@@ -754,13 +753,13 @@ library MultiPhaseSecureOperation {
      * @param oldWallet The old wallet address to remove from the role.
      */
     function updateAuthorizedWalletInRole(SecureOperationState storage self, bytes32 role, address newWallet, address oldWallet) public {
-        SharedValidationLibrary.validateRoleExists(self.roles[role].roleHash);
-        SharedValidationLibrary.validateNotZeroAddress(newWallet, SharedValidationLibrary.ERROR_CANNOT_SET_ZERO_ADDRESS);
+        if (self.roles[role].roleHash == bytes32(0)) revert SharedValidationLibrary.RoleDoesNotExist("role");
+        SharedValidationLibrary.validateNotZeroAddress(newWallet, "new wallet");
         
         // Check if old wallet exists in the role
         Role storage roleData = self.roles[role];
         if (!roleData.authorizedWallets.contains(oldWallet)) {
-            revert(SharedValidationLibrary.ERROR_OLD_WALLET_NOT_FOUND);
+            revert SharedValidationLibrary.OldWalletNotFound(oldWallet, "role");
         }
         
         // Remove old wallet and add new wallet (O(1) operations)
@@ -776,17 +775,17 @@ library MultiPhaseSecureOperation {
      * @notice Security: Cannot remove the last wallet from a role to prevent empty roles.
      */
     function removeWalletFromRole(SecureOperationState storage self, bytes32 role, address wallet) public {
-        SharedValidationLibrary.validateRoleExists(self.roles[role].roleHash);
+        if (self.roles[role].roleHash == bytes32(0)) revert SharedValidationLibrary.RoleDoesNotExist("role");
         
         // Check if wallet exists in the role
         Role storage roleData = self.roles[role];
         if (!roleData.authorizedWallets.contains(wallet)) {
-            revert(SharedValidationLibrary.ERROR_OLD_WALLET_NOT_FOUND);
+            revert SharedValidationLibrary.OldWalletNotFound(wallet, "role");
         }
         
         // Security check: Prevent removing the last wallet from a role
         if (roleData.authorizedWallets.length() <= 1) {
-            revert(SharedValidationLibrary.ERROR_CANNOT_REMOVE_LAST_WALLET);
+            revert SharedValidationLibrary.CannotRemoveLastWallet(wallet, "role");
         }
         
         // Remove the wallet (O(1) operation)
@@ -806,12 +805,14 @@ library MultiPhaseSecureOperation {
         bytes4 functionSelector,
         TxAction[] memory grantedActions
     ) public {
-        SharedValidationLibrary.validateRoleExists(self.roles[roleHash].roleHash);
+        if (self.roles[roleHash].roleHash == bytes32(0)) revert SharedValidationLibrary.RoleDoesNotExist("role");
         SharedValidationLibrary.validateFunctionExists(self.functions[functionSelector].functionSelector);
         
         // Validate that all grantedActions are supported by the function
         for (uint i = 0; i < grantedActions.length; i++) {
-            SharedValidationLibrary.validateActionSupported(isActionSupportedByFunction(self, functionSelector, grantedActions[i]));
+            if (!isActionSupportedByFunction(self, functionSelector, grantedActions[i])) {
+                revert SharedValidationLibrary.ActionNotSupported("action", "function");
+            }
         }
         
         Role storage role = self.roles[roleHash];
@@ -824,7 +825,7 @@ library MultiPhaseSecureOperation {
                 break;
             }
         }
-        SharedValidationLibrary.validatePermissionNew(permissionExists);
+        if (permissionExists) revert SharedValidationLibrary.FunctionPermissionExists(functionSelector, "role");
         
         // If it doesn't exist, add it
         role.functionPermissions.push(FunctionPermission({
@@ -840,7 +841,7 @@ library MultiPhaseSecureOperation {
      */
     function checkPermission(SecureOperationState storage self, bytes4 functionSelector) public view {
         bool hasPermission = checkPermissionPermissive(self,functionSelector);       
-        SharedValidationLibrary.validateTrue(hasPermission, SharedValidationLibrary.ERROR_NO_PERMISSION);
+        if (!hasPermission) revert SharedValidationLibrary.NoPermission(msg.sender);
     }
 
     /**
@@ -970,7 +971,7 @@ library MultiPhaseSecureOperation {
         SecureOperationState storage self,
         ReadableOperationType memory readableType
     ) public {
-        SharedValidationLibrary.validateOperationTypeNew(self.supportedOperationTypes[readableType.operationType].operationType != bytes32(0));
+        if (self.supportedOperationTypes[readableType.operationType].operationType != bytes32(0)) revert SharedValidationLibrary.OperationTypeExists("operation type");
         self.supportedOperationTypes[readableType.operationType] = readableType;
         self.supportedOperationTypesSet.add(readableType.operationType);
     }
@@ -1092,12 +1093,12 @@ library MultiPhaseSecureOperation {
         SharedValidationLibrary.validatePendingTransaction(uint8(metaTx.txRecord.status));
         
         // Transaction parameters validation
-        SharedValidationLibrary.validateNotZeroAddress(metaTx.txRecord.params.requester, SharedValidationLibrary.ERROR_INVALID_REQUESTER_ADDRESS);
-        SharedValidationLibrary.validateOperationSupported(isOperationTypeSupported(self, metaTx.txRecord.params.operationType));
+        SharedValidationLibrary.validateRequesterAddress(metaTx.txRecord.params.requester);
+        if (!isOperationTypeSupported(self, metaTx.txRecord.params.operationType)) revert SharedValidationLibrary.OperationNotSupported("unsupported operation");
         
         // Meta-transaction parameters validation
         SharedValidationLibrary.validateChainId(metaTx.params.chainId);
-        SharedValidationLibrary.validateHandlerContract(metaTx.params.handlerContract, metaTx.txRecord.params.target);
+        SharedValidationLibrary.validateHandlerContractMatch(metaTx.params.handlerContract, metaTx.txRecord.params.target);
         SharedValidationLibrary.validateMetaTxDeadline(metaTx.params.deadline);
         
         // Gas price validation (if applicable)
@@ -1112,11 +1113,11 @@ library MultiPhaseSecureOperation {
         // Signature verification
         bytes32 messageHash = generateMessageHash(metaTx);
         address recoveredSigner = recoverSigner(messageHash, metaTx.signature);
-        require(recoveredSigner == metaTx.params.signer, SharedValidationLibrary.ERROR_INVALID_SIGNATURE);
+        if (recoveredSigner != metaTx.params.signer) revert SharedValidationLibrary.InvalidSignature(metaTx.signature);
 
         // Authorization check - verify signer has meta-transaction signing permissions for the function and action
         bool isAuthorized = hasMetaTxSigningPermission(self, metaTx.params.signer, metaTx.params.handlerSelector, metaTx.params.action);
-        SharedValidationLibrary.validateTrue(isAuthorized, SharedValidationLibrary.ERROR_SIGNER_NOT_AUTHORIZED);
+        if (!isAuthorized) revert SharedValidationLibrary.SignerNotAuthorized(metaTx.params.signer);
         
         return true;
     }
@@ -1211,8 +1212,8 @@ library MultiPhaseSecureOperation {
         TxParams memory txParams,
         MetaTxParams memory metaTxParams
     ) public view returns (MetaTransaction memory) {
-        SharedValidationLibrary.validateOperationSupported(isOperationTypeSupported(self, txParams.operationType));
-        SharedValidationLibrary.validateNotZeroAddress(txParams.target, SharedValidationLibrary.ERROR_INVALID_TARGET_ADDRESS);
+        if (!isOperationTypeSupported(self, txParams.operationType)) revert SharedValidationLibrary.OperationNotSupported("unsupported operation");
+        SharedValidationLibrary.validateTargetAddress(txParams.target);
         
         TxRecord memory txRecord = createNewTxRecord(
             self,
@@ -1238,7 +1239,7 @@ library MultiPhaseSecureOperation {
         MetaTxParams memory metaTxParams
     ) public view returns (MetaTransaction memory) {
         TxRecord memory txRecord = getTxRecord(self, txId);
-        require(txRecord.txId == txId, SharedValidationLibrary.ERROR_TRANSACTION_NOT_FOUND);
+        if (txRecord.txId != txId) revert SharedValidationLibrary.TransactionNotFound(txId);
         
         return generateMetaTransaction(self, txRecord, metaTxParams);
     }
@@ -1264,10 +1265,10 @@ library MultiPhaseSecureOperation {
     ) private view returns (MetaTransaction memory) {
         SharedValidationLibrary.validateChainId(metaTxParams.chainId);
         SharedValidationLibrary.validateNonce(metaTxParams.nonce, getSignerNonce(self, metaTxParams.signer));
-        SharedValidationLibrary.validateNotZeroAddress(metaTxParams.handlerContract, SharedValidationLibrary.ERROR_INVALID_HANDLER_CONTRACT);
+        SharedValidationLibrary.validateHandlerContract(metaTxParams.handlerContract);
         SharedValidationLibrary.validateHandlerSelector(metaTxParams.handlerSelector);
         SharedValidationLibrary.validateDeadline(metaTxParams.deadline);
-        SharedValidationLibrary.validateNotZeroAddress(metaTxParams.signer, SharedValidationLibrary.ERROR_INVALID_SIGNER_ADDRESS);
+        SharedValidationLibrary.validateSignerAddress(metaTxParams.signer);
 
         MetaTransaction memory metaTx = MetaTransaction({
             txRecord: txRecord,
@@ -1304,10 +1305,10 @@ library MultiPhaseSecureOperation {
         uint256 maxGasPrice,
         address signer
     ) public view returns (MetaTxParams memory) {
-        SharedValidationLibrary.validateNotZeroAddress(handlerContract, SharedValidationLibrary.ERROR_INVALID_HANDLER_CONTRACT);
+        SharedValidationLibrary.validateHandlerContract(handlerContract);
         SharedValidationLibrary.validateHandlerSelector(handlerSelector);
         SharedValidationLibrary.validateDeadline(deadline);
-        SharedValidationLibrary.validateNotZeroAddress(signer, SharedValidationLibrary.ERROR_INVALID_SIGNER_ADDRESS);
+        SharedValidationLibrary.validateSignerAddress(signer);
         return MetaTxParams({
             chainId: block.chainid,
             nonce: getSignerNonce(self, signer),

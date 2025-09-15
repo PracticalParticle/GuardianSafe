@@ -101,7 +101,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @return The transaction record
      */
     function transferOwnershipRequest() public onlyRecovery returns (MultiPhaseSecureOperation.TxRecord memory) {
-        SharedValidationLibrary.validateNoOpenRequest(_hasOpenOwnershipRequest);
+        if (_hasOpenOwnershipRequest) revert SharedValidationLibrary.RequestAlreadyPending(0);
         bytes memory executionOptions = MultiPhaseSecureOperation.createStandardExecutionOptions(
             SecureOwnableDefinitions.TRANSFER_OWNERSHIP_SELECTOR,
             abi.encode(getRecovery())
@@ -183,7 +183,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @return The execution options
      */
     function updateBroadcasterRequest(address newBroadcaster) public onlyOwner returns (MultiPhaseSecureOperation.TxRecord memory) {
-        SharedValidationLibrary.validateNoOpenRequest(_hasOpenBroadcasterRequest);
+        if (_hasOpenBroadcasterRequest) revert SharedValidationLibrary.RequestAlreadyPending(0);
         SharedValidationLibrary.validateAddressUpdate(newBroadcaster, getBroadcaster(), "broadcaster");
         
         bytes memory executionOptions = MultiPhaseSecureOperation.createStandardExecutionOptions(
