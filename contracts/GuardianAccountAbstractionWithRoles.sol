@@ -20,7 +20,7 @@ contract GuardianAccountAbstractionWithRoles is DynamicRBAC {
         address broadcaster,
         address recovery,
         uint256 timeLockPeriodInMinutes      
-    ) public override initializer {
+    ) public virtual override initializer {
         super.initialize(
             initialOwner,
             broadcaster,

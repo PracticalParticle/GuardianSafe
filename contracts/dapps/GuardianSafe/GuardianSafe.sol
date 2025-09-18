@@ -2,6 +2,7 @@
 pragma solidity ^0.8.2;
 
 import "../../GuardianAccountAbstraction.sol";
+import "../../lib/SharedValidationLibrary.sol";
 
 interface ISafe {
     function execTransaction(
@@ -47,6 +48,9 @@ interface ITransactionGuard {
  * Implements time-locked operations and meta-transaction support for enhanced security.
  */
 contract GuardianSafe is GuardianAccountAbstraction, ITransactionGuard {
+    // Initialization state
+    bool private _initialized;
+    
     // Operation types
     bytes32 public constant EXEC_SAFE_TX = keccak256("EXEC_SAFE_TX");
 
@@ -76,7 +80,7 @@ contract GuardianSafe is GuardianAccountAbstraction, ITransactionGuard {
     }
 
     // Safe instance
-    ISafe private immutable safe;
+    ISafe private safe;
 
     // Events
     event TransactionRequested(SafeTx safeTx);
@@ -93,27 +97,25 @@ contract GuardianSafe is GuardianAccountAbstraction, ITransactionGuard {
     bool private isExecutingThroughGuardian = false;
     
     /**
-     * @notice Constructor to initialize the GuardianSafe
+     * @notice Initialize GuardianSafe (replaces constructor for clone pattern)
      * @param _safe The Safe contract address
      * @param initialOwner The initial owner address
      * @param broadcaster The broadcaster address for meta-transactions
      * @param recovery The recovery address
      * @param timeLockPeriodInMinutes The timelock period for operations
      */
-    constructor(
+    function initialize(
         address _safe,
         address initialOwner,
         address broadcaster,
         address recovery,
         uint256 timeLockPeriodInMinutes
-    ) GuardianAccountAbstraction(
-        initialOwner,
-        broadcaster,
-        recovery,
-        timeLockPeriodInMinutes
-    ) {
-        _validateNotZeroAddress(_safe);
+    ) public initializer {
+        SharedValidationLibrary.validateNotZeroAddress(_safe);
         safe = ISafe(_safe);
+
+        // Initialize GuardianAccountAbstraction
+        super.initialize(initialOwner, broadcaster, recovery, timeLockPeriodInMinutes);
 
         // Initialize operation type
         MultiPhaseSecureOperation.addOperationType(_getSecureState(), MultiPhaseSecureOperation.ReadableOperationType({
@@ -121,10 +123,27 @@ contract GuardianSafe is GuardianAccountAbstraction, ITransactionGuard {
             name: "EXEC_SAFE_TX"
         }));
 
-        // Add meta-transaction function selector permissions for broadcaster
-        MultiPhaseSecureOperation.addRoleForFunction(_getSecureState(), APPROVE_TX_META_SELECTOR, MultiPhaseSecureOperation.BROADCASTER_ROLE);
-        MultiPhaseSecureOperation.addRoleForFunction(_getSecureState(), CANCEL_TX_META_SELECTOR, MultiPhaseSecureOperation.BROADCASTER_ROLE);
-        MultiPhaseSecureOperation.addRoleForFunction(_getSecureState(), REQUEST_AND_APPROVE_TX_META_SELECTOR, MultiPhaseSecureOperation.BROADCASTER_ROLE);
+        // Create function schemas for GuardianSafe-specific functions
+        MultiPhaseSecureOperation.TxAction[] memory approveActions = new MultiPhaseSecureOperation.TxAction[](2);
+        approveActions[0] = MultiPhaseSecureOperation.TxAction.SIGN_META_APPROVE;
+        approveActions[1] = MultiPhaseSecureOperation.TxAction.EXECUTE_META_APPROVE;
+        
+        MultiPhaseSecureOperation.TxAction[] memory cancelActions = new MultiPhaseSecureOperation.TxAction[](2);
+        cancelActions[0] = MultiPhaseSecureOperation.TxAction.SIGN_META_CANCEL;
+        cancelActions[1] = MultiPhaseSecureOperation.TxAction.EXECUTE_META_CANCEL;
+        
+        MultiPhaseSecureOperation.TxAction[] memory requestAndApproveActions = new MultiPhaseSecureOperation.TxAction[](2);
+        requestAndApproveActions[0] = MultiPhaseSecureOperation.TxAction.SIGN_META_REQUEST_AND_APPROVE;
+        requestAndApproveActions[1] = MultiPhaseSecureOperation.TxAction.EXECUTE_META_REQUEST_AND_APPROVE;
+        
+        MultiPhaseSecureOperation.createFunctionSchema(_getSecureState(), "approveTransactionWithMetaTx", APPROVE_TX_META_SELECTOR, EXEC_SAFE_TX, approveActions);
+        MultiPhaseSecureOperation.createFunctionSchema(_getSecureState(), "cancelTransactionWithMetaTx", CANCEL_TX_META_SELECTOR, EXEC_SAFE_TX, cancelActions);
+        MultiPhaseSecureOperation.createFunctionSchema(_getSecureState(), "requestAndApproveTransactionWithMetaTx", REQUEST_AND_APPROVE_TX_META_SELECTOR, EXEC_SAFE_TX, requestAndApproveActions);
+        
+        // Add function permissions to broadcaster role
+        MultiPhaseSecureOperation.addFunctionToRole(_getSecureState(), MultiPhaseSecureOperation.BROADCASTER_ROLE, APPROVE_TX_META_SELECTOR, approveActions);
+        MultiPhaseSecureOperation.addFunctionToRole(_getSecureState(), MultiPhaseSecureOperation.BROADCASTER_ROLE, CANCEL_TX_META_SELECTOR, cancelActions);
+        MultiPhaseSecureOperation.addFunctionToRole(_getSecureState(), MultiPhaseSecureOperation.BROADCASTER_ROLE, REQUEST_AND_APPROVE_TX_META_SELECTOR, requestAndApproveActions);
     }
 
     /**
@@ -166,7 +185,7 @@ contract GuardianSafe is GuardianAccountAbstraction, ITransactionGuard {
             executionOptions
         );
 
-        addOperation(txRecord);
+        // Operation is automatically handled by MultiPhaseSecureOperation
         
         emit TransactionRequested(safeTx);
 
@@ -179,9 +198,9 @@ contract GuardianSafe is GuardianAccountAbstraction, ITransactionGuard {
      */
     function approveTransactionAfterDelay(uint256 txId) external onlyOwner returns (MultiPhaseSecureOperation.TxRecord memory) {
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = MultiPhaseSecureOperation.txDelayedApproval(_getSecureState(), txId);
-        _validateOperationType(updatedRecord.params.operationType, EXEC_SAFE_TX);
+        SharedValidationLibrary.validateOperationType(updatedRecord.params.operationType, EXEC_SAFE_TX);
 
-        finalizeOperation(updatedRecord);
+        // Operation is automatically handled by MultiPhaseSecureOperation
         return updatedRecord;
     }
 
@@ -195,15 +214,15 @@ contract GuardianSafe is GuardianAccountAbstraction, ITransactionGuard {
         returns (MultiPhaseSecureOperation.TxRecord memory) 
     {
         MultiPhaseSecureOperation.checkPermission(_getSecureState(), APPROVE_TX_META_SELECTOR);
-        _validateHandlerSelector(metaTx.params.handlerSelector, APPROVE_TX_META_SELECTOR);
+        SharedValidationLibrary.validateHandlerSelectorMatch(metaTx.params.handlerSelector, APPROVE_TX_META_SELECTOR);
         
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = MultiPhaseSecureOperation.txApprovalWithMetaTx(
             _getSecureState(),
             metaTx
         );
-        _validateOperationType(updatedRecord.params.operationType, EXEC_SAFE_TX);
+        SharedValidationLibrary.validateOperationType(updatedRecord.params.operationType, EXEC_SAFE_TX);
 
-        finalizeOperation(updatedRecord);
+        // Operation is automatically handled by MultiPhaseSecureOperation
         return updatedRecord;
     }
 
@@ -213,9 +232,9 @@ contract GuardianSafe is GuardianAccountAbstraction, ITransactionGuard {
      */
     function cancelTransaction(uint256 txId) external onlyOwner returns (MultiPhaseSecureOperation.TxRecord memory) {
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = MultiPhaseSecureOperation.txCancellation(_getSecureState(), txId);
-        _validateOperationType(updatedRecord.params.operationType, EXEC_SAFE_TX);
+        SharedValidationLibrary.validateOperationType(updatedRecord.params.operationType, EXEC_SAFE_TX);
 
-        finalizeOperation(updatedRecord);
+        // Operation is automatically handled by MultiPhaseSecureOperation
         emit TransactionCancelled(txId);
         return updatedRecord;
     }
@@ -230,15 +249,15 @@ contract GuardianSafe is GuardianAccountAbstraction, ITransactionGuard {
         returns (MultiPhaseSecureOperation.TxRecord memory) 
     {
         MultiPhaseSecureOperation.checkPermission(_getSecureState(), CANCEL_TX_META_SELECTOR);
-        _validateHandlerSelector(metaTx.params.handlerSelector, CANCEL_TX_META_SELECTOR);
+        SharedValidationLibrary.validateHandlerSelectorMatch(metaTx.params.handlerSelector, CANCEL_TX_META_SELECTOR);
         
         MultiPhaseSecureOperation.TxRecord memory updatedRecord = MultiPhaseSecureOperation.txCancellationWithMetaTx(
             _getSecureState(),
             metaTx
         );
-        _validateOperationType(updatedRecord.params.operationType, EXEC_SAFE_TX);
+        SharedValidationLibrary.validateOperationType(updatedRecord.params.operationType, EXEC_SAFE_TX);
 
-        finalizeOperation(updatedRecord);
+        // Operation is automatically handled by MultiPhaseSecureOperation
         emit TransactionCancelled(updatedRecord.txId);
         return updatedRecord;
     }
@@ -252,16 +271,15 @@ contract GuardianSafe is GuardianAccountAbstraction, ITransactionGuard {
         MultiPhaseSecureOperation.MetaTransaction memory metaTx
     ) public onlyBroadcaster returns (MultiPhaseSecureOperation.TxRecord memory) {
         MultiPhaseSecureOperation.checkPermission(_getSecureState(), REQUEST_AND_APPROVE_TX_META_SELECTOR);
-        _validateHandlerSelector(metaTx.params.handlerSelector, REQUEST_AND_APPROVE_TX_META_SELECTOR);
+        SharedValidationLibrary.validateHandlerSelectorMatch(metaTx.params.handlerSelector, REQUEST_AND_APPROVE_TX_META_SELECTOR);
 
         MultiPhaseSecureOperation.TxRecord memory txRecord = MultiPhaseSecureOperation.requestAndApprove(
             _getSecureState(),
             metaTx
         );
-        _validateOperationType(txRecord.params.operationType, EXEC_SAFE_TX);
+        SharedValidationLibrary.validateOperationType(txRecord.params.operationType, EXEC_SAFE_TX);
 
-        addOperation(txRecord);
-        finalizeOperation(txRecord);
+        // Operation is automatically handled by MultiPhaseSecureOperation
         return txRecord;
     }
 
@@ -270,7 +288,7 @@ contract GuardianSafe is GuardianAccountAbstraction, ITransactionGuard {
      * @param safeTx The Safe transaction parameters
      */
     function executeTransaction(SafeTx memory safeTx) external {
-        _validateInternal();
+        SharedValidationLibrary.validateInternalCall(address(this));
         
         isExecutingThroughGuardian = true;
         
@@ -292,22 +310,6 @@ contract GuardianSafe is GuardianAccountAbstraction, ITransactionGuard {
         require(success, "Safe transaction execution failed");
     }
 
-    /**
-     * @dev Internal function to add an operation to history
-     * @param txRecord The transaction record to add
-     */
-    function addOperation(MultiPhaseSecureOperation.TxRecord memory txRecord) internal override {
-        super.addOperation(txRecord);
-    }
-
-    /**
-     * @dev Internal function to finalize an operation
-     * @param txRecord The transaction record to finalize
-     */
-    function finalizeOperation(MultiPhaseSecureOperation.TxRecord memory txRecord) internal override {
-        super.finalizeOperation(txRecord);
-        emit TransactionExecuted(txRecord.params.operationType, txRecord.params.executionOptions);
-    }
 
     /**
      * @dev Returns whether the module supports a given interface
@@ -336,7 +338,7 @@ contract GuardianSafe is GuardianAccountAbstraction, ITransactionGuard {
         SafeMetaTxParams memory params
     ) public view returns (MultiPhaseSecureOperation.MetaTransaction memory) {
         // Validate that operation is Call (0)
-        require(safeTx.operation == 0, "Only Call operations are allowed in single-phase meta transactions");
+        if (safeTx.operation != 0) revert SharedValidationLibrary.OperationNotSupported("Only Call operations allowed");
 
         bytes memory executionOptions = createTransactionExecutionOptions(safeTx);
 
@@ -344,6 +346,7 @@ contract GuardianSafe is GuardianAccountAbstraction, ITransactionGuard {
         MultiPhaseSecureOperation.MetaTxParams memory metaTxParams = createMetaTxParams(
             address(this),
             REQUEST_AND_APPROVE_TX_META_SELECTOR,
+            MultiPhaseSecureOperation.TxAction.EXECUTE_META_REQUEST_AND_APPROVE,
             params.deadline,
             params.maxGasPrice,
             owner()
@@ -378,6 +381,7 @@ contract GuardianSafe is GuardianAccountAbstraction, ITransactionGuard {
         MultiPhaseSecureOperation.MetaTxParams memory metaTxParams = createMetaTxParams(
             address(this),
             isApproval ? APPROVE_TX_META_SELECTOR : CANCEL_TX_META_SELECTOR,
+            isApproval ? MultiPhaseSecureOperation.TxAction.EXECUTE_META_APPROVE : MultiPhaseSecureOperation.TxAction.EXECUTE_META_CANCEL,
             params.deadline,
             params.maxGasPrice,
             owner()
@@ -398,7 +402,7 @@ contract GuardianSafe is GuardianAccountAbstraction, ITransactionGuard {
     function createTransactionExecutionOptions(
         SafeTx memory safeTx
     ) public view returns (bytes memory) {
-        _validateNotZeroAddress(safeTx.to);
+        SharedValidationLibrary.validateTargetAddress(safeTx.to);
 
         bytes memory executionData = abi.encode(
             safeTx.to,

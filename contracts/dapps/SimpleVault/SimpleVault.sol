@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 // Particle imports
 import "../../GuardianAccountAbstraction.sol";
+import "../../lib/SharedValidationLibrary.sol";
 
 
 contract SimpleVault is GuardianAccountAbstraction {
@@ -36,20 +37,22 @@ contract SimpleVault is GuardianAccountAbstraction {
     event EthReceived(address indexed from, uint256 amount);
 
     /**
-     * @notice Constructor to initialize SimpleVault
+     * @notice Initialize SimpleVault (replaces constructor for clone pattern)
      * @param initialOwner The initial owner address
      * @param broadcaster The broadcaster address
      * @param recovery The recovery address
      * @param timeLockPeriodInMinutes The timelock period in minutes
      */
-    constructor(
+    function initialize(
         address initialOwner,
         address broadcaster,
         address recovery,
         uint256 timeLockPeriodInMinutes     
-    ) GuardianAccountAbstraction(initialOwner, broadcaster, recovery, timeLockPeriodInMinutes) {
-        require(timeLockPeriodInMinutes >= MIN_TIMELOCK_PERIOD, "Time lock period must be at least 1 day (1440 minutes)");
-        require(timeLockPeriodInMinutes <= MAX_TIMELOCK_PERIOD, "Time lock period must be less than 90 days (129600 minutes)");
+    ) public override initializer {
+        // Initialize GuardianAccountAbstraction
+        super.initialize(initialOwner, broadcaster, recovery, timeLockPeriodInMinutes);
+        if (timeLockPeriodInMinutes < MIN_TIMELOCK_PERIOD) revert SharedValidationLibrary.InvalidTimeLockPeriod(timeLockPeriodInMinutes);
+        if (timeLockPeriodInMinutes > MAX_TIMELOCK_PERIOD) revert SharedValidationLibrary.InvalidTimeLockPeriod(timeLockPeriodInMinutes);
         
         // Add operation types with human-readable names
         MultiPhaseSecureOperation.ReadableOperationType memory ethWithdraw = MultiPhaseSecureOperation.ReadableOperationType({
@@ -93,8 +96,8 @@ contract SimpleVault is GuardianAccountAbstraction {
      * @param amount Amount of ETH to withdraw
      */
     function withdrawEthRequest(address to, uint256 amount) public onlyOwner returns (MultiPhaseSecureOperation.TxRecord memory) {
-        require(to != address(0), "Invalid recipient");
-        require(amount <= getEthBalance(), "Insufficient balance");
+        SharedValidationLibrary.validateNotZeroAddress(to);
+        if (amount > getEthBalance()) revert SharedValidationLibrary.OperationNotSupported("Insufficient balance");
 
         bytes memory executionOptions = MultiPhaseSecureOperation.createStandardExecutionOptions(
             WITHDRAW_ETH_SELECTOR,
@@ -112,7 +115,7 @@ contract SimpleVault is GuardianAccountAbstraction {
             executionOptions     
         );
 
-        addOperation(txRecord);
+        // Operation is automatically handled by MultiPhaseSecureOperation
         return txRecord;
     }
 
@@ -123,9 +126,9 @@ contract SimpleVault is GuardianAccountAbstraction {
      * @param amount Amount of tokens to withdraw
      */
     function withdrawTokenRequest(address token, address to, uint256 amount) public onlyOwner returns (MultiPhaseSecureOperation.TxRecord memory) {
-        require(token != address(0), "Invalid token");
-        require(to != address(0), "Invalid recipient");
-        require(amount <= getTokenBalance(token), "Insufficient balance");
+        SharedValidationLibrary.validateNotZeroAddress(token);
+        SharedValidationLibrary.validateNotZeroAddress(to);
+        if (amount > getTokenBalance(token)) revert SharedValidationLibrary.OperationNotSupported("Insufficient balance");
 
         bytes memory executionOptions = MultiPhaseSecureOperation.createStandardExecutionOptions(
             WITHDRAW_TOKEN_SELECTOR,
@@ -143,7 +146,7 @@ contract SimpleVault is GuardianAccountAbstraction {
             executionOptions
         );
 
-        addOperation(txRecord);
+        // Operation is automatically handled by MultiPhaseSecureOperation
         return txRecord;
     }
 
@@ -189,7 +192,7 @@ contract SimpleVault is GuardianAccountAbstraction {
      * @param amount Amount to withdraw
      */
     function executeWithdrawEth(address payable to, uint256 amount) external {
-        require(msg.sender == address(this), "Only callable by contract itself");
+        SharedValidationLibrary.validateInternalCall(address(this));
         _withdrawEth(to, amount);
     }
 
@@ -200,7 +203,7 @@ contract SimpleVault is GuardianAccountAbstraction {
      * @param amount Amount to withdraw
      */
     function executeWithdrawToken(address token, address to, uint256 amount) external {
-        require(msg.sender == address(this), "Only callable by contract itself");
+        SharedValidationLibrary.validateInternalCall(address(this));
         _withdrawToken(token, to, amount);
     }
 
@@ -237,6 +240,7 @@ contract SimpleVault is GuardianAccountAbstraction {
         MultiPhaseSecureOperation.MetaTxParams memory params = createMetaTxParams(
             address(this),
             this.approveWithdrawalWithMetaTx.selector,
+            MultiPhaseSecureOperation.TxAction.EXECUTE_META_APPROVE,
             metaTxParams.deadline,
             metaTxParams.maxGasPrice,
             owner()
@@ -246,13 +250,14 @@ contract SimpleVault is GuardianAccountAbstraction {
         return generateUnsignedMetaTransactionForExisting(txId, params);
     }
 
+
     /**
      * @dev Internal function to update the timelock period with validation
      * @param newTimeLockPeriodInMinutes The new timelock period in minutes
      */
     function _updateTimeLockPeriod(uint256 newTimeLockPeriodInMinutes) internal virtual override {
-        require(newTimeLockPeriodInMinutes >= MIN_TIMELOCK_PERIOD, "Time lock period must be at least 1 day (1440 minutes)");
-        require(newTimeLockPeriodInMinutes <= MAX_TIMELOCK_PERIOD, "Time lock period must be less than 90 days (129600 minutes)");
+        if (newTimeLockPeriodInMinutes < MIN_TIMELOCK_PERIOD) revert SharedValidationLibrary.InvalidTimeLockPeriod(newTimeLockPeriodInMinutes);
+        if (newTimeLockPeriodInMinutes > MAX_TIMELOCK_PERIOD) revert SharedValidationLibrary.InvalidTimeLockPeriod(newTimeLockPeriodInMinutes);
         super._updateTimeLockPeriod(newTimeLockPeriodInMinutes);
     }
 }

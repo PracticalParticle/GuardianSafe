@@ -2,12 +2,13 @@
 pragma solidity ^0.8.2;
 
 // OpenZeppelin imports
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 // Particle imports
 import "../../GuardianAccountAbstraction.sol";
+import "../../lib/SharedValidationLibrary.sol";
 
 /**
  * @title SimpleRWA20
@@ -15,7 +16,7 @@ import "../../GuardianAccountAbstraction.sol";
  * Uses MultiPhaseSecureOperation for mint and burn operations, restricted to broadcaster.
  * Implements ERC20Burnable for secure burn operations with allowance checks.
  */
-contract SimpleRWA20 is ERC20, ERC20Burnable, GuardianAccountAbstraction {
+contract SimpleRWA20 is ERC20Upgradeable, ERC20BurnableUpgradeable, GuardianAccountAbstraction {
     using SafeERC20 for IERC20;
 
     // Constants for operation types
@@ -41,7 +42,7 @@ contract SimpleRWA20 is ERC20, ERC20Burnable, GuardianAccountAbstraction {
     event TokensBurned(address indexed from, uint256 amount);
 
     /**
-     * @notice Constructor to initialize SimpleRWA20
+     * @notice Initialize SimpleRWA20 (replaces constructor for clone pattern)
      * @param name The name of the token
      * @param symbol The symbol of the token
      * @param initialOwner The initial owner address
@@ -49,19 +50,20 @@ contract SimpleRWA20 is ERC20, ERC20Burnable, GuardianAccountAbstraction {
      * @param recovery The recovery address
      * @param timeLockPeriodInMinutes The timelock period in minutes
      */
-    constructor(
+    function initialize(
         string memory name,
         string memory symbol,
         address initialOwner,
         address broadcaster,
         address recovery,
         uint256 timeLockPeriodInMinutes
-    ) ERC20(name, symbol) GuardianAccountAbstraction(
-        initialOwner,
-        broadcaster,
-        recovery,
-        timeLockPeriodInMinutes
-    ) {
+    ) public initializer {
+        // Initialize ERC20 state variables manually
+        __ERC20_init(name, symbol);
+        
+        // Initialize GuardianAccountAbstraction
+        super.initialize(initialOwner, broadcaster, recovery, timeLockPeriodInMinutes);
+        
         // Add operation types with human-readable names
         MultiPhaseSecureOperation.ReadableOperationType memory mintOp = MultiPhaseSecureOperation.ReadableOperationType({
             operationType: MINT_TOKENS,
@@ -76,9 +78,21 @@ contract SimpleRWA20 is ERC20, ERC20Burnable, GuardianAccountAbstraction {
         MultiPhaseSecureOperation.addOperationType(_getSecureState(), mintOp);
         MultiPhaseSecureOperation.addOperationType(_getSecureState(), burnOp);
         
-        // Add meta-transaction function selector permissions for broadcaster
-        MultiPhaseSecureOperation.addRoleForFunction(_getSecureState(), MINT_TOKENS_META_SELECTOR, MultiPhaseSecureOperation.BROADCASTER_ROLE);
-        MultiPhaseSecureOperation.addRoleForFunction(_getSecureState(), BURN_TOKENS_META_SELECTOR, MultiPhaseSecureOperation.BROADCASTER_ROLE);
+        // Create function schemas for SimpleRWA20-specific functions
+        MultiPhaseSecureOperation.TxAction[] memory mintActions = new MultiPhaseSecureOperation.TxAction[](2);
+        mintActions[0] = MultiPhaseSecureOperation.TxAction.SIGN_META_REQUEST_AND_APPROVE;
+        mintActions[1] = MultiPhaseSecureOperation.TxAction.EXECUTE_META_REQUEST_AND_APPROVE;
+        
+        MultiPhaseSecureOperation.TxAction[] memory burnActions = new MultiPhaseSecureOperation.TxAction[](2);
+        burnActions[0] = MultiPhaseSecureOperation.TxAction.SIGN_META_REQUEST_AND_APPROVE;
+        burnActions[1] = MultiPhaseSecureOperation.TxAction.EXECUTE_META_REQUEST_AND_APPROVE;
+        
+        MultiPhaseSecureOperation.createFunctionSchema(_getSecureState(), "mintWithMetaTx", MINT_TOKENS_META_SELECTOR, MINT_TOKENS, mintActions);
+        MultiPhaseSecureOperation.createFunctionSchema(_getSecureState(), "burnWithMetaTx", BURN_TOKENS_META_SELECTOR, BURN_TOKENS, burnActions);
+        
+        // Add function permissions to broadcaster role
+        MultiPhaseSecureOperation.addFunctionToRole(_getSecureState(), MultiPhaseSecureOperation.BROADCASTER_ROLE, MINT_TOKENS_META_SELECTOR, mintActions);
+        MultiPhaseSecureOperation.addFunctionToRole(_getSecureState(), MultiPhaseSecureOperation.BROADCASTER_ROLE, BURN_TOKENS_META_SELECTOR, burnActions);
     }
 
     /**
@@ -119,7 +133,7 @@ contract SimpleRWA20 is ERC20, ERC20Burnable, GuardianAccountAbstraction {
         uint256 amount,
         TokenMetaTxParams memory params
     ) public view returns (MultiPhaseSecureOperation.MetaTransaction memory) {
-        super._validateNotZeroAddress(to);
+        SharedValidationLibrary.validateNotZeroAddress(to);
         
         return _generateUnsignedTokenMetaTx(
             to,
@@ -143,8 +157,8 @@ contract SimpleRWA20 is ERC20, ERC20Burnable, GuardianAccountAbstraction {
         uint256 amount,
         TokenMetaTxParams memory params
     ) public view returns (MultiPhaseSecureOperation.MetaTransaction memory) {
-        super._validateNotZeroAddress(from);
-        require(balanceOf(from) >= amount, "Insufficient balance");
+        SharedValidationLibrary.validateNotZeroAddress(from);
+        if (balanceOf(from) < amount) revert SharedValidationLibrary.OperationNotSupported("Insufficient balance");
         
         return _generateUnsignedTokenMetaTx(
             from,
@@ -162,7 +176,7 @@ contract SimpleRWA20 is ERC20, ERC20Burnable, GuardianAccountAbstraction {
      * @param amount Amount to mint
      */
     function executeMint(address to, uint256 amount) external {
-        super._validateInternal();
+        SharedValidationLibrary.validateInternalCall(address(this));
         _mint(to, amount);
         emit TokensMinted(to, amount);
     }
@@ -173,7 +187,7 @@ contract SimpleRWA20 is ERC20, ERC20Burnable, GuardianAccountAbstraction {
      * @param amount Amount to burn
      */
     function executeBurn(address from, uint256 amount) external {
-        super._validateInternal();
+        SharedValidationLibrary.validateInternalCall(address(this));
         // Use burnFrom from ERC20Burnable which handles allowance checks
         burnFrom(from, amount);
         emit TokensBurned(from, amount);
@@ -192,16 +206,15 @@ contract SimpleRWA20 is ERC20, ERC20Burnable, GuardianAccountAbstraction {
         bytes32 expectedOperationType
     ) internal returns (MultiPhaseSecureOperation.TxRecord memory) {
         MultiPhaseSecureOperation.checkPermission(_getSecureState(), expectedSelector);
-        require(metaTx.params.handlerSelector == expectedSelector, "Invalid handler selector");
+        SharedValidationLibrary.validateHandlerSelectorMatch(metaTx.params.handlerSelector, expectedSelector);
         
         MultiPhaseSecureOperation.TxRecord memory txRecord = MultiPhaseSecureOperation.requestAndApprove(
             _getSecureState(),
             metaTx
         );
         
-        require(txRecord.params.operationType == expectedOperationType, "Invalid operation type");
-        addOperation(txRecord);
-        finalizeOperation(txRecord);
+        SharedValidationLibrary.validateOperationType(txRecord.params.operationType, expectedOperationType);
+        // Operation is automatically handled by MultiPhaseSecureOperation
         return txRecord;
     }
 
@@ -233,6 +246,7 @@ contract SimpleRWA20 is ERC20, ERC20Burnable, GuardianAccountAbstraction {
         MultiPhaseSecureOperation.MetaTxParams memory metaTxParams = createMetaTxParams(
             address(this),
             metaTxSelector,
+            MultiPhaseSecureOperation.TxAction.EXECUTE_META_REQUEST_AND_APPROVE,
             params.deadline,
             params.maxGasPrice,
             owner()
@@ -250,6 +264,7 @@ contract SimpleRWA20 is ERC20, ERC20Burnable, GuardianAccountAbstraction {
             metaTxParams
         );
     }
+
 
     /**
      * @dev Hook that is called during any token transfer
