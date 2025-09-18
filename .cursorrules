@@ -384,6 +384,8 @@ event OperationRequested(uint256 indexed txId, bytes32 indexed operationType, ui
  * - Multi-Phase Security Operations [Time-Lock Security]
  * - Dynamic RBAC Implementation [Role-Based Access Control]
  * - TypeScript SDK Development [Client-Side Integration]
+ * - Truffle Development Platform Standards [Contract Size Optimization]
+ * - Contract Size Monitoring with npm run compile:truffle:size [Gas Efficiency]
  */
 ```
 
@@ -450,6 +452,15 @@ rule SecurityAudits {
     external_audit before_deployment; // [4]
     automatic_scanning continuous;
 }
+
+// Truffle Development Platform Rules
+rule TruffleCompilation {
+    platform = "Truffle"; // [Primary Development Platform]
+    compilation_check = "npm run compile:truffle:size";
+    contract_size_limit = "24KB"; // [Ethereum Mainnet Limit]
+    optimization_enabled = true;
+    bytecode_verification = required;
+}
 ```
 
 This ruleset enforces:  
@@ -457,6 +468,54 @@ This ruleset enforces:
 - 95%+ test coverage with fuzzing requirements[5]  
 - Third-party audits before mainnet deployment[4]  
 - Continuous security monitoring post-deployment[6]
+- Truffle as primary development platform with size optimization[Contract Efficiency]
+- Contract size monitoring with `npm run compile:truffle:size` validation[Gas Optimization]
+
+## Truffle Development Platform Standards
+
+```solidity
+// SECTION 13: TRUFFLE DEVELOPMENT WORKFLOW
+// Sources: [Truffle Best Practices][Contract Size Optimization]
+
+// Rule 13.1: Truffle Compilation Standards
+contract TruffleOptimized {
+    // Always run: npm run compile:truffle:size
+    // Verify: Contract size < 24KB (Ethereum mainnet limit)
+    // Check: No compilation errors or warnings
+    
+    // Use Truffle's built-in optimization
+    // pragma solidity ^0.8.0;
+    // optimizer: { enabled: true, runs: 200 }
+}
+
+// Rule 13.2: Contract Size Optimization Patterns
+library SizeOptimization {
+    // Use libraries for reusable code
+    // Minimize storage variables
+    // Use packed structs where possible
+    // Implement custom errors instead of strings
+    
+    struct PackedData {
+        uint128 value1; // Packed into single slot
+        uint128 value2; // Packed into single slot
+    }
+    
+    // Use events instead of storage for historical data
+    event OptimizedEvent(uint256 indexed id, bytes32 data);
+}
+
+// Rule 13.3: Truffle Testing Integration
+contract TruffleTestSuite {
+    // Use Truffle's testing framework
+    // Implement size-aware testing
+    // Verify deployment gas costs
+    
+    function testContractSize() public {
+        // Verify contract compiles under size limit
+        // Check gas optimization effectiveness
+    }
+}
+```
 
 ## Implementation Guidance
 
@@ -472,3 +531,6 @@ This ruleset enforces:
 10. Create type-safe SDK interfaces with proper error handling[1][2]  
 11. Write comprehensive tests with fuzzing and invariant checking[5][6]  
 12. Document all functions with NatSpec and security annotations[1][5]
+13. **Always run `npm run compile:truffle:size` before deployment**[Contract Size Optimization]
+14. **Maintain contract size under 24KB limit**[Gas Efficiency]
+15. **Use Truffle as primary development and testing platform**[Development Workflow]
