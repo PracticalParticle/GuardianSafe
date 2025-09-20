@@ -2,23 +2,114 @@
 
 {{{natspec.dev}}}
 
-{{#each ownFunctions}}
-## {{name}}
+{{#if natspec.author}}
+**Author:** {{natspec.author}}
+{{/if}}
+
+{{#if natspec.notice}}
+**Notice:** {{natspec.notice}}
+{{/if}}
+
+{{#if natspec.custom.security-contact}}
+**Security Contact:** {{natspec.custom.security-contact}}
+{{/if}}
+
+## Functions
+
+{{#each functions}}
+### {{name}}
+
+```solidity
+function {{name}}({{#each params}}{{type}} {{name}}{{#unless @last}}, {{/unless}}{{/each}}) {{visibility}}{{#if stateMutability}} {{stateMutability}}{{/if}}{{#if returns}} returns ({{#each returns}}{{type}}{{#unless @last}}, {{/unless}}{{/each}}){{/if}}
+```
 
 {{{natspec.dev}}}
 
 {{#if natspec.params}}
-### Parameters:
+**Parameters:**
 {{#each natspec.params}}
-- `{{param}}`: {{description}}
+- `{{param}}` ({{type}}): {{description}}
 {{/each}}
 {{/if}}
 
 {{#if natspec.returns}}
-### Returns:
+**Returns:**
 {{#each natspec.returns}}
 - {{description}}
 {{/each}}
 {{/if}}
+
+{{#if natspec.custom.security}}
+**Security:** {{natspec.custom.security}}
+{{/if}}
+
+---
+
+{{/each}}
+
+## Events
+
+{{#each events}}
+### {{name}}
+
+```solidity
+event {{name}}({{#each params}}{{type}} {{name}}{{#unless @last}}, {{/unless}}{{/each}})
+```
+
+{{{natspec.dev}}}
+
+{{#if natspec.params}}
+**Parameters:**
+{{#each natspec.params}}
+- `{{param}}` ({{type}}): {{description}}
+{{/each}}
+{{/if}}
+
+---
+
+{{/each}}
+
+## Structs
+
+{{#each structs}}
+### {{name}}
+
+```solidity
+struct {{name}} {
+{{#each members}}
+    {{type}} {{name}};
+{{/each}}
+}
+```
+
+{{{natspec.dev}}}
+
+{{#if natspec.params}}
+**Members:**
+{{#each natspec.params}}
+- `{{param}}` ({{type}}): {{description}}
+{{/each}}
+{{/if}}
+
+---
+
+{{/each}}
+
+## Enums
+
+{{#each enums}}
+### {{name}}
+
+```solidity
+enum {{name}} {
+{{#each members}}
+    {{name}}{{#unless @last}},{{/unless}}
+{{/each}}
+}
+```
+
+{{{natspec.dev}}}
+
+---
 
 {{/each}}

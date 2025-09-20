@@ -7,6 +7,8 @@
 ### Dev Tools ###
 node_modules/
 build/
+artifacts/
+cache/
 
 ### VS Code ###
 .vscode/
