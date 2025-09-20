@@ -109,13 +109,14 @@ contract GuardianSafe is GuardianAccountAbstraction, ITransactionGuard {
         address initialOwner,
         address broadcaster,
         address recovery,
-        uint256 timeLockPeriodInMinutes
+        uint256 timeLockPeriodInMinutes,
+        address eventForwarder
     ) public initializer {
         SharedValidationLibrary.validateNotZeroAddress(_safe);
         safe = ISafe(_safe);
 
         // Initialize GuardianAccountAbstraction
-        super.initialize(initialOwner, broadcaster, recovery, timeLockPeriodInMinutes);
+        super.initialize(initialOwner, broadcaster, recovery, timeLockPeriodInMinutes, eventForwarder);
 
         // Initialize operation type
         MultiPhaseSecureOperation.addOperationType(_getSecureState(), MultiPhaseSecureOperation.ReadableOperationType({

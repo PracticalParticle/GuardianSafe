@@ -80,12 +80,14 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @param broadcaster The broadcaster address
      * @param recovery The recovery address
      * @param timeLockPeriodInMinutes The timelock period in minutes
+     * @param eventForwarder The event forwarder address 
      */
     function initialize(
         address initialOwner,
         address broadcaster,
         address recovery,
-        uint256 timeLockPeriodInMinutes    
+        uint256 timeLockPeriodInMinutes,    
+        address eventForwarder
     ) public virtual initializer {
         __ERC165_init();
         
@@ -93,6 +95,8 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
         
         // Load definitions directly from SecureOwnableDefinitions library
         SecureOwnableDefinitions.loadDefinitionContract(_secureState);
+
+        _secureState.setEventForwarder(eventForwarder);
     }
 
     // Ownership Management

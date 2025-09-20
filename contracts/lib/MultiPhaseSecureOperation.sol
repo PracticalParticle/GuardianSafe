@@ -10,6 +10,7 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./IDefinitionContract.sol";
 import "./SharedValidationLibrary.sol";
 import "./MultiPhaseSecureOperationDefinitions.sol";
+import "./IEventForwarder.sol";
 
 /**
  * @title MultiPhaseSecureOperation
@@ -171,6 +172,9 @@ library MultiPhaseSecureOperation {
         
         // ============ META-TRANSACTION SUPPORT ============
         mapping(address => uint256) signerNonces;
+        
+        // ============ EVENT FORWARDING ============
+        address eventForwarder;
     }
 
     bytes32 constant OWNER_ROLE = keccak256(bytes("OWNER_ROLE"));
@@ -182,12 +186,7 @@ library MultiPhaseSecureOperation {
     bytes32 private constant DOMAIN_SEPARATOR_TYPE_HASH = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
 
 
-    event RequestedTx(uint256 indexed txId, uint256 releaseTime, address target, ExecutionType executionType, bytes executionOptions);
-    event TxApproved(uint256 indexed txId);
-    event TxCancelled(uint256 indexed txId);
-    event TxExecuted(uint256 indexed txId, bool success, bytes result);
-    event PaymentUpdated(uint256 indexed txId, address recipient, uint256 nativeAmount, uint256 erc20Amount);
-    event PaymentExecuted(uint256 indexed txId, bool success, bytes result);
+    event TransactionEvent(TxRecord txRecord, string triggerFunc, bytes decodedParams);
 
     // ============ SYSTEM STATE FUNCTIONS ============
 
@@ -299,7 +298,7 @@ library MultiPhaseSecureOperation {
         // Add to pending transactions list
         addToPendingTransactionsList(self, txRequestRecord.txId);
 
-        emit RequestedTx(txRequestRecord.txId, txRequestRecord.releaseTime, txRequestRecord.params.target, txRequestRecord.params.executionType, txRequestRecord.params.executionOptions);
+        logTxEvent(self, txRequestRecord.txId, MultiPhaseSecureOperationDefinitions.TX_REQUEST_SELECTOR);
         
         return txRequestRecord;
     }
@@ -328,9 +327,7 @@ library MultiPhaseSecureOperation {
         // Remove from pending transactions list
         removeFromPendingTransactionsList(self, txId);
         
-        emit TxApproved(txId);
-        emit TxExecuted(txId, success, result);
-        
+        logTxEvent(self, txId, MultiPhaseSecureOperationDefinitions.TX_DELAYED_APPROVAL_SELECTOR);
         return self.txRecords[txId];
     }
 
@@ -349,7 +346,7 @@ library MultiPhaseSecureOperation {
         // Remove from pending transactions list
         removeFromPendingTransactionsList(self, txId);
         
-        emit TxCancelled(txId);
+        logTxEvent(self, txId, MultiPhaseSecureOperationDefinitions.TX_CANCELLATION_SELECTOR);
         
         return self.txRecords[txId];
     }
@@ -372,7 +369,7 @@ library MultiPhaseSecureOperation {
         // Remove from pending transactions list
         removeFromPendingTransactionsList(self, txId);
         
-        emit TxCancelled(txId);
+        logTxEvent(self, txId, MultiPhaseSecureOperationDefinitions.META_TX_CANCELLATION_SELECTOR);
         
         return self.txRecords[txId];
     }
@@ -403,8 +400,7 @@ library MultiPhaseSecureOperation {
         // Remove from pending transactions list
         removeFromPendingTransactionsList(self, txId);
         
-        emit TxApproved(txId);
-        emit TxExecuted(txId, success, result);
+        logTxEvent(self, txId, MultiPhaseSecureOperationDefinitions.META_TX_APPROVAL_SELECTOR);
         
         return self.txRecords[txId];
     }
@@ -549,6 +545,32 @@ library MultiPhaseSecureOperation {
     }
 
     /**
+    * @dev Generic function to extract decoded parameters from any execution type
+    * @param txRecord The transaction record
+    * @return decodedParams The decoded parameters as bytes
+    */
+    function extractDecodedParams(TxRecord memory txRecord) public pure returns (bytes memory) {
+        if (txRecord.params.executionType == ExecutionType.STANDARD) {
+            // For STANDARD: Extract the params field from StandardExecutionOptions
+            StandardExecutionOptions memory options = abi.decode(
+                txRecord.params.executionOptions, 
+                (StandardExecutionOptions)
+            );
+            return options.params; // This is already the decoded parameters!
+        } else if (txRecord.params.executionType == ExecutionType.RAW) {
+            // For RAW: Return the raw transaction data
+            RawExecutionOptions memory options = abi.decode(
+                txRecord.params.executionOptions, 
+                (RawExecutionOptions)
+            );
+            return options.rawTxData;
+        } else {
+            // For NONE or other types: Return empty bytes
+            return new bytes(0);
+        }
+    }
+
+    /**
      * @notice Creates a new transaction record with basic fields populated
      * @dev Initializes a TxRecord struct with the provided parameters and default values
      * @param self The SecureOperationState to reference for txId and timelock
@@ -642,7 +664,7 @@ library MultiPhaseSecureOperation {
            
         self.txRecords[txId].payment = paymentDetails;
         
-        emit PaymentUpdated(txId, paymentDetails.recipient, paymentDetails.nativeTokenAmount, paymentDetails.erc20TokenAmount);
+        logTxEvent(self, txId, MultiPhaseSecureOperationDefinitions.UPDATE_PAYMENT_SELECTOR);
     }
 
     // ============ ROLE-BASED ACCESS CONTROL FUNCTIONS ============
@@ -1304,6 +1326,54 @@ library MultiPhaseSecureOperation {
             maxGasPrice: maxGasPrice,
             signer: signer
         });
+    }
+
+    // ============ EVENT FUNCTIONS ============
+
+    /**
+     * @dev Logs an event by emitting TransactionEvent and forwarding to event forwarder
+     * @param self The SecureOperationState
+     * @param txId The transaction ID
+     * @param functionSelector The function selector to get the function name from
+     */
+    function logTxEvent(
+        SecureOperationState storage self,
+        uint256 txId,
+        bytes4 functionSelector
+    ) public {
+        TxRecord memory txRecord = self.txRecords[txId];
+        string memory functionName = self.functions[functionSelector].functionName;
+        
+        // Validate that function exists
+        if (bytes(functionName).length == 0) {
+            revert SharedValidationLibrary.FunctionDoesNotExist(functionSelector);
+        }
+
+        bytes memory decodedParams = extractDecodedParams(txRecord);
+        
+        // Emit TransactionEvent
+        emit TransactionEvent(txRecord, functionName, decodedParams);
+        
+        // Forward event to event forwarder
+        if (self.eventForwarder != address(0)) {
+            try IEventForwarder(self.eventForwarder).forwardTxEvent(txRecord, functionName, decodedParams) {
+                // Event forwarded successfully
+            } catch {
+                // Forwarding failed, continue execution
+            }
+        }
+    }
+
+    /**
+     * @dev Set the event forwarder for this specific instance
+     * @param self The SecureOperationState
+     * @param forwarder The event forwarder address
+     */
+    function setEventForwarder(
+        SecureOperationState storage self,
+        address forwarder
+    ) public {
+        self.eventForwarder = forwarder;
     }
 
 }

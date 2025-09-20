@@ -48,15 +48,17 @@ abstract contract DynamicRBAC is Initializable, SecureOwnable {
      * @param broadcaster The broadcaster address
      * @param recovery The recovery address
      * @param timeLockPeriodInMinutes The timelock period in minutes
+     * @param eventForwarder The event forwarder address 
      */
     function initialize(
         address initialOwner,
         address broadcaster,
         address recovery,
-        uint256 timeLockPeriodInMinutes
+        uint256 timeLockPeriodInMinutes,
+        address eventForwarder
     ) public virtual override initializer {
         // Initialize SecureOwnable
-        SecureOwnable.initialize(initialOwner, broadcaster, recovery, timeLockPeriodInMinutes);
+        SecureOwnable.initialize(initialOwner, broadcaster, recovery, timeLockPeriodInMinutes, eventForwarder);
         
         // Load DynamicRBAC-specific definitions
         DynamicRBACDefinitions.loadDefinitionContract(_getSecureState());

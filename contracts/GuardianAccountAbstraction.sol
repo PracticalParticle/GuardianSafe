@@ -14,18 +14,21 @@ contract GuardianAccountAbstraction is SecureOwnable {
      * @param broadcaster The broadcaster address
      * @param recovery The recovery address
      * @param timeLockPeriodInMinutes The timelock period in minutes
+     * @param eventForwarder The event forwarder address (optional)
      */
     function initialize(
         address initialOwner,
         address broadcaster,
         address recovery,
-        uint256 timeLockPeriodInMinutes      
+        uint256 timeLockPeriodInMinutes,
+        address eventForwarder   
     ) public virtual override initializer {
         super.initialize(
             initialOwner,
             broadcaster,
             recovery,
-            timeLockPeriodInMinutes      
+            timeLockPeriodInMinutes,
+            eventForwarder      
         );
         // add your initialization logic here
     }

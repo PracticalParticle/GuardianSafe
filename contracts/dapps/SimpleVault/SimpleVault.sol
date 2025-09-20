@@ -47,10 +47,11 @@ contract SimpleVault is GuardianAccountAbstraction {
         address initialOwner,
         address broadcaster,
         address recovery,
-        uint256 timeLockPeriodInMinutes     
+        uint256 timeLockPeriodInMinutes,
+        address eventForwarder
     ) public override initializer {
         // Initialize GuardianAccountAbstraction
-        super.initialize(initialOwner, broadcaster, recovery, timeLockPeriodInMinutes);
+        super.initialize(initialOwner, broadcaster, recovery, timeLockPeriodInMinutes, eventForwarder);
         if (timeLockPeriodInMinutes < MIN_TIMELOCK_PERIOD) revert SharedValidationLibrary.InvalidTimeLockPeriod(timeLockPeriodInMinutes);
         if (timeLockPeriodInMinutes > MAX_TIMELOCK_PERIOD) revert SharedValidationLibrary.InvalidTimeLockPeriod(timeLockPeriodInMinutes);
         

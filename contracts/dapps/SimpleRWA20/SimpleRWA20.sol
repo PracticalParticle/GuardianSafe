@@ -56,13 +56,14 @@ contract SimpleRWA20 is ERC20Upgradeable, ERC20BurnableUpgradeable, GuardianAcco
         address initialOwner,
         address broadcaster,
         address recovery,
-        uint256 timeLockPeriodInMinutes
+        uint256 timeLockPeriodInMinutes,
+        address eventForwarder
     ) public initializer {
         // Initialize ERC20 state variables manually
         __ERC20_init(name, symbol);
         
         // Initialize GuardianAccountAbstraction
-        super.initialize(initialOwner, broadcaster, recovery, timeLockPeriodInMinutes);
+        super.initialize(initialOwner, broadcaster, recovery, timeLockPeriodInMinutes, eventForwarder);
         
         // Add operation types with human-readable names
         MultiPhaseSecureOperation.ReadableOperationType memory mintOp = MultiPhaseSecureOperation.ReadableOperationType({
