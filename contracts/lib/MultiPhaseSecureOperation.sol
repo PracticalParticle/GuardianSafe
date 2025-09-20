@@ -908,6 +908,7 @@ library MultiPhaseSecureOperation {
         TxAction[] memory supportedActions
     ) public {
         SharedValidationLibrary.validateFunctionNew(self.functions[functionSelector].functionSelector);
+        if (self.functions[functionSelector].functionSelector != bytes4(0)) {
         self.functions[functionSelector] = FunctionSchema({
             functionName: functionName,
             functionSelector: functionSelector,
