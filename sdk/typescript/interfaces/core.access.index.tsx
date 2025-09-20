@@ -108,14 +108,59 @@ export interface ISecureOwnable {
   ): Promise<MetaTransaction>;
 
   // Getters
-  getOperationHistory(): Promise<TxRecord[]>;
-  getOperation(txId: bigint): Promise<TxRecord>;
+  getTransactionHistory(fromTxId: bigint, toTxId: bigint): Promise<TxRecord[]>;
+  getTransaction(txId: bigint): Promise<TxRecord>;
+  getPendingTransactions(): Promise<bigint[]>;
   getBroadcaster(): Promise<Address>;
   getRecoveryAddress(): Promise<Address>;
   getTimeLockPeriodInMinutes(): Promise<bigint>;
   owner(): Promise<Address>;
 
   // Operation Type Support
-  getSupportedOperationTypes(): Promise<Array<{ operationType: Hex; name: string }>>;
+  getSupportedOperationTypes(): Promise<Hex[]>;
+  getSupportedRoles(): Promise<Hex[]>;
+  getSupportedFunctions(): Promise<Hex[]>;
   isOperationTypeSupported(operationType: Hex): Promise<boolean>;
+
+  // Interface Support
+  supportsInterface(interfaceId: Hex): Promise<boolean>;
+}
+
+/**
+ * Interface for DynamicRBAC contract methods
+ */
+export interface IDynamicRBAC {
+  // Role Management Functions
+  createRole(roleName: string, maxWallets: bigint, options: TransactionOptions): Promise<TransactionResult>;
+  updateRole(roleHash: Hex, newRoleName: string, newMaxWallets: bigint, options: TransactionOptions): Promise<TransactionResult>;
+  deleteRole(roleHash: Hex, options: TransactionOptions): Promise<TransactionResult>;
+
+  // Wallet Management Functions
+  addWalletToRole(roleHash: Hex, wallet: Address, options: TransactionOptions): Promise<TransactionResult>;
+  removeWalletFromRole(roleHash: Hex, wallet: Address, options: TransactionOptions): Promise<TransactionResult>;
+  replaceWalletInRole(roleHash: Hex, newWallet: Address, oldWallet: Address, options: TransactionOptions): Promise<TransactionResult>;
+
+  // Permission Management Functions
+  addFunctionPermissionToRole(roleHash: Hex, functionSelector: Hex, action: TxAction, options: TransactionOptions): Promise<TransactionResult>;
+  removeFunctionPermissionFromRole(roleHash: Hex, functionSelector: Hex, options: TransactionOptions): Promise<TransactionResult>;
+
+  // Query Functions
+  getDynamicRoles(): Promise<Hex[]>;
+  getAllRoles(): Promise<Hex[]>;
+  getRoleInfo(roleHash: Hex): Promise<{
+    roleName: string;
+    maxWallets: bigint;
+    isProtected: boolean;
+    authorizedWallets: Address[];
+  }>;
+  hasRole(roleHash: Hex, wallet: Address): Promise<boolean>;
+  getWalletsInRole(roleHash: Hex): Promise<Address[]>;
+  getRolePermissions(roleHash: Hex): Promise<{
+    functionSelectors: Hex[];
+    actions: TxAction[];
+  }>;
+  roleExists(roleHash: Hex): Promise<boolean>;
+  isRoleProtected(roleHash: Hex): Promise<boolean>;
+  getRoleWalletCount(roleHash: Hex): Promise<bigint>;
+  isRoleAtCapacity(roleHash: Hex): Promise<boolean>;
 }

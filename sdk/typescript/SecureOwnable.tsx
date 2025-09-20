@@ -316,21 +316,30 @@ export class SecureOwnable implements ISecureOwnable {
   }
 
   // Getters
-  async getOperationHistory(): Promise<TxRecord[]> {
+  async getTransactionHistory(fromTxId: bigint, toTxId: bigint): Promise<TxRecord[]> {
     return await this.client.readContract({
       address: this.contractAddress,
       abi: SecureOwnableABIJson,
-      functionName: 'getOperationHistory'
+      functionName: 'getTransactionHistory',
+      args: [fromTxId, toTxId]
     }) as TxRecord[];
   }
 
-  async getOperation(txId: bigint): Promise<TxRecord> {
+  async getTransaction(txId: bigint): Promise<TxRecord> {
     return await this.client.readContract({
       address: this.contractAddress,
       abi: SecureOwnableABIJson,
-      functionName: 'getOperation',
+      functionName: 'getTransaction',
       args: [txId]
     }) as TxRecord;
+  }
+
+  async getPendingTransactions(): Promise<bigint[]> {
+    return await this.client.readContract({
+      address: this.contractAddress,
+      abi: SecureOwnableABIJson,
+      functionName: 'getPendingTransactions'
+    }) as bigint[];
   }
 
   async getBroadcaster(): Promise<Address> {
@@ -365,12 +374,28 @@ export class SecureOwnable implements ISecureOwnable {
     }) as Address;
   }
 
-  async getSupportedOperationTypes(): Promise<Array<{ operationType: Hex; name: string }>> {
+  async getSupportedOperationTypes(): Promise<Hex[]> {
     return await this.client.readContract({
       address: this.contractAddress,
       abi: SecureOwnableABIJson,
       functionName: 'getSupportedOperationTypes'
-    }) as Array<{ operationType: Hex; name: string }>;
+    }) as Hex[];
+  }
+
+  async getSupportedRoles(): Promise<Hex[]> {
+    return await this.client.readContract({
+      address: this.contractAddress,
+      abi: SecureOwnableABIJson,
+      functionName: 'getSupportedRoles'
+    }) as Hex[];
+  }
+
+  async getSupportedFunctions(): Promise<Hex[]> {
+    return await this.client.readContract({
+      address: this.contractAddress,
+      abi: SecureOwnableABIJson,
+      functionName: 'getSupportedFunctions'
+    }) as Hex[];
   }
 
   async isOperationTypeSupported(operationType: Hex): Promise<boolean> {

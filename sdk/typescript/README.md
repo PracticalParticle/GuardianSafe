@@ -1,0 +1,306 @@
+# Guardian Framework TypeScript SDK
+
+A comprehensive TypeScript SDK for interacting with the Guardian Framework smart contracts, providing type-safe interfaces for secure multi-phase operations, dynamic role-based access control, and account abstraction.
+
+## Features
+
+- **SecureOwnable**: Multi-phase ownership management with time-locked operations
+- **DynamicRBAC**: Dynamic role-based access control system
+- **GuardianAccountAbstraction**: Account abstraction with secure operations
+- **Type Safety**: Full TypeScript support with comprehensive type definitions
+- **Viem Integration**: Built on top of Viem for modern Ethereum development
+
+## Installation
+
+```bash
+npm install viem
+```
+
+## Quick Start
+
+```typescript
+import { 
+  SecureOwnable, 
+  DynamicRBAC, 
+  GuardianAccountAbstraction,
+  type Address,
+  type PublicClient,
+  type WalletClient,
+  type Chain
+} from './index';
+
+// Initialize clients (using your preferred provider)
+const publicClient: PublicClient = createPublicClient({...});
+const walletClient: WalletClient = createWalletClient({...});
+const chain: Chain = mainnet; // or your target chain
+
+// Initialize SDK classes
+const secureOwnable = new SecureOwnable(
+  publicClient,
+  walletClient,
+  contractAddress,
+  chain
+);
+
+const dynamicRBAC = new DynamicRBAC(
+  publicClient,
+  walletClient,
+  contractAddress,
+  chain
+);
+
+const guardianAA = new GuardianAccountAbstraction(
+  publicClient,
+  walletClient,
+  contractAddress,
+  chain
+);
+```
+
+## SecureOwnable Usage
+
+### Ownership Management
+
+```typescript
+// Request ownership transfer
+const txResult = await secureOwnable.transferOwnershipRequest({
+  from: ownerAddress
+});
+
+// Approve after time lock period
+const approvalResult = await secureOwnable.transferOwnershipDelayedApproval(
+  txId,
+  { from: ownerAddress }
+);
+
+// Cancel ownership transfer
+const cancelResult = await secureOwnable.transferOwnershipCancellation(
+  txId,
+  { from: ownerAddress }
+);
+```
+
+### Meta Transactions
+
+```typescript
+// Create meta transaction parameters
+const metaTxParams = await secureOwnable.createMetaTxParams(
+  handlerContract,
+  handlerSelector,
+  deadline,
+  maxGasPrice,
+  signer
+);
+
+// Generate unsigned meta transaction
+const metaTx = await secureOwnable.generateUnsignedMetaTransactionForNew(
+  requester,
+  target,
+  value,
+  gasLimit,
+  operationType,
+  executionType,
+  executionOptions,
+  metaTxParams
+);
+```
+
+## DynamicRBAC Usage
+
+### Role Management
+
+```typescript
+// Create a new role
+const createResult = await dynamicRBAC.createRole(
+  "ADMIN_ROLE",
+  5n, // max 5 wallets
+  { from: ownerAddress }
+);
+
+// Update role properties
+const updateResult = await dynamicRBAC.updateRole(
+  roleHash,
+  "UPDATED_ADMIN_ROLE",
+  10n, // new max wallets
+  { from: ownerAddress }
+);
+
+// Delete a role
+const deleteResult = await dynamicRBAC.deleteRole(
+  roleHash,
+  { from: ownerAddress }
+);
+```
+
+### Wallet Management
+
+```typescript
+// Add wallet to role
+const addResult = await dynamicRBAC.addWalletToRole(
+  roleHash,
+  walletAddress,
+  { from: ownerAddress }
+);
+
+// Remove wallet from role
+const removeResult = await dynamicRBAC.removeWalletFromRole(
+  roleHash,
+  walletAddress,
+  { from: ownerAddress }
+);
+
+// Replace wallet in role
+const replaceResult = await dynamicRBAC.replaceWalletInRole(
+  roleHash,
+  newWalletAddress,
+  oldWalletAddress,
+  { from: ownerAddress }
+);
+```
+
+### Permission Management
+
+```typescript
+// Add function permission to role
+const addPermissionResult = await dynamicRBAC.addFunctionPermissionToRole(
+  roleHash,
+  functionSelector,
+  TxAction.EXECUTE_TIME_DELAY_APPROVE,
+  { from: ownerAddress }
+);
+
+// Remove function permission from role
+const removePermissionResult = await dynamicRBAC.removeFunctionPermissionFromRole(
+  roleHash,
+  functionSelector,
+  { from: ownerAddress }
+);
+```
+
+### Query Functions
+
+```typescript
+// Get all dynamic roles
+const dynamicRoles = await dynamicRBAC.getDynamicRoles();
+
+// Get role information
+const roleInfo = await dynamicRBAC.getRoleInfo(roleHash);
+console.log(roleInfo.roleName, roleInfo.maxWallets, roleInfo.isProtected);
+
+// Check if wallet has role
+const hasRole = await dynamicRBAC.hasRole(roleHash, walletAddress);
+
+// Get wallets in role
+const wallets = await dynamicRBAC.getWalletsInRole(roleHash);
+
+// Get role permissions
+const permissions = await dynamicRBAC.getRolePermissions(roleHash);
+```
+
+## GuardianAccountAbstraction Usage
+
+### Initialization
+
+```typescript
+// Initialize the contract
+const initResult = await guardianAA.initialize(
+  initialOwner,
+  broadcaster,
+  recovery,
+  timeLockPeriodInMinutes,
+  { from: deployerAddress }
+);
+```
+
+### Operation Management
+
+```typescript
+// Get operation history
+const history = await guardianAA.getOperationHistory();
+
+// Get specific operation
+const operation = await guardianAA.getOperation(txId);
+
+// Check supported operation types
+const supportedTypes = await guardianAA.getSupportedOperationTypes();
+const isSupported = await guardianAA.isOperationTypeSupported(operationType);
+```
+
+## Types and Constants
+
+### Transaction Actions
+
+```typescript
+import { TxAction } from './types/lib.index';
+
+// Available transaction actions
+TxAction.EXECUTE_TIME_DELAY_REQUEST
+TxAction.EXECUTE_TIME_DELAY_APPROVE
+TxAction.EXECUTE_TIME_DELAY_CANCEL
+TxAction.SIGN_META_REQUEST_AND_APPROVE
+TxAction.SIGN_META_APPROVE
+TxAction.SIGN_META_CANCEL
+TxAction.EXECUTE_META_REQUEST_AND_APPROVE
+TxAction.EXECUTE_META_APPROVE
+TxAction.EXECUTE_META_CANCEL
+```
+
+### Execution Types
+
+```typescript
+import { ExecutionType } from './types/lib.index';
+
+ExecutionType.NONE
+ExecutionType.STANDARD
+ExecutionType.RAW
+```
+
+### Transaction Status
+
+```typescript
+import { TxStatus } from './types/lib.index';
+
+TxStatus.UNDEFINED
+TxStatus.PENDING
+TxStatus.CANCELLED
+TxStatus.COMPLETED
+TxStatus.FAILED
+TxStatus.REJECTED
+```
+
+## Error Handling
+
+All SDK methods throw errors for failed operations. Always wrap SDK calls in try-catch blocks:
+
+```typescript
+try {
+  const result = await secureOwnable.transferOwnershipRequest({
+    from: ownerAddress
+  });
+  console.log('Transaction successful:', result.hash);
+} catch (error) {
+  console.error('Transaction failed:', error);
+}
+```
+
+## Security Considerations
+
+- Always validate addresses and parameters before making transactions
+- Use proper time-lock periods for critical operations
+- Implement proper access control using DynamicRBAC
+- Monitor transaction status and handle failures appropriately
+- Keep private keys secure and never expose them in client-side code
+
+## Contributing
+
+When contributing to the SDK:
+
+1. Follow TypeScript best practices
+2. Add comprehensive type definitions
+3. Include JSDoc comments for all public methods
+4. Test all new functionality thoroughly
+5. Update this README with new features
+
+## License
+
+This SDK is part of the Guardian Framework and follows the same licensing terms.

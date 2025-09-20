@@ -32,17 +32,16 @@ export const FUNCTION_SELECTORS = {
 export type FunctionSelector = typeof FUNCTION_SELECTORS[keyof typeof FUNCTION_SELECTORS];
 
 /**
- * Constants for SecureOwnable events
+ * Constants for DynamicRBAC function selectors
  */
-export const EVENT_TYPES = {
-  OWNERSHIP_TRANSFER_REQUEST: "OwnershipTransferRequest",
-  OWNERSHIP_TRANSFER_CANCELLED: "OwnershipTransferCancelled",
-  OWNERSHIP_TRANSFER_UPDATED: "OwnershipTransferUpdated",
-  BROADCASTER_UPDATE_REQUEST: "BroadcasterUpdateRequest",
-  BROADCASTER_UPDATE_CANCELLED: "BroadcasterUpdateCancelled",
-  BROADCASTER_UPDATED: "BroadcasterUpdated",
-  RECOVERY_ADDRESS_UPDATED: "RecoveryAddressUpdated",
-  TIMELOCK_PERIOD_UPDATED: "TimeLockPeriodUpdated"
+export const DYNAMIC_RBAC_FUNCTION_SELECTORS = {
+  CREATE_ROLE: keccak256(new TextEncoder().encode("createRole(string,uint256)")).slice(0, 10),
+  UPDATE_ROLE: keccak256(new TextEncoder().encode("updateRole(bytes32,string,uint256)")).slice(0, 10),
+  DELETE_ROLE: keccak256(new TextEncoder().encode("deleteRole(bytes32)")).slice(0, 10),
+  ADD_WALLET_TO_ROLE: keccak256(new TextEncoder().encode("addWalletToRole(bytes32,address)")).slice(0, 10),
+  REMOVE_WALLET_FROM_ROLE: keccak256(new TextEncoder().encode("removeWalletFromRole(bytes32,address)")).slice(0, 10),
+  REPLACE_WALLET_IN_ROLE: keccak256(new TextEncoder().encode("replaceWalletInRole(bytes32,address,address)")).slice(0, 10),
+  ADD_FUNCTION_PERMISSION_TO_ROLE: keccak256(new TextEncoder().encode("addFunctionPermissionToRole(bytes32,bytes4,uint8)")).slice(0, 10),
+  REMOVE_FUNCTION_PERMISSION_FROM_ROLE: keccak256(new TextEncoder().encode("removeFunctionPermissionFromRole(bytes32,bytes4)")).slice(0, 10)
 } as const;
 
-export type EventType = typeof EVENT_TYPES[keyof typeof EVENT_TYPES];

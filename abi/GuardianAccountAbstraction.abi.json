@@ -1,12 +1,210 @@
 [
   {
+    "inputs": [
+      {
+        "internalType": "bytes4",
+        "name": "selector",
+        "type": "bytes4"
+      }
+    ],
+    "name": "InvalidHandlerSelector",
+    "type": "error"
+  },
+  {
     "inputs": [],
     "name": "InvalidInitialization",
     "type": "error"
   },
   {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "actualType",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "expectedType",
+        "type": "bytes32"
+      }
+    ],
+    "name": "InvalidOperationType",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "from",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "to",
+        "type": "uint256"
+      }
+    ],
+    "name": "InvalidRange",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "role",
+        "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "roleType",
+        "type": "string"
+      }
+    ],
+    "name": "InvalidRoleAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "newPeriod",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "currentPeriod",
+        "type": "uint256"
+      }
+    ],
+    "name": "NewTimelockSame",
+    "type": "error"
+  },
+  {
     "inputs": [],
     "name": "NotInitializing",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "currentAddress",
+        "type": "address"
+      }
+    ],
+    "name": "NotNewAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "caller",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "contractAddress",
+        "type": "address"
+      }
+    ],
+    "name": "OnlyCallableByContract",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "txId",
+        "type": "uint256"
+      }
+    ],
+    "name": "RequestAlreadyPending",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "caller",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "broadcaster",
+        "type": "address"
+      }
+    ],
+    "name": "RestrictedBroadcaster",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "caller",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      }
+    ],
+    "name": "RestrictedOwner",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "caller",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "recovery",
+        "type": "address"
+      }
+    ],
+    "name": "RestrictedOwnerRecovery",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "caller",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "recovery",
+        "type": "address"
+      }
+    ],
+    "name": "RestrictedRecovery",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "provided",
+        "type": "uint256"
+      }
+    ],
+    "name": "TimeLockPeriodZero",
     "type": "error"
   },
   {
@@ -175,6 +373,11 @@
         "type": "bytes4"
       },
       {
+        "internalType": "enum MultiPhaseSecureOperation.TxAction",
+        "name": "action",
+        "type": "uint8"
+      },
+      {
         "internalType": "uint256",
         "name": "deadline",
         "type": "uint256"
@@ -213,6 +416,11 @@
             "internalType": "bytes4",
             "name": "handlerSelector",
             "type": "bytes4"
+          },
+          {
+            "internalType": "enum MultiPhaseSecureOperation.TxAction",
+            "name": "action",
+            "type": "uint8"
           },
           {
             "internalType": "uint256",
@@ -318,6 +526,11 @@
             "internalType": "bytes4",
             "name": "handlerSelector",
             "type": "bytes4"
+          },
+          {
+            "internalType": "enum MultiPhaseSecureOperation.TxAction",
+            "name": "action",
+            "type": "uint8"
           },
           {
             "internalType": "uint256",
@@ -468,6 +681,11 @@
                 "type": "bytes4"
               },
               {
+                "internalType": "enum MultiPhaseSecureOperation.TxAction",
+                "name": "action",
+                "type": "uint8"
+              },
+              {
                 "internalType": "uint256",
                 "name": "deadline",
                 "type": "uint256"
@@ -569,6 +787,11 @@
             "internalType": "bytes4",
             "name": "handlerSelector",
             "type": "bytes4"
+          },
+          {
+            "internalType": "enum MultiPhaseSecureOperation.TxAction",
+            "name": "action",
+            "type": "uint8"
           },
           {
             "internalType": "uint256",
@@ -719,6 +942,11 @@
                 "type": "bytes4"
               },
               {
+                "internalType": "enum MultiPhaseSecureOperation.TxAction",
+                "name": "action",
+                "type": "uint8"
+              },
+              {
                 "internalType": "uint256",
                 "name": "deadline",
                 "type": "uint256"
@@ -776,6 +1004,84 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "getPendingTransactions",
+    "outputs": [
+      {
+        "internalType": "uint256[]",
+        "name": "",
+        "type": "uint256[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getRecovery",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getSupportedFunctions",
+    "outputs": [
+      {
+        "internalType": "bytes4[]",
+        "name": "",
+        "type": "bytes4[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getSupportedOperationTypes",
+    "outputs": [
+      {
+        "internalType": "bytes32[]",
+        "name": "",
+        "type": "bytes32[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getSupportedRoles",
+    "outputs": [
+      {
+        "internalType": "bytes32[]",
+        "name": "",
+        "type": "bytes32[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getTimeLockPeriodInMinutes",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -783,7 +1089,7 @@
         "type": "uint256"
       }
     ],
-    "name": "getOperation",
+    "name": "getTransaction",
     "outputs": [
       {
         "components": [
@@ -891,8 +1197,19 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "getOperationHistory",
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "fromTxId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "toTxId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getTransactionHistory",
     "outputs": [
       {
         "components": [
@@ -994,76 +1311,6 @@
         "internalType": "struct MultiPhaseSecureOperation.TxRecord[]",
         "name": "",
         "type": "tuple[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getRecoveryAddress",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getSupportedOperationTypes",
-    "outputs": [
-      {
-        "components": [
-          {
-            "internalType": "bytes32",
-            "name": "operationType",
-            "type": "bytes32"
-          },
-          {
-            "internalType": "string",
-            "name": "name",
-            "type": "string"
-          }
-        ],
-        "internalType": "struct MultiPhaseSecureOperation.ReadableOperationType[]",
-        "name": "",
-        "type": "tuple[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getTimeLockPeriodInMinutes",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "operationType",
-        "type": "bytes32"
-      }
-    ],
-    "name": "isOperationTypeSupported",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
       }
     ],
     "stateMutability": "view",
@@ -1227,6 +1474,11 @@
                 "internalType": "bytes4",
                 "name": "handlerSelector",
                 "type": "bytes4"
+              },
+              {
+                "internalType": "enum MultiPhaseSecureOperation.TxAction",
+                "name": "action",
+                "type": "uint8"
               },
               {
                 "internalType": "uint256",
@@ -1617,6 +1869,11 @@
                 "internalType": "bytes4",
                 "name": "handlerSelector",
                 "type": "bytes4"
+              },
+              {
+                "internalType": "enum MultiPhaseSecureOperation.TxAction",
+                "name": "action",
+                "type": "uint8"
               },
               {
                 "internalType": "uint256",
@@ -2118,6 +2375,11 @@
                 "type": "bytes4"
               },
               {
+                "internalType": "enum MultiPhaseSecureOperation.TxAction",
+                "name": "action",
+                "type": "uint8"
+              },
+              {
                 "internalType": "uint256",
                 "name": "deadline",
                 "type": "uint256"
@@ -2506,6 +2768,11 @@
                 "internalType": "bytes4",
                 "name": "handlerSelector",
                 "type": "bytes4"
+              },
+              {
+                "internalType": "enum MultiPhaseSecureOperation.TxAction",
+                "name": "action",
+                "type": "uint8"
               },
               {
                 "internalType": "uint256",
@@ -3032,6 +3299,11 @@
                 "type": "bytes4"
               },
               {
+                "internalType": "enum MultiPhaseSecureOperation.TxAction",
+                "name": "action",
+                "type": "uint8"
+              },
+              {
                 "internalType": "uint256",
                 "name": "deadline",
                 "type": "uint256"
@@ -3326,6 +3598,11 @@
                 "type": "bytes4"
               },
               {
+                "internalType": "enum MultiPhaseSecureOperation.TxAction",
+                "name": "action",
+                "type": "uint8"
+              },
+              {
                 "internalType": "uint256",
                 "name": "deadline",
                 "type": "uint256"
@@ -3494,6 +3771,11 @@
         "internalType": "uint256",
         "name": "timeLockPeriodInMinutes",
         "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "eventForwarder",
+        "type": "address"
       }
     ],
     "name": "initialize",
