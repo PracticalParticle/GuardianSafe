@@ -2,6 +2,7 @@
 pragma solidity ^0.8.2;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
@@ -36,6 +37,7 @@ library MultiPhaseSecureOperation {
     using EnumerableSet for EnumerableSet.UintSet;
     using EnumerableSet for EnumerableSet.Bytes32Set;
     using EnumerableSet for EnumerableSet.AddressSet;
+    using SafeERC20 for IERC20;
 
     enum TxStatus {
         UNDEFINED,
@@ -457,11 +459,7 @@ library MultiPhaseSecureOperation {
             
             // Execute attached payment if transaction was successful
             if (record.payment.recipient != address(0)) {
-                (bool paymentSuccess, bytes memory paymentResult) = executeAttachedPayment(record);
-                if (!paymentSuccess) {
-                    // Revert the entire transaction if payment fails
-                    revert(string(paymentResult));
-                }
+                executeAttachedPayment(record);
             }
         } else {
             record.status = TxStatus.FAILED;
@@ -473,49 +471,33 @@ library MultiPhaseSecureOperation {
     /**
      * @dev Executes the payment attached to a transaction record
      * @param record The transaction record containing payment details
-     * @return A tuple containing the success status and result of the payment execution
      */
-    function executeAttachedPayment(TxRecord memory record) private returns (bool, bytes memory) {
+    function executeAttachedPayment(TxRecord memory record) private {
         PaymentDetails memory payment = record.payment;
-        bool paymentSuccess = true;
-        bytes memory paymentResult = "";
         
         // Execute native token payment if specified
         if (payment.nativeTokenAmount > 0) {
             if (address(this).balance < payment.nativeTokenAmount) {
-                paymentSuccess = false;
-                paymentResult = abi.encode("Insufficient native token balance");
-            } else {
-                (bool success, bytes memory result) = payment.recipient.call{value: payment.nativeTokenAmount}("");
-                if (!success) {
-                    paymentSuccess = false;
-                    paymentResult = result.length > 0 ? result : abi.encode("Native token transfer failed");
-                }
+                revert SharedValidationLibrary.InsufficientBalance(address(this).balance, payment.nativeTokenAmount);
+            }
+            
+            (bool success, bytes memory result) = payment.recipient.call{value: payment.nativeTokenAmount}("");
+            if (!success) {
+                revert SharedValidationLibrary.PaymentFailed(payment.recipient, payment.nativeTokenAmount, result);
             }
         }
         
         // Execute ERC20 token payment if specified
-        if (payment.erc20TokenAmount > 0 && paymentSuccess) {
-            if (payment.erc20TokenAddress == address(0)) {
-                paymentSuccess = false;
-                paymentResult = abi.encode("Invalid token address");
-            } else {
-                IERC20 erc20Token = IERC20(payment.erc20TokenAddress);
-                if (erc20Token.balanceOf(address(this)) < payment.erc20TokenAmount) {
-                    paymentSuccess = false;
-                    paymentResult = abi.encode("Insufficient token balance");
-                } else {
-                    bool success = erc20Token.transfer(payment.recipient, payment.erc20TokenAmount);
-                    if (!success) {
-                        paymentSuccess = false;
-                        paymentResult = abi.encode("ERC20 token transfer failed");
-                    }
-                }
+        if (payment.erc20TokenAmount > 0) {
+            SharedValidationLibrary.validateNotZeroAddress(payment.erc20TokenAddress, "token address");
+            
+            IERC20 erc20Token = IERC20(payment.erc20TokenAddress);
+            if (erc20Token.balanceOf(address(this)) < payment.erc20TokenAmount) {
+                revert SharedValidationLibrary.InsufficientBalance(erc20Token.balanceOf(address(this)), payment.erc20TokenAmount);
             }
+            
+            erc20Token.safeTransfer(payment.recipient, payment.erc20TokenAmount);
         }
-        
-        emit PaymentExecuted(record.txId, paymentSuccess, paymentResult);
-        return (paymentSuccess, paymentResult);
     }
 
     /**
