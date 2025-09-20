@@ -102,6 +102,10 @@ library SharedValidationLibrary {
     error ActionNotSupported(string action, string functionName);
     error InvalidRange(uint256 from, uint256 to);
     
+    // Payment and balance errors with context
+    error InsufficientBalance(uint256 currentBalance, uint256 requiredAmount);
+    error PaymentFailed(address recipient, uint256 amount, bytes reason);
+    
     // ============ ADDRESS VALIDATION FUNCTIONS ============
     
     /**
