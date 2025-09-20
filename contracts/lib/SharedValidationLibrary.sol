@@ -106,6 +106,10 @@ library SharedValidationLibrary {
     error InsufficientBalance(uint256 currentBalance, uint256 requiredAmount);
     error PaymentFailed(address recipient, uint256 amount, bytes reason);
     
+    // Array validation errors with context
+    error ArrayLengthMismatch(uint256 array1Length, uint256 array2Length);
+    error IndexOutOfBounds(uint256 index, uint256 arrayLength);
+    
     // ============ ADDRESS VALIDATION FUNCTIONS ============
     
     /**
@@ -678,5 +682,23 @@ library SharedValidationLibrary {
      */
     function validateBytesNotEmpty(bytes memory data) internal pure {
         if (data.length == 0) revert InvalidSignature(data);
+    }
+    
+    /**
+     * @dev Validates that two arrays have the same length
+     * @param array1Length The length of the first array
+     * @param array2Length The length of the second array
+     */
+    function validateArrayLengthMatch(uint256 array1Length, uint256 array2Length) internal pure {
+        if (array1Length != array2Length) revert ArrayLengthMismatch(array1Length, array2Length);
+    }
+    
+    /**
+     * @dev Validates that an index is within bounds of an array
+     * @param index The index to validate
+     * @param arrayLength The length of the array
+     */
+    function validateIndexInBounds(uint256 index, uint256 arrayLength) internal pure {
+        if (index >= arrayLength) revert IndexOutOfBounds(index, arrayLength);
     }
 }

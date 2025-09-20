@@ -7,9 +7,7 @@ import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/Mes
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 // Local imports
-import "./IDefinitionContract.sol";
 import "./SharedValidationLibrary.sol";
-import "./MultiPhaseSecureOperationDefinitions.sol";
 import "./IEventForwarder.sol";
 
 /**
@@ -148,6 +146,8 @@ library MultiPhaseSecureOperation {
         string name;
     }
 
+    // ============ DEFINITION STRUCTS ============
+
     struct SecureOperationState {
         // ============ SYSTEM STATE ============
         bool initialized;
@@ -180,6 +180,18 @@ library MultiPhaseSecureOperation {
     bytes32 constant OWNER_ROLE = keccak256(bytes("OWNER_ROLE"));
     bytes32 constant BROADCASTER_ROLE = keccak256(bytes("BROADCASTER_ROLE"));
     bytes32 constant RECOVERY_ROLE = keccak256(bytes("RECOVERY_ROLE"));
+
+       // Function Selector Constants for core MultiPhase functions
+    bytes4 public constant TX_REQUEST_SELECTOR = bytes4(keccak256("txRequest(address,address,uint256,uint256,bytes32,uint8,bytes)"));
+    bytes4 public constant TX_DELAYED_APPROVAL_SELECTOR = bytes4(keccak256("txDelayedApproval(uint256)"));
+    bytes4 public constant TX_CANCELLATION_SELECTOR = bytes4(keccak256("txCancellation(uint256)"));
+    bytes4 public constant META_TX_APPROVAL_SELECTOR = bytes4(keccak256("txApprovalWithMetaTx((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes,(address,uint256,address,uint256)),(uint256,address,bytes4,uint256,uint256,uint256,address),bytes,bytes)"));
+    bytes4 public constant META_TX_CANCELLATION_SELECTOR = bytes4(keccak256("txCancellationWithMetaTx((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes,(address,uint256,address,uint256)),(uint256,address,bytes4,uint256,uint256,uint256,address),bytes,bytes)"));
+    bytes4 public constant META_TX_REQUEST_AND_APPROVE_SELECTOR = bytes4(keccak256("requestAndApprove((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes,(address,uint256,address,uint256)),(uint256,address,bytes4,uint256,uint256,uint256,address),bytes,bytes)"));
+    
+    // Payment-related function selectors
+    bytes4 public constant UPDATE_PAYMENT_SELECTOR = bytes4(keccak256("updatePaymentForTransaction(uint256,(address,uint256,address,uint256))"));
+   
 
     // EIP-712 Type Hashes
     bytes32 private constant TYPE_HASH = keccak256("MetaTransaction(TxRecord txRecord,MetaTxParams params,bytes data)TxRecord(uint256 txId,uint256 releaseTime,uint8 status,TxParams params,bytes32 message,bytes result,PaymentDetails payment)TxParams(address requester,address target,uint256 value,uint256 gasLimit,bytes32 operationType,uint8 executionType,bytes executionOptions)MetaTxParams(uint256 chainId,uint256 nonce,address handlerContract,bytes4 handlerSelector,uint8 action,uint256 deadline,uint256 maxGasPrice,address signer)PaymentDetails(address recipient,uint256 nativeTokenAmount,address erc20TokenAddress,uint256 erc20TokenAmount)");
@@ -225,7 +237,7 @@ library MultiPhaseSecureOperation {
         addAuthorizedWalletToRole(self, RECOVERY_ROLE, _recovery);
 
         // Load all definitions from the definition library
-        MultiPhaseSecureOperationDefinitions.loadDefinitionContract(self);
+        // loadDefinitionContract(self);
         
         // Mark as initialized after successful setup
         self.initialized = true;
@@ -275,7 +287,7 @@ library MultiPhaseSecureOperation {
         ExecutionType executionType,
         bytes memory executionOptions
     ) public returns (TxRecord memory) {
-        if (!checkPermissionPermissive(self, MultiPhaseSecureOperationDefinitions.TX_REQUEST_SELECTOR) && !checkPermissionPermissive(self, MultiPhaseSecureOperationDefinitions.META_TX_REQUEST_AND_APPROVE_SELECTOR)) {
+        if (!checkPermissionPermissive(self, TX_REQUEST_SELECTOR) && !checkPermissionPermissive(self, META_TX_REQUEST_AND_APPROVE_SELECTOR)) {
             revert SharedValidationLibrary.NoPermissionExecute(msg.sender, "execute");
         }
         SharedValidationLibrary.validateTargetAddress(target);
@@ -298,7 +310,7 @@ library MultiPhaseSecureOperation {
         // Add to pending transactions list
         addToPendingTransactionsList(self, txRequestRecord.txId);
 
-        logTxEvent(self, txRequestRecord.txId, MultiPhaseSecureOperationDefinitions.TX_REQUEST_SELECTOR);
+        logTxEvent(self, txRequestRecord.txId, TX_REQUEST_SELECTOR);
         
         return txRequestRecord;
     }
@@ -310,7 +322,7 @@ library MultiPhaseSecureOperation {
      * @return The updated TxRecord.
      */
     function txDelayedApproval(SecureOperationState storage self, uint256 txId) public returns (TxRecord memory) {
-        checkPermission(self, MultiPhaseSecureOperationDefinitions.TX_DELAYED_APPROVAL_SELECTOR);
+        checkPermission(self, TX_DELAYED_APPROVAL_SELECTOR);
         SharedValidationLibrary.validatePendingTransaction(uint8(self.txRecords[txId].status));
         SharedValidationLibrary.validateReleaseTime(self.txRecords[txId].releaseTime);
         
@@ -327,7 +339,7 @@ library MultiPhaseSecureOperation {
         // Remove from pending transactions list
         removeFromPendingTransactionsList(self, txId);
         
-        logTxEvent(self, txId, MultiPhaseSecureOperationDefinitions.TX_DELAYED_APPROVAL_SELECTOR);
+        logTxEvent(self, txId, TX_DELAYED_APPROVAL_SELECTOR);
         return self.txRecords[txId];
     }
 
@@ -338,7 +350,7 @@ library MultiPhaseSecureOperation {
      * @return The updated TxRecord.
      */
     function txCancellation(SecureOperationState storage self, uint256 txId) public returns (TxRecord memory) {
-        checkPermission(self, MultiPhaseSecureOperationDefinitions.TX_CANCELLATION_SELECTOR);
+        checkPermission(self, TX_CANCELLATION_SELECTOR);
         SharedValidationLibrary.validatePendingTransaction(uint8(self.txRecords[txId].status));
         
         self.txRecords[txId].status = TxStatus.CANCELLED;
@@ -346,7 +358,7 @@ library MultiPhaseSecureOperation {
         // Remove from pending transactions list
         removeFromPendingTransactionsList(self, txId);
         
-        logTxEvent(self, txId, MultiPhaseSecureOperationDefinitions.TX_CANCELLATION_SELECTOR);
+        logTxEvent(self, txId, TX_CANCELLATION_SELECTOR);
         
         return self.txRecords[txId];
     }
@@ -359,7 +371,7 @@ library MultiPhaseSecureOperation {
      */
     function txCancellationWithMetaTx(SecureOperationState storage self, MetaTransaction memory metaTx) public returns (TxRecord memory) {
         uint256 txId = metaTx.txRecord.txId;
-        checkPermission(self, MultiPhaseSecureOperationDefinitions.META_TX_CANCELLATION_SELECTOR);
+        checkPermission(self, META_TX_CANCELLATION_SELECTOR);
         SharedValidationLibrary.validatePendingTransaction(uint8(self.txRecords[txId].status));
         if (!verifySignature(self, metaTx)) revert SharedValidationLibrary.InvalidSignature(metaTx.signature);
         
@@ -369,7 +381,7 @@ library MultiPhaseSecureOperation {
         // Remove from pending transactions list
         removeFromPendingTransactionsList(self, txId);
         
-        logTxEvent(self, txId, MultiPhaseSecureOperationDefinitions.META_TX_CANCELLATION_SELECTOR);
+        logTxEvent(self, txId, META_TX_CANCELLATION_SELECTOR);
         
         return self.txRecords[txId];
     }
@@ -382,7 +394,7 @@ library MultiPhaseSecureOperation {
      */
     function txApprovalWithMetaTx(SecureOperationState storage self, MetaTransaction memory metaTx) public returns (TxRecord memory) {
         uint256 txId = metaTx.txRecord.txId;
-        checkPermission(self, MultiPhaseSecureOperationDefinitions.META_TX_APPROVAL_SELECTOR);
+        checkPermission(self, META_TX_APPROVAL_SELECTOR);
         SharedValidationLibrary.validatePendingTransaction(uint8(self.txRecords[txId].status));
         if (!verifySignature(self, metaTx)) revert SharedValidationLibrary.InvalidSignature(metaTx.signature);
         
@@ -400,7 +412,7 @@ library MultiPhaseSecureOperation {
         // Remove from pending transactions list
         removeFromPendingTransactionsList(self, txId);
         
-        logTxEvent(self, txId, MultiPhaseSecureOperationDefinitions.META_TX_APPROVAL_SELECTOR);
+        logTxEvent(self, txId, META_TX_APPROVAL_SELECTOR);
         
         return self.txRecords[txId];
     }
@@ -415,7 +427,7 @@ library MultiPhaseSecureOperation {
         SecureOperationState storage self,
         MetaTransaction memory metaTx
     ) public returns (TxRecord memory) {
-        checkPermission(self, MultiPhaseSecureOperationDefinitions.META_TX_REQUEST_AND_APPROVE_SELECTOR);
+        checkPermission(self, META_TX_REQUEST_AND_APPROVE_SELECTOR);
         
         TxRecord memory txRecord = txRequest(
             self,
@@ -659,12 +671,12 @@ library MultiPhaseSecureOperation {
         uint256 txId,
         PaymentDetails memory paymentDetails
     ) public {
-        checkPermission(self, MultiPhaseSecureOperationDefinitions.UPDATE_PAYMENT_SELECTOR);
+        checkPermission(self, UPDATE_PAYMENT_SELECTOR);
         SharedValidationLibrary.validatePendingTransaction(uint8(self.txRecords[txId].status));
            
         self.txRecords[txId].payment = paymentDetails;
         
-        logTxEvent(self, txId, MultiPhaseSecureOperationDefinitions.UPDATE_PAYMENT_SELECTOR);
+        logTxEvent(self, txId, UPDATE_PAYMENT_SELECTOR);
     }
 
     // ============ ROLE-BASED ACCESS CONTROL FUNCTIONS ============
@@ -694,7 +706,7 @@ library MultiPhaseSecureOperation {
         bool isProtected
     ) public {
         bytes32 roleHash = keccak256(bytes(roleName));
-        if (self.roles[roleHash].roleHash != bytes32(0)) revert SharedValidationLibrary.RoleAlreadyExists("role");
+        if (self.roles[roleHash].roleHash != bytes32(0)) revert SharedValidationLibrary.RoleAlreadyExists(roleName);
         
         // Create the role with empty arrays
         self.roles[roleHash].roleName = roleName;
@@ -716,7 +728,7 @@ library MultiPhaseSecureOperation {
         bytes32 roleHash
     ) public {
         // Validate that the role exists
-        if (self.roles[roleHash].roleHash == bytes32(0)) revert SharedValidationLibrary.RoleDoesNotExist("role");
+        if (self.roles[roleHash].roleHash == bytes32(0)) revert SharedValidationLibrary.RoleNameEmpty();
         
         // Security check: Prevent removing protected roles
         if (self.roles[roleHash].isProtected) {
@@ -738,7 +750,7 @@ library MultiPhaseSecureOperation {
      */
     function addAuthorizedWalletToRole(SecureOperationState storage self, bytes32 role, address wallet) public {
         SharedValidationLibrary.validateNotZeroAddress(wallet, "wallet");
-        if (self.roles[role].roleHash == bytes32(0)) revert SharedValidationLibrary.RoleDoesNotExist("role");
+        if (self.roles[role].roleHash == bytes32(0)) revert SharedValidationLibrary.RoleNameEmpty();
         
         Role storage roleData = self.roles[role];
         SharedValidationLibrary.validateWalletLimit(roleData.authorizedWallets.length(), roleData.maxWallets, "role");
@@ -757,7 +769,7 @@ library MultiPhaseSecureOperation {
      * @param oldWallet The old wallet address to remove from the role.
      */
     function updateAuthorizedWalletInRole(SecureOperationState storage self, bytes32 role, address newWallet, address oldWallet) public {
-        if (self.roles[role].roleHash == bytes32(0)) revert SharedValidationLibrary.RoleDoesNotExist("role");
+        if (self.roles[role].roleHash == bytes32(0)) revert SharedValidationLibrary.RoleNameEmpty();
         SharedValidationLibrary.validateNotZeroAddress(newWallet, "new wallet");
         
         // Check if old wallet exists in the role
@@ -779,7 +791,7 @@ library MultiPhaseSecureOperation {
      * @notice Security: Cannot remove the last wallet from a role to prevent empty roles.
      */
     function removeWalletFromRole(SecureOperationState storage self, bytes32 role, address wallet) public {
-        if (self.roles[role].roleHash == bytes32(0)) revert SharedValidationLibrary.RoleDoesNotExist("role");
+        if (self.roles[role].roleHash == bytes32(0)) revert SharedValidationLibrary.RoleNameEmpty();
         
         // Check if wallet exists in the role
         Role storage roleData = self.roles[role];
@@ -800,21 +812,19 @@ library MultiPhaseSecureOperation {
      * @dev Adds a function permission to an existing role.
      * @param self The SecureOperationState to modify.
      * @param roleHash The role hash to add the function permission to.
-     * @param functionSelector The function selector to add permission for.
-     * @param grantedActions The actions granted for this function selector.
+     * @param functionPermission The function permission to add.
      */
     function addFunctionToRole(
         SecureOperationState storage self,
         bytes32 roleHash,
-        bytes4 functionSelector,
-        TxAction[] memory grantedActions
+        FunctionPermission memory functionPermission
     ) public {
-        if (self.roles[roleHash].roleHash == bytes32(0)) revert SharedValidationLibrary.RoleDoesNotExist("role");
-        SharedValidationLibrary.validateFunctionExists(self.functions[functionSelector].functionSelector);
+        if (self.roles[roleHash].roleHash == bytes32(0)) revert SharedValidationLibrary.RoleNameEmpty();
+        SharedValidationLibrary.validateFunctionExists(self.functions[functionPermission.functionSelector].functionSelector);
         
         // Validate that all grantedActions are supported by the function
-        for (uint i = 0; i < grantedActions.length; i++) {
-            if (!isActionSupportedByFunction(self, functionSelector, grantedActions[i])) {
+        for (uint i = 0; i < functionPermission.grantedActions.length; i++) {
+            if (!isActionSupportedByFunction(self, functionPermission.functionSelector, functionPermission.grantedActions[i])) {
                 revert SharedValidationLibrary.ActionNotSupported("action", "function");
             }
         }
@@ -824,18 +834,15 @@ library MultiPhaseSecureOperation {
         // Check if permission already exists
         bool permissionExists = false;
         for (uint i = 0; i < role.functionPermissions.length; i++) {
-            if (role.functionPermissions[i].functionSelector == functionSelector) {
+            if (role.functionPermissions[i].functionSelector == functionPermission.functionSelector) {
                 permissionExists = true;
                 break;
             }
         }
-        if (permissionExists) revert SharedValidationLibrary.FunctionPermissionExists(functionSelector, "role");
+        if (permissionExists) revert SharedValidationLibrary.FunctionPermissionExists(functionPermission.functionSelector, "role");
         
         // If it doesn't exist, add it
-        role.functionPermissions.push(FunctionPermission({
-            functionSelector: functionSelector,
-            grantedActions: grantedActions
-        }));
+        role.functionPermissions.push(functionPermission);
     }
 
     /**
@@ -1060,7 +1067,7 @@ library MultiPhaseSecureOperation {
      */
     function getAuthorizedWalletAt(SecureOperationState storage self, bytes32 roleHash, uint256 index) public view returns (address) {
         Role storage role = self.roles[roleHash];
-        require(role.authorizedWallets.length() > index, "Index out of bounds or role has no authorized wallets");
+        SharedValidationLibrary.validateIndexInBounds(index, role.authorizedWallets.length());
         return role.authorizedWallets.at(index);
     }
 
@@ -1374,6 +1381,51 @@ library MultiPhaseSecureOperation {
         address forwarder
     ) public {
         self.eventForwarder = forwarder;
+    }
+
+    // ============ DEFINITION LOADING FUNCTIONS ============
+
+    /**
+     * @dev Loads definitions directly into a SecureOperationState
+     * This function initializes the secure state with all predefined definitions
+     * @param secureState The SecureOperationState to initialize
+     * @param operationTypes Array of operation type definitions
+     * @param functionSchemas Array of function schema definitions  
+     * @param roleHashes Array of role hashes
+     * @param functionPermissions Array of function permissions (parallel to roleHashes)
+     */
+    function loadDefinitionContract(
+        SecureOperationState storage secureState,
+        ReadableOperationType[] memory operationTypes,
+        FunctionSchema[] memory functionSchemas,
+        bytes32[] memory roleHashes,
+        FunctionPermission[] memory functionPermissions
+    ) public {
+        // Load operation types
+        for (uint256 i = 0; i < operationTypes.length; i++) {
+            addOperationType(secureState, operationTypes[i]);
+        }
+        
+        // Load function schemas
+        for (uint256 i = 0; i < functionSchemas.length; i++) {
+            createFunctionSchema(
+                secureState,
+                functionSchemas[i].functionName,
+                functionSchemas[i].functionSelector,
+                functionSchemas[i].operationType,
+                functionSchemas[i].supportedActions
+            );
+        }
+        
+        // Load role permissions using parallel arrays
+        SharedValidationLibrary.validateArrayLengthMatch(roleHashes.length, functionPermissions.length);
+        for (uint256 i = 0; i < roleHashes.length; i++) {
+            addFunctionToRole(
+                secureState,
+                roleHashes[i],
+                functionPermissions[i]
+            );
+        }
     }
 
 }

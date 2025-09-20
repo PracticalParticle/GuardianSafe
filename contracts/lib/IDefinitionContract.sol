@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
 pragma solidity ^0.8.2;
 
+import "./MultiPhaseSecureOperation.sol";
+
 /**
  * @dev Interface for definition contracts that provide operation types, function schemas, and role permissions
  * 
@@ -17,44 +19,23 @@ interface IDefinitionContract {
      * @dev Returns all operation type definitions
      * @return Array of operation type definitions
      */
-    function getOperationTypes() external pure returns (OperationTypeDefinition[] memory);
+    function getOperationTypes() external pure returns (MultiPhaseSecureOperation.ReadableOperationType[] memory);
     
     /**
      * @dev Returns all function schema definitions
      * @return Array of function schema definitions
      */
-    function getFunctionSchemas() external pure returns (FunctionSchemaDefinition[] memory);
+    function getFunctionSchemas() external pure returns (MultiPhaseSecureOperation.FunctionSchema[] memory);
     
     /**
-     * @dev Returns all role permission definitions
-     * @return Array of role permission definitions
+     * @dev Returns all role hashes
+     * @return Array of role hashes
      */
-    function getRolePermissions() external pure returns (RolePermissionDefinition[] memory);
-}
-
-/**
- * @dev Struct for operation type definitions
- */
-struct OperationTypeDefinition {
-    bytes32 operationType;
-    string name;
-}
-
-/**
- * @dev Struct for function schema definitions
- */
-struct FunctionSchemaDefinition {
-    string functionName;
-    bytes4 functionSelector;
-    bytes32 operationType;
-    uint8[] supportedActions; // Using uint8 array instead of enum array to avoid circular dependency
-}
-
-/**
- * @dev Struct for role permission definitions
- */
-struct RolePermissionDefinition {
-    bytes32 roleHash;
-    bytes4 functionSelector;
-    uint8[] grantedActions; // Using uint8 array instead of enum array to avoid circular dependency
+    function getRoleHashes() external pure returns (bytes32[] memory);
+    
+    /**
+     * @dev Returns all function permissions (parallel to role hashes)
+     * @return Array of function permissions
+     */
+    function getFunctionPermissions() external pure returns (MultiPhaseSecureOperation.FunctionPermission[] memory);
 }

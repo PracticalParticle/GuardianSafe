@@ -92,8 +92,14 @@ contract SimpleRWA20 is ERC20Upgradeable, ERC20BurnableUpgradeable, GuardianAcco
         MultiPhaseSecureOperation.createFunctionSchema(_getSecureState(), "burnWithMetaTx", BURN_TOKENS_META_SELECTOR, BURN_TOKENS, burnActions);
         
         // Add function permissions to broadcaster role
-        MultiPhaseSecureOperation.addFunctionToRole(_getSecureState(), MultiPhaseSecureOperation.BROADCASTER_ROLE, MINT_TOKENS_META_SELECTOR, mintActions);
-        MultiPhaseSecureOperation.addFunctionToRole(_getSecureState(), MultiPhaseSecureOperation.BROADCASTER_ROLE, BURN_TOKENS_META_SELECTOR, burnActions);
+        MultiPhaseSecureOperation.addFunctionToRole(_getSecureState(), MultiPhaseSecureOperation.BROADCASTER_ROLE, MultiPhaseSecureOperation.FunctionPermission({
+            functionSelector: MINT_TOKENS_META_SELECTOR,
+            grantedActions: mintActions
+        }));
+        MultiPhaseSecureOperation.addFunctionToRole(_getSecureState(), MultiPhaseSecureOperation.BROADCASTER_ROLE, MultiPhaseSecureOperation.FunctionPermission({
+            functionSelector: BURN_TOKENS_META_SELECTOR,
+            grantedActions: burnActions
+        }));
     }
 
     /**

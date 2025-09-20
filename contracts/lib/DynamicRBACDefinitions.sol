@@ -3,7 +3,6 @@ pragma solidity ^0.8.2;
 
 import "./MultiPhaseSecureOperation.sol";
 import "./IDefinitionContract.sol";
-import "./BaseDefinitionLoader.sol";
 
 /**
  * @title DynamicRBACDefinitions
@@ -29,10 +28,10 @@ library DynamicRBACDefinitions {
      * @dev Returns predefined operation types
      * @return Array of operation type definitions
      */
-    function getOperationTypes() public pure returns (OperationTypeDefinition[] memory) {
-        OperationTypeDefinition[] memory types = new OperationTypeDefinition[](1);
+    function getOperationTypes() public pure returns (MultiPhaseSecureOperation.ReadableOperationType[] memory) {
+        MultiPhaseSecureOperation.ReadableOperationType[] memory types = new MultiPhaseSecureOperation.ReadableOperationType[](1);
         
-        types[0] = OperationTypeDefinition({
+        types[0] = MultiPhaseSecureOperation.ReadableOperationType({
             operationType: keccak256("ROLE_EDITING_TOGGLE"),
             name: "ROLE_EDITING_TOGGLE"
         });
@@ -44,14 +43,14 @@ library DynamicRBACDefinitions {
      * @dev Returns predefined function schemas
      * @return Array of function schema definitions
      */
-    function getFunctionSchemas() public pure returns (FunctionSchemaDefinition[] memory) {
-        FunctionSchemaDefinition[] memory schemas = new FunctionSchemaDefinition[](1);
+    function getFunctionSchemas() public pure returns (MultiPhaseSecureOperation.FunctionSchema[] memory) {
+        MultiPhaseSecureOperation.FunctionSchema[] memory schemas = new MultiPhaseSecureOperation.FunctionSchema[](1);
         
         // Meta-transaction function schemas
-        uint8[] memory metaRequestApproveActions = new uint8[](1);
-        metaRequestApproveActions[0] = uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_META_REQUEST_AND_APPROVE);
+        MultiPhaseSecureOperation.TxAction[] memory metaRequestApproveActions = new MultiPhaseSecureOperation.TxAction[](1);
+        metaRequestApproveActions[0] = MultiPhaseSecureOperation.TxAction.EXECUTE_META_REQUEST_AND_APPROVE;
         
-        schemas[0] = FunctionSchemaDefinition({
+        schemas[0] = MultiPhaseSecureOperation.FunctionSchema({
             functionName: "updateRoleEditingToggleRequestAndApprove",
             functionSelector: ROLE_EDITING_TOGGLE_META_SELECTOR,
             operationType: ROLE_EDITING_TOGGLE,
@@ -62,18 +61,30 @@ library DynamicRBACDefinitions {
     }
     
     /**
-     * @dev Returns predefined role permissions
-     * @return Array of role permission definitions
+     * @dev Returns predefined role hashes
+     * @return Array of role hashes
      */
-    function getRolePermissions() public pure returns (RolePermissionDefinition[] memory) {
-        RolePermissionDefinition[] memory permissions = new RolePermissionDefinition[](1);
+    function getRoleHashes() public pure returns (bytes32[] memory) {
+        bytes32[] memory roleHashes = new bytes32[](1);
         
         // Role editing toggle permission (only broadcaster can execute)
-        uint8[] memory broadcasterActions = new uint8[](1);
-        broadcasterActions[0] = uint8(MultiPhaseSecureOperation.TxAction.EXECUTE_META_REQUEST_AND_APPROVE);
+        roleHashes[0] = MultiPhaseSecureOperation.BROADCASTER_ROLE;
         
-        permissions[0] = RolePermissionDefinition({
-            roleHash: MultiPhaseSecureOperation.BROADCASTER_ROLE,
+        return roleHashes;
+    }
+    
+    /**
+     * @dev Returns predefined function permissions (parallel to role hashes)
+     * @return Array of function permissions
+     */
+    function getFunctionPermissions() public pure returns (MultiPhaseSecureOperation.FunctionPermission[] memory) {
+        MultiPhaseSecureOperation.FunctionPermission[] memory permissions = new MultiPhaseSecureOperation.FunctionPermission[](1);
+        
+        // Role editing toggle permission (only broadcaster can execute)
+        MultiPhaseSecureOperation.TxAction[] memory broadcasterActions = new MultiPhaseSecureOperation.TxAction[](1);
+        broadcasterActions[0] = MultiPhaseSecureOperation.TxAction.EXECUTE_META_REQUEST_AND_APPROVE;
+        
+        permissions[0] = MultiPhaseSecureOperation.FunctionPermission({
             functionSelector: ROLE_EDITING_TOGGLE_META_SELECTOR,
             grantedActions: broadcasterActions
         });
@@ -89,11 +100,12 @@ library DynamicRBACDefinitions {
     function loadDefinitionContract(
         MultiPhaseSecureOperation.SecureOperationState storage secureState
     ) public {
-        BaseDefinitionLoader.loadDefinitionContract(
+        MultiPhaseSecureOperation.loadDefinitionContract(
             secureState,
             getOperationTypes(),
             getFunctionSchemas(),
-            getRolePermissions()
+            getRoleHashes(),
+            getFunctionPermissions()
         );
     }
 }

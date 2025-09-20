@@ -142,9 +142,18 @@ contract GuardianSafe is GuardianAccountAbstraction, ITransactionGuard {
         MultiPhaseSecureOperation.createFunctionSchema(_getSecureState(), "requestAndApproveTransactionWithMetaTx", REQUEST_AND_APPROVE_TX_META_SELECTOR, EXEC_SAFE_TX, requestAndApproveActions);
         
         // Add function permissions to broadcaster role
-        MultiPhaseSecureOperation.addFunctionToRole(_getSecureState(), MultiPhaseSecureOperation.BROADCASTER_ROLE, APPROVE_TX_META_SELECTOR, approveActions);
-        MultiPhaseSecureOperation.addFunctionToRole(_getSecureState(), MultiPhaseSecureOperation.BROADCASTER_ROLE, CANCEL_TX_META_SELECTOR, cancelActions);
-        MultiPhaseSecureOperation.addFunctionToRole(_getSecureState(), MultiPhaseSecureOperation.BROADCASTER_ROLE, REQUEST_AND_APPROVE_TX_META_SELECTOR, requestAndApproveActions);
+        MultiPhaseSecureOperation.addFunctionToRole(_getSecureState(), MultiPhaseSecureOperation.BROADCASTER_ROLE, MultiPhaseSecureOperation.FunctionPermission({
+            functionSelector: APPROVE_TX_META_SELECTOR,
+            grantedActions: approveActions
+        }));
+        MultiPhaseSecureOperation.addFunctionToRole(_getSecureState(), MultiPhaseSecureOperation.BROADCASTER_ROLE, MultiPhaseSecureOperation.FunctionPermission({
+            functionSelector: CANCEL_TX_META_SELECTOR,
+            grantedActions: cancelActions
+        }));
+        MultiPhaseSecureOperation.addFunctionToRole(_getSecureState(), MultiPhaseSecureOperation.BROADCASTER_ROLE, MultiPhaseSecureOperation.FunctionPermission({
+            functionSelector: REQUEST_AND_APPROVE_TX_META_SELECTOR,
+            grantedActions: requestAndApproveActions
+        }));
     }
 
     /**

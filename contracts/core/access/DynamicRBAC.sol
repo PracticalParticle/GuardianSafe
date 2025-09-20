@@ -126,8 +126,7 @@ abstract contract DynamicRBAC is Initializable, SecureOwnable {
             MultiPhaseSecureOperation.addFunctionToRole(
                 _getSecureState(), 
                 roleHash, 
-                functionPermissions[i].functionSelector, 
-                functionPermissions[i].grantedActions
+                functionPermissions[i]
             );
         }
         
