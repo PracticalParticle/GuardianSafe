@@ -2,13 +2,47 @@
 
 A comprehensive TypeScript SDK for interacting with the Guardian Framework smart contracts, providing type-safe interfaces for secure multi-phase operations, dynamic role-based access control, and account abstraction.
 
+## 🏗️ **Unique Architecture**
+
+Guardian Framework implements a **state machine architecture** with `SecureOperationState` as the core engine, providing:
+
+- **Centralized State Management**: All security operations flow through a unified state machine
+- **Multi-Phase Transaction Processing**: Time-locked operations with request/approval workflows
+- **Dynamic Role-Based Access Control**: Flexible, hierarchical permission system
+- **Meta-Transaction Support**: Gasless transactions and delegated execution
+- **Event-Driven Architecture**: Comprehensive audit trails and external monitoring
+
 ## Features
 
 - **SecureOwnable**: Multi-phase ownership management with time-locked operations
 - **DynamicRBAC**: Dynamic role-based access control system
 - **GuardianAccountAbstraction**: Account abstraction with secure operations
+- **Workflow Analyzer**: Comprehensive contract analysis and workflow generation
 - **Type Safety**: Full TypeScript support with comprehensive type definitions
 - **Viem Integration**: Built on top of Viem for modern Ethereum development
+
+## 📚 Documentation
+
+Comprehensive documentation is available in the [`docs/`](./docs/) directory:
+
+### **🏗️ Architecture & Design**
+- **[Framework Architecture](./docs/guardian-architecture.md)** - Guardian framework overview and design principles
+- **[State Machine Engine](./docs/state-machine-engine.md)** - SecureOperationState engine and state management
+- **[Architecture Patterns](./docs/architecture-patterns.md)** - Design patterns and best practices
+
+### **🚀 Getting Started**
+- **[Getting Started](./docs/getting-started.md)** - Quick setup and basic usage
+- **[API Reference](./docs/api-reference.md)** - Complete API documentation
+- **[SecureOwnable Guide](./docs/secure-ownable.md)** - Ownership management
+- **[DynamicRBAC Guide](./docs/dynamic-rbac.md)** - Role-based access control
+
+### **🔍 Analysis & Tools**
+- **[Workflow Analyzer](./docs/analyzer-overview.md)** - Contract analysis and workflow generation
+- **[Best Practices](./docs/best-practices.md)** - Development guidelines
+- **[Examples](./docs/examples-basic.md)** - Practical code samples
+- **[Types & Interfaces](./docs/types-interfaces.md)** - Type definitions
+
+**📖 [View All Documentation](./docs/README.md)**
 
 ## Installation
 

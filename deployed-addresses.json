@@ -1,0 +1,16 @@
+{
+  "definitionLibraries": {
+    "MultiPhaseSecureOperationDefinitions": "",
+    "SecureOwnableDefinitions": "",
+    "DynamicRBACDefinitions": "",
+    "BaseDefinitionLoader": ""
+  },
+  "guardianContracts": {
+    "GuardianAccountAbstraction": "",
+    "GuardianAccountAbstractionWithRoles": ""
+  },
+  "network": {
+    "chainId": 1337,
+    "rpcUrl": "http://127.0.0.1:8545"
+  }
+}

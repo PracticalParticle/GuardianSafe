@@ -22,5 +22,8 @@ export * from './types/lib.index';
 export * from './utils/validations';
 export * from './utils/erc20/erc20Token';
 
+// Workflow Analyzer (Optional)
+export * from './analyzer';
+
 // Re-export commonly used types from viem
 export type { Address, Hex, PublicClient, WalletClient, Chain } from 'viem';
