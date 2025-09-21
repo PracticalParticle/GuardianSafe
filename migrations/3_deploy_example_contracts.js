@@ -43,7 +43,7 @@ module.exports = async function(deployer, network, accounts) {
             accounts[0],  // initialOwner
             accounts[0],  // broadcaster
             accounts[0],  // recovery
-            60,           // timeLockPeriodInMinutes (1 hour)
+            1,           // timeLockPeriodInMinutes (1 minute)
             "0x0000000000000000000000000000000000000000"  // eventForwarder (none)
         );
         console.log("✅ SimpleVault initialized successfully");
@@ -70,7 +70,7 @@ module.exports = async function(deployer, network, accounts) {
             accounts[0],     // initialOwner
             accounts[0],     // broadcaster
             accounts[0],     // recovery
-            60,              // timeLockPeriodInMinutes (1 hour)
+            1,              // timeLockPeriodInMinutes (1 minute)
             "0x0000000000000000000000000000000000000000"  // eventForwarder (none)
         );
         console.log("✅ SimpleRWA20 initialized successfully");
@@ -102,7 +102,7 @@ module.exports = async function(deployer, network, accounts) {
     console.log(`   Owner: ${accounts[0]}`);
     console.log(`   Broadcaster: ${accounts[0]}`);
     console.log(`   Recovery: ${accounts[0]}`);
-    console.log(`   Time Lock Period: 60 minutes`);
+    console.log(`   Time Lock Period: 1 minute`);
     console.log(`   Event Forwarder: None`);
     console.log(`   Token Name: SimpleRWA20`);
     console.log(`   Token Symbol: SRWA`);

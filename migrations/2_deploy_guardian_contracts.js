@@ -44,7 +44,7 @@ module.exports = async function(deployer, network, accounts) {
             accounts[0],  // initialOwner
             accounts[0],  // broadcaster (same as owner for simplicity)
             accounts[0],  // recovery (same as owner for simplicity)
-            60,           // timeLockPeriodInMinutes (1 hour)
+            1,           // timeLockPeriodInMinutes (1 minute)
             "0x0000000000000000000000000000000000000000"  // eventForwarder (none)
         );
         console.log("✅ GuardianAccountAbstraction initialized successfully");
@@ -74,7 +74,7 @@ module.exports = async function(deployer, network, accounts) {
             accounts[0],  // initialOwner
             accounts[0],  // broadcaster (same as owner for simplicity)
             accounts[0],  // recovery (same as owner for simplicity)
-            60,           // timeLockPeriodInMinutes (1 hour)
+            1,           // timeLockPeriodInMinutes (1 minute)
             "0x0000000000000000000000000000000000000000"  // eventForwarder (none)
         );
         console.log("✅ GuardianAccountAbstractionWithRoles initialized successfully");
@@ -104,6 +104,6 @@ module.exports = async function(deployer, network, accounts) {
     console.log(`   Owner: ${accounts[0]}`);
     console.log(`   Broadcaster: ${accounts[0]}`);
     console.log(`   Recovery: ${accounts[0]}`);
-    console.log(`   Time Lock Period: 60 minutes`);
+    console.log(`   Time Lock Period: 1 minute`);
     console.log(`   Event Forwarder: None`);
 };
