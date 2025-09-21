@@ -7,6 +7,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 // Contracts imports
 import "../../lib/MultiPhaseSecureOperation.sol";
+import "../../lib/MultiPhaseSecureOperationDefinitions.sol";
 import "../../lib/SecureOwnableDefinitions.sol";
 import "../../lib/IDefinitionContract.sol";
 import "../../lib/SharedValidationLibrary.sol";
@@ -94,6 +95,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
         _secureState.initialize(initialOwner, broadcaster, recovery, timeLockPeriodInMinutes);
         
         // Load definitions directly from SecureOwnableDefinitions library
+        MultiPhaseSecureOperationDefinitions.loadDefinitionContract(_secureState);
         SecureOwnableDefinitions.loadDefinitionContract(_secureState);
 
         _secureState.setEventForwarder(eventForwarder);

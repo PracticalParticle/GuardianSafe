@@ -235,9 +235,6 @@ library MultiPhaseSecureOperation {
         addAuthorizedWalletToRole(self, OWNER_ROLE, _owner);
         addAuthorizedWalletToRole(self, BROADCASTER_ROLE, _broadcaster);
         addAuthorizedWalletToRole(self, RECOVERY_ROLE, _recovery);
-
-        // Load all definitions from the definition library
-        // loadDefinitionContract(self);
         
         // Mark as initialized after successful setup
         self.initialized = true;
