@@ -2,6 +2,17 @@
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "provided",
+        "type": "address"
+      }
+    ],
+    "name": "InvalidAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "bytes4",
         "name": "selector",
         "type": "bytes4"
@@ -67,6 +78,17 @@
     "inputs": [
       {
         "internalType": "uint256",
+        "name": "provided",
+        "type": "uint256"
+      }
+    ],
+    "name": "InvalidTimeLockPeriod",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
         "name": "newPeriod",
         "type": "uint256"
       },
@@ -114,6 +136,17 @@
       }
     ],
     "name": "OnlyCallableByContract",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "operationType",
+        "type": "string"
+      }
+    ],
+    "name": "OperationNotSupported",
     "type": "error"
   },
   {
@@ -199,6 +232,17 @@
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "SafeERC20FailedOperation",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "uint256",
         "name": "provided",
         "type": "uint256"
@@ -256,6 +300,44 @@
       }
     ],
     "name": "BroadcasterUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "EthReceived",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "EthWithdrawn",
     "type": "event"
   },
   {
@@ -359,6 +441,59 @@
     ],
     "name": "TimeLockPeriodUpdated",
     "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "TokenWithdrawn",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "WITHDRAW_ETH",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [],
+    "name": "WITHDRAW_TOKEN",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
   },
   {
     "inputs": [
@@ -3767,6 +3902,11 @@
     "type": "function"
   },
   {
+    "stateMutability": "payable",
+    "type": "receive",
+    "payable": true
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -3798,5 +3938,1037 @@
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getEthBalance",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "getTokenBalance",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "withdrawEthRequest",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "txId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "releaseTime",
+            "type": "uint256"
+          },
+          {
+            "internalType": "enum MultiPhaseSecureOperation.TxStatus",
+            "name": "status",
+            "type": "uint8"
+          },
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "requester",
+                "type": "address"
+              },
+              {
+                "internalType": "address",
+                "name": "target",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "value",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "gasLimit",
+                "type": "uint256"
+              },
+              {
+                "internalType": "bytes32",
+                "name": "operationType",
+                "type": "bytes32"
+              },
+              {
+                "internalType": "enum MultiPhaseSecureOperation.ExecutionType",
+                "name": "executionType",
+                "type": "uint8"
+              },
+              {
+                "internalType": "bytes",
+                "name": "executionOptions",
+                "type": "bytes"
+              }
+            ],
+            "internalType": "struct MultiPhaseSecureOperation.TxParams",
+            "name": "params",
+            "type": "tuple"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "message",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes",
+            "name": "result",
+            "type": "bytes"
+          },
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "nativeTokenAmount",
+                "type": "uint256"
+              },
+              {
+                "internalType": "address",
+                "name": "erc20TokenAddress",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "erc20TokenAmount",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct MultiPhaseSecureOperation.PaymentDetails",
+            "name": "payment",
+            "type": "tuple"
+          }
+        ],
+        "internalType": "struct MultiPhaseSecureOperation.TxRecord",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "withdrawTokenRequest",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "txId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "releaseTime",
+            "type": "uint256"
+          },
+          {
+            "internalType": "enum MultiPhaseSecureOperation.TxStatus",
+            "name": "status",
+            "type": "uint8"
+          },
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "requester",
+                "type": "address"
+              },
+              {
+                "internalType": "address",
+                "name": "target",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "value",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "gasLimit",
+                "type": "uint256"
+              },
+              {
+                "internalType": "bytes32",
+                "name": "operationType",
+                "type": "bytes32"
+              },
+              {
+                "internalType": "enum MultiPhaseSecureOperation.ExecutionType",
+                "name": "executionType",
+                "type": "uint8"
+              },
+              {
+                "internalType": "bytes",
+                "name": "executionOptions",
+                "type": "bytes"
+              }
+            ],
+            "internalType": "struct MultiPhaseSecureOperation.TxParams",
+            "name": "params",
+            "type": "tuple"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "message",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes",
+            "name": "result",
+            "type": "bytes"
+          },
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "nativeTokenAmount",
+                "type": "uint256"
+              },
+              {
+                "internalType": "address",
+                "name": "erc20TokenAddress",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "erc20TokenAmount",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct MultiPhaseSecureOperation.PaymentDetails",
+            "name": "payment",
+            "type": "tuple"
+          }
+        ],
+        "internalType": "struct MultiPhaseSecureOperation.TxRecord",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "txId",
+        "type": "uint256"
+      }
+    ],
+    "name": "approveWithdrawalAfterDelay",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "txId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "releaseTime",
+            "type": "uint256"
+          },
+          {
+            "internalType": "enum MultiPhaseSecureOperation.TxStatus",
+            "name": "status",
+            "type": "uint8"
+          },
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "requester",
+                "type": "address"
+              },
+              {
+                "internalType": "address",
+                "name": "target",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "value",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "gasLimit",
+                "type": "uint256"
+              },
+              {
+                "internalType": "bytes32",
+                "name": "operationType",
+                "type": "bytes32"
+              },
+              {
+                "internalType": "enum MultiPhaseSecureOperation.ExecutionType",
+                "name": "executionType",
+                "type": "uint8"
+              },
+              {
+                "internalType": "bytes",
+                "name": "executionOptions",
+                "type": "bytes"
+              }
+            ],
+            "internalType": "struct MultiPhaseSecureOperation.TxParams",
+            "name": "params",
+            "type": "tuple"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "message",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes",
+            "name": "result",
+            "type": "bytes"
+          },
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "nativeTokenAmount",
+                "type": "uint256"
+              },
+              {
+                "internalType": "address",
+                "name": "erc20TokenAddress",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "erc20TokenAmount",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct MultiPhaseSecureOperation.PaymentDetails",
+            "name": "payment",
+            "type": "tuple"
+          }
+        ],
+        "internalType": "struct MultiPhaseSecureOperation.TxRecord",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "txId",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "releaseTime",
+                "type": "uint256"
+              },
+              {
+                "internalType": "enum MultiPhaseSecureOperation.TxStatus",
+                "name": "status",
+                "type": "uint8"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "address",
+                    "name": "requester",
+                    "type": "address"
+                  },
+                  {
+                    "internalType": "address",
+                    "name": "target",
+                    "type": "address"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "value",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "gasLimit",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "bytes32",
+                    "name": "operationType",
+                    "type": "bytes32"
+                  },
+                  {
+                    "internalType": "enum MultiPhaseSecureOperation.ExecutionType",
+                    "name": "executionType",
+                    "type": "uint8"
+                  },
+                  {
+                    "internalType": "bytes",
+                    "name": "executionOptions",
+                    "type": "bytes"
+                  }
+                ],
+                "internalType": "struct MultiPhaseSecureOperation.TxParams",
+                "name": "params",
+                "type": "tuple"
+              },
+              {
+                "internalType": "bytes32",
+                "name": "message",
+                "type": "bytes32"
+              },
+              {
+                "internalType": "bytes",
+                "name": "result",
+                "type": "bytes"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "address",
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "nativeTokenAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "address",
+                    "name": "erc20TokenAddress",
+                    "type": "address"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "erc20TokenAmount",
+                    "type": "uint256"
+                  }
+                ],
+                "internalType": "struct MultiPhaseSecureOperation.PaymentDetails",
+                "name": "payment",
+                "type": "tuple"
+              }
+            ],
+            "internalType": "struct MultiPhaseSecureOperation.TxRecord",
+            "name": "txRecord",
+            "type": "tuple"
+          },
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "chainId",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "nonce",
+                "type": "uint256"
+              },
+              {
+                "internalType": "address",
+                "name": "handlerContract",
+                "type": "address"
+              },
+              {
+                "internalType": "bytes4",
+                "name": "handlerSelector",
+                "type": "bytes4"
+              },
+              {
+                "internalType": "enum MultiPhaseSecureOperation.TxAction",
+                "name": "action",
+                "type": "uint8"
+              },
+              {
+                "internalType": "uint256",
+                "name": "deadline",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "maxGasPrice",
+                "type": "uint256"
+              },
+              {
+                "internalType": "address",
+                "name": "signer",
+                "type": "address"
+              }
+            ],
+            "internalType": "struct MultiPhaseSecureOperation.MetaTxParams",
+            "name": "params",
+            "type": "tuple"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "message",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes",
+            "name": "signature",
+            "type": "bytes"
+          },
+          {
+            "internalType": "bytes",
+            "name": "data",
+            "type": "bytes"
+          }
+        ],
+        "internalType": "struct MultiPhaseSecureOperation.MetaTransaction",
+        "name": "metaTx",
+        "type": "tuple"
+      }
+    ],
+    "name": "approveWithdrawalWithMetaTx",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "txId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "releaseTime",
+            "type": "uint256"
+          },
+          {
+            "internalType": "enum MultiPhaseSecureOperation.TxStatus",
+            "name": "status",
+            "type": "uint8"
+          },
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "requester",
+                "type": "address"
+              },
+              {
+                "internalType": "address",
+                "name": "target",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "value",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "gasLimit",
+                "type": "uint256"
+              },
+              {
+                "internalType": "bytes32",
+                "name": "operationType",
+                "type": "bytes32"
+              },
+              {
+                "internalType": "enum MultiPhaseSecureOperation.ExecutionType",
+                "name": "executionType",
+                "type": "uint8"
+              },
+              {
+                "internalType": "bytes",
+                "name": "executionOptions",
+                "type": "bytes"
+              }
+            ],
+            "internalType": "struct MultiPhaseSecureOperation.TxParams",
+            "name": "params",
+            "type": "tuple"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "message",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes",
+            "name": "result",
+            "type": "bytes"
+          },
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "nativeTokenAmount",
+                "type": "uint256"
+              },
+              {
+                "internalType": "address",
+                "name": "erc20TokenAddress",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "erc20TokenAmount",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct MultiPhaseSecureOperation.PaymentDetails",
+            "name": "payment",
+            "type": "tuple"
+          }
+        ],
+        "internalType": "struct MultiPhaseSecureOperation.TxRecord",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "txId",
+        "type": "uint256"
+      }
+    ],
+    "name": "cancelWithdrawal",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "txId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "releaseTime",
+            "type": "uint256"
+          },
+          {
+            "internalType": "enum MultiPhaseSecureOperation.TxStatus",
+            "name": "status",
+            "type": "uint8"
+          },
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "requester",
+                "type": "address"
+              },
+              {
+                "internalType": "address",
+                "name": "target",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "value",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "gasLimit",
+                "type": "uint256"
+              },
+              {
+                "internalType": "bytes32",
+                "name": "operationType",
+                "type": "bytes32"
+              },
+              {
+                "internalType": "enum MultiPhaseSecureOperation.ExecutionType",
+                "name": "executionType",
+                "type": "uint8"
+              },
+              {
+                "internalType": "bytes",
+                "name": "executionOptions",
+                "type": "bytes"
+              }
+            ],
+            "internalType": "struct MultiPhaseSecureOperation.TxParams",
+            "name": "params",
+            "type": "tuple"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "message",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes",
+            "name": "result",
+            "type": "bytes"
+          },
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "recipient",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "nativeTokenAmount",
+                "type": "uint256"
+              },
+              {
+                "internalType": "address",
+                "name": "erc20TokenAddress",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "erc20TokenAmount",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct MultiPhaseSecureOperation.PaymentDetails",
+            "name": "payment",
+            "type": "tuple"
+          }
+        ],
+        "internalType": "struct MultiPhaseSecureOperation.TxRecord",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address payable",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "executeWithdrawEth",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "executeWithdrawToken",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "txId",
+        "type": "uint256"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "deadline",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "maxGasPrice",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct SimpleVault.VaultMetaTxParams",
+        "name": "metaTxParams",
+        "type": "tuple"
+      }
+    ],
+    "name": "generateUnsignedWithdrawalMetaTxApproval",
+    "outputs": [
+      {
+        "components": [
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "txId",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "releaseTime",
+                "type": "uint256"
+              },
+              {
+                "internalType": "enum MultiPhaseSecureOperation.TxStatus",
+                "name": "status",
+                "type": "uint8"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "address",
+                    "name": "requester",
+                    "type": "address"
+                  },
+                  {
+                    "internalType": "address",
+                    "name": "target",
+                    "type": "address"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "value",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "gasLimit",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "bytes32",
+                    "name": "operationType",
+                    "type": "bytes32"
+                  },
+                  {
+                    "internalType": "enum MultiPhaseSecureOperation.ExecutionType",
+                    "name": "executionType",
+                    "type": "uint8"
+                  },
+                  {
+                    "internalType": "bytes",
+                    "name": "executionOptions",
+                    "type": "bytes"
+                  }
+                ],
+                "internalType": "struct MultiPhaseSecureOperation.TxParams",
+                "name": "params",
+                "type": "tuple"
+              },
+              {
+                "internalType": "bytes32",
+                "name": "message",
+                "type": "bytes32"
+              },
+              {
+                "internalType": "bytes",
+                "name": "result",
+                "type": "bytes"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "address",
+                    "name": "recipient",
+                    "type": "address"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "nativeTokenAmount",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "address",
+                    "name": "erc20TokenAddress",
+                    "type": "address"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "erc20TokenAmount",
+                    "type": "uint256"
+                  }
+                ],
+                "internalType": "struct MultiPhaseSecureOperation.PaymentDetails",
+                "name": "payment",
+                "type": "tuple"
+              }
+            ],
+            "internalType": "struct MultiPhaseSecureOperation.TxRecord",
+            "name": "txRecord",
+            "type": "tuple"
+          },
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "chainId",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "nonce",
+                "type": "uint256"
+              },
+              {
+                "internalType": "address",
+                "name": "handlerContract",
+                "type": "address"
+              },
+              {
+                "internalType": "bytes4",
+                "name": "handlerSelector",
+                "type": "bytes4"
+              },
+              {
+                "internalType": "enum MultiPhaseSecureOperation.TxAction",
+                "name": "action",
+                "type": "uint8"
+              },
+              {
+                "internalType": "uint256",
+                "name": "deadline",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "maxGasPrice",
+                "type": "uint256"
+              },
+              {
+                "internalType": "address",
+                "name": "signer",
+                "type": "address"
+              }
+            ],
+            "internalType": "struct MultiPhaseSecureOperation.MetaTxParams",
+            "name": "params",
+            "type": "tuple"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "message",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes",
+            "name": "signature",
+            "type": "bytes"
+          },
+          {
+            "internalType": "bytes",
+            "name": "data",
+            "type": "bytes"
+          }
+        ],
+        "internalType": "struct MultiPhaseSecureOperation.MetaTransaction",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
   }
 ]

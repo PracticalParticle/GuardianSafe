@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-// Script to get deployed contract addresses
+// Script to display deployed contract addresses from Truffle artifacts and environment variables
 
 const fs = require('fs');
 const path = require('path');
@@ -121,57 +121,92 @@ function displayAddresses(addresses) {
 }
 
 /**
- * @dev Generates configuration file with deployed addresses
+ * @dev Displays environment variable configuration and verifies against artifacts
  */
-function generateConfigFile(addresses) {
-  if (!addresses || Object.keys(addresses).length === 0) {
-    return;
-  }
+function displayEnvironmentConfig(addresses) {
+  console.log('📝 Environment Variable Configuration (Source of Truth):\n');
   
-  console.log('📝 Generating configuration file...\n');
-  
-  // Find the most recent network (highest network ID)
-  const networkIds = Object.keys(addresses).map(id => parseInt(id)).sort((a, b) => b - a);
-  const latestNetworkId = networkIds[0];
-  const latestContracts = addresses[latestNetworkId.toString()];
-  
-  if (!latestContracts) {
-    console.log('❌ No contracts found for latest network.');
-    return;
-  }
-  
-  // Extract definition library addresses
-  const config = {
+  const envConfig = {
     definitionLibraries: {
-      MultiPhaseSecureOperationDefinitions: latestContracts.MultiPhaseSecureOperationDefinitions || '0x0000000000000000000000000000000000000000',
-      SecureOwnableDefinitions: latestContracts.SecureOwnableDefinitions || '0x0000000000000000000000000000000000000000',
-      DynamicRBACDefinitions: latestContracts.DynamicRBACDefinitions || '0x0000000000000000000000000000000000000000',
-      BaseDefinitionLoader: latestContracts.BaseDefinitionLoader || '0x0000000000000000000000000000000000000000'
+      MULTIPHASE_DEFINITIONS_ADDRESS: process.env.MULTIPHASE_DEFINITIONS_ADDRESS || 'Not set',
+      SECURE_OWNABLE_DEFINITIONS_ADDRESS: process.env.SECURE_OWNABLE_DEFINITIONS_ADDRESS || 'Not set',
+      DYNAMIC_RBAC_DEFINITIONS_ADDRESS: process.env.DYNAMIC_RBAC_DEFINITIONS_ADDRESS || 'Not set'
     },
     guardianContracts: {
-      GuardianAccountAbstraction: latestContracts.GuardianAccountAbstraction || '0x0000000000000000000000000000000000000000',
-      GuardianAccountAbstractionWithRoles: latestContracts.GuardianAccountAbstractionWithRoles || '0x0000000000000000000000000000000000000000'
+      GUARDIAN_ACCOUNT_ABSTRACTION_ADDRESS: process.env.GUARDIAN_ACCOUNT_ABSTRACTION_ADDRESS || 'Not set',
+      GUARDIAN_ACCOUNT_ABSTRACTION_WITH_ROLES_ADDRESS: process.env.GUARDIAN_ACCOUNT_ABSTRACTION_WITH_ROLES_ADDRESS || 'Not set'
+    },
+    exampleContracts: {
+      SIMPLE_VAULT_ADDRESS: process.env.SIMPLE_VAULT_ADDRESS || 'Not set',
+      SIMPLE_RWA20_ADDRESS: process.env.SIMPLE_RWA20_ADDRESS || 'Not set'
     },
     network: {
-      chainId: latestNetworkId,
-      rpcUrl: process.env.REMOTE_HOST ? `http://${process.env.REMOTE_HOST}:${process.env.REMOTE_PORT || '8545'}` : 'http://127.0.0.1:8545'
+      REMOTE_HOST: process.env.REMOTE_HOST || 'Not set',
+      REMOTE_PORT: process.env.REMOTE_PORT || 'Not set',
+      REMOTE_NETWORK_ID: process.env.REMOTE_NETWORK_ID || 'Not set'
     }
   };
   
-  // Write config file
-  const configPath = path.join(__dirname, '../deployed-addresses.json');
-  fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
-  
-  console.log('✅ Configuration saved to:', configPath);
-  console.log('\n📋 Usage in your analyzer:');
-  console.log('```typescript');
-  console.log('import { DEFAULT_CONFIG } from "./Configuration"');
-  console.log('import deployedAddresses from "./deployed-addresses.json"');
+  console.log('📚 Definition Libraries:');
+  for (const [key, value] of Object.entries(envConfig.definitionLibraries)) {
+    console.log(`   ${key}: ${value}`);
+  }
   console.log('');
-  console.log('const config = updateConfigWithDeployedAddresses(');
-  console.log('  DEFAULT_CONFIG,');
-  console.log('  deployedAddresses.definitionLibraries');
-  console.log(');');
+  
+  console.log('🛡️ Guardian Contracts:');
+  for (const [key, value] of Object.entries(envConfig.guardianContracts)) {
+    console.log(`   ${key}: ${value}`);
+  }
+  console.log('');
+  
+  console.log('📦 Example Contracts:');
+  for (const [key, value] of Object.entries(envConfig.exampleContracts)) {
+    console.log(`   ${key}: ${value}`);
+  }
+  console.log('');
+  
+  console.log('🌐 Network Configuration:');
+  for (const [key, value] of Object.entries(envConfig.network)) {
+    console.log(`   ${key}: ${value}`);
+  }
+  console.log('');
+  
+  // Verify addresses against artifacts if available
+  if (addresses && Object.keys(addresses).length > 0) {
+    console.log('🔍 Verification against Truffle Artifacts:');
+    console.log('─'.repeat(50));
+    
+    const networkIds = Object.keys(addresses).map(id => parseInt(id)).sort((a, b) => b - a);
+    const latestNetworkId = networkIds[0];
+    const latestContracts = addresses[latestNetworkId.toString()];
+    
+    if (latestContracts) {
+      const verifications = [
+        { env: 'GUARDIAN_ACCOUNT_ABSTRACTION_ADDRESS', artifact: latestContracts.GuardianAccountAbstraction },
+        { env: 'GUARDIAN_ACCOUNT_ABSTRACTION_WITH_ROLES_ADDRESS', artifact: latestContracts.GuardianAccountAbstractionWithRoles },
+        { env: 'SIMPLE_VAULT_ADDRESS', artifact: latestContracts.SimpleVault },
+        { env: 'SIMPLE_RWA20_ADDRESS', artifact: latestContracts.SimpleRWA20 }
+      ];
+      
+      for (const ver of verifications) {
+        const envValue = process.env[ver.env];
+        const artifactValue = ver.artifact;
+        const status = envValue === artifactValue ? '✅' : '⚠️';
+        console.log(`${status} ${ver.env}:`);
+        console.log(`   .env: ${envValue || 'Not set'}`);
+        console.log(`   Artifact: ${artifactValue || 'Not found'}`);
+        console.log('');
+      }
+    }
+  }
+  
+  console.log('📋 Usage in your scripts:');
+  console.log('```javascript');
+  console.log('require(\'dotenv\').config();');
+  console.log('');
+  console.log('const guardianAddress = process.env.GUARDIAN_ACCOUNT_ABSTRACTION_ADDRESS;');
+  console.log('const vaultAddress = process.env.SIMPLE_VAULT_ADDRESS;');
+  console.log('// etc...');
   console.log('```');
 }
 
@@ -181,15 +216,18 @@ function generateConfigFile(addresses) {
 function main() {
   console.log('🚀 Guardian Contract Address Extractor\n');
   
+  // Display addresses from Truffle artifacts (if available)
   const addresses = getDeployedAddresses();
   displayAddresses(addresses);
-  generateConfigFile(addresses);
+  
+  // Display environment variable configuration (source of truth) and verify against artifacts
+  displayEnvironmentConfig(addresses);
   
   console.log('\n🎯 Next Steps:');
-  console.log('1. Deploy contracts: npm run deploy:guardian');
-  console.log('2. Run this script again to get addresses');
-  console.log('3. Update your analyzer configuration');
-  console.log('4. Use RealContractDefinitionAnalyzer for real contract analysis');
+  console.log('1. Deploy contracts: npm run deploy:truffle');
+  console.log('2. Update your .env file with the correct addresses');
+  console.log('3. Use environment variables in your scripts');
+  console.log('4. Run sanity tests: node scripts/sanity/run-all-sanity-tests.js');
 }
 
 // Run the script

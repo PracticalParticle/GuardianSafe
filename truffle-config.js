@@ -18,6 +18,9 @@
  *
  */
 
+// Load environment variables from .env file
+require('dotenv').config();
+
 // const HDWalletProvider = require('@truffle/hdwallet-provider');
 // const infuraKey = "fj4jll3k.....";
 //

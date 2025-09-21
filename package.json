@@ -9,7 +9,7 @@
     "compile:truffle": "truffle compile",
     "compile:truffle:size": "npm run compile:truffle && npx truffle run contract-size",
     "compile:hardhat": "hardhat compile",
-    "deploy:truffle": "truffle migrate",
+    "deploy:truffle": "npx truffle migrate --network development --reset",
     "deploy:hardhat": "hardhat run scripts/deploy.js",
     "docgen": "hardhat docgen",
     "format": "prettier --config .prettierrc --write \"contracts/**/*.sol\"",

@@ -17,3 +17,6 @@ experimental/
 ### Environment Variables ###
 *.env
 
+### Test Reports ###
+scripts/sanity/reports/
+
