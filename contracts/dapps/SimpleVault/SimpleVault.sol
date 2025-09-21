@@ -22,7 +22,7 @@ contract SimpleVault is GuardianAccountAbstraction {
     bytes4 private constant WITHDRAW_TOKEN_SELECTOR = bytes4(keccak256("executeWithdrawToken(address,address,uint256)"));
 
     // Timelock period constants (in minutes)
-    uint256 private constant MIN_TIMELOCK_PERIOD = 1 * 24 * 60; // 1 day
+    uint256 private constant MIN_TIMELOCK_PERIOD = 1 * 1 * 1; // 1 minute
     uint256 private constant MAX_TIMELOCK_PERIOD = 90 * 24 * 60; // 90 days
 
     // Struct for meta-transaction parameters
