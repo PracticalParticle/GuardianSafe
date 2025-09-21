@@ -36,10 +36,16 @@ module.exports = {
    */
 
   networks: {
+    // Dynamic development network - automatically adapts based on environment variables
+    // Local development: No environment variables set (defaults to localhost)
+    // Remote development: Set REMOTE_HOST environment variable
     development: {
-      host: "127.0.0.1",
-      port: 8545,
-      network_id: "*"
+      host: process.env.REMOTE_HOST || "127.0.0.1",
+      port: parseInt(process.env.REMOTE_PORT) || 8545,
+      network_id: process.env.REMOTE_NETWORK_ID || "*",
+      gas: process.env.REMOTE_GAS ? parseInt(process.env.REMOTE_GAS) : undefined,
+      gasPrice: process.env.REMOTE_GAS_PRICE ? parseInt(process.env.REMOTE_GAS_PRICE) : undefined,
+      from: process.env.REMOTE_FROM || undefined
     },
     
 

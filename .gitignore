@@ -14,3 +14,6 @@ experimental/
 ### VS Code ###
 .vscode/
 
+### Environment Variables ###
+*.env
+
