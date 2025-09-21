@@ -608,6 +608,20 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
     }
 
     /**
+     * @dev Returns whether the contract is initialized
+     * @return bool True if the contract is initialized, false otherwise
+     * 
+     * This function checks both:
+     * 1. The Initializable contract state (from OpenZeppelin)
+     * 2. The _secureState.initialized flag (from our custom library)
+     * 
+     * Both conditions must be true for the contract to be considered fully initialized.
+     */
+    function initialized() public view virtual returns (bool) {
+        return _getInitializedVersion() != type(uint8).max && _secureState.initialized;
+    }
+
+    /**
      * @dev See {IERC165-supportsInterface}.
      */
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165Upgradeable) returns (bool) {
