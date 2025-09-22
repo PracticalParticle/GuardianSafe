@@ -1,13 +1,18 @@
 [
   {
+    "inputs": [],
+    "name": "CannotModifyProtectedRoles",
+    "type": "error"
+  },
+  {
     "inputs": [
       {
-        "internalType": "string",
-        "name": "role",
-        "type": "string"
+        "internalType": "address",
+        "name": "provided",
+        "type": "address"
       }
     ],
-    "name": "CannotModifyProtectedRoles",
+    "name": "InvalidAddress",
     "type": "error"
   },
   {
@@ -56,22 +61,6 @@
       }
     ],
     "name": "InvalidRange",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "role",
-        "type": "address"
-      },
-      {
-        "internalType": "string",
-        "name": "roleType",
-        "type": "string"
-      }
-    ],
-    "name": "InvalidRoleAddress",
     "type": "error"
   },
   {

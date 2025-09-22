@@ -1,17 +1,6 @@
 [
   {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "action",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "functionName",
-        "type": "string"
-      }
-    ],
+    "inputs": [],
     "name": "ActionNotSupported",
     "type": "error"
   },
@@ -69,24 +58,13 @@
         "internalType": "address",
         "name": "wallet",
         "type": "address"
-      },
-      {
-        "internalType": "string",
-        "name": "role",
-        "type": "string"
       }
     ],
     "name": "CannotRemoveLastWallet",
     "type": "error"
   },
   {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "role",
-        "type": "string"
-      }
-    ],
+    "inputs": [],
     "name": "CannotRemoveProtectedRole",
     "type": "error"
   },
@@ -161,11 +139,6 @@
         "internalType": "bytes4",
         "name": "functionSelector",
         "type": "bytes4"
-      },
-      {
-        "internalType": "string",
-        "name": "role",
-        "type": "string"
       }
     ],
     "name": "FunctionPermissionExists",
@@ -223,6 +196,17 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "provided",
+        "type": "address"
+      }
+    ],
+    "name": "InvalidAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "handler",
         "type": "address"
       }
@@ -266,22 +250,6 @@
       }
     ],
     "name": "InvalidRequesterAddress",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "role",
-        "type": "address"
-      },
-      {
-        "internalType": "string",
-        "name": "roleType",
-        "type": "string"
-      }
-    ],
-    "name": "InvalidRoleAddress",
     "type": "error"
   },
   {
@@ -388,11 +356,6 @@
         "internalType": "address",
         "name": "caller",
         "type": "address"
-      },
-      {
-        "internalType": "string",
-        "name": "functionName",
-        "type": "string"
       }
     ],
     "name": "NoPermissionExecute",
@@ -404,35 +367,18 @@
         "internalType": "address",
         "name": "wallet",
         "type": "address"
-      },
-      {
-        "internalType": "string",
-        "name": "role",
-        "type": "string"
       }
     ],
     "name": "OldWalletNotFound",
     "type": "error"
   },
   {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "operationType",
-        "type": "string"
-      }
-    ],
+    "inputs": [],
     "name": "OperationNotSupported",
     "type": "error"
   },
   {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "operationType",
-        "type": "string"
-      }
-    ],
+    "inputs": [],
     "name": "OperationTypeExists",
     "type": "error"
   },
@@ -469,13 +415,7 @@
     "type": "error"
   },
   {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "roleName",
-        "type": "string"
-      }
-    ],
+    "inputs": [],
     "name": "RoleAlreadyExists",
     "type": "error"
   },
@@ -486,11 +426,6 @@
   },
   {
     "inputs": [
-      {
-        "internalType": "string",
-        "name": "role",
-        "type": "string"
-      },
       {
         "internalType": "uint256",
         "name": "currentCount",
@@ -571,11 +506,6 @@
         "internalType": "address",
         "name": "wallet",
         "type": "address"
-      },
-      {
-        "internalType": "string",
-        "name": "role",
-        "type": "string"
       }
     ],
     "name": "WalletAlreadyInRole",

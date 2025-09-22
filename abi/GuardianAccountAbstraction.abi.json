@@ -2,6 +2,17 @@
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "provided",
+        "type": "address"
+      }
+    ],
+    "name": "InvalidAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "bytes4",
         "name": "selector",
         "type": "bytes4"
@@ -45,22 +56,6 @@
       }
     ],
     "name": "InvalidRange",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "role",
-        "type": "address"
-      },
-      {
-        "internalType": "string",
-        "name": "roleType",
-        "type": "string"
-      }
-    ],
-    "name": "InvalidRoleAddress",
     "type": "error"
   },
   {
