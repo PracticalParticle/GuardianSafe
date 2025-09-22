@@ -251,20 +251,4 @@ library MultiPhaseSecureOperationDefinitions {
         return permissions;
     }
     
-    /**
-     * @dev Loads definitions directly into a SecureOperationState
-     * This function initializes the secure state with all predefined definitions
-     * @param secureState The SecureOperationState to initialize
-     */
-    function loadDefinitionContract(
-        MultiPhaseSecureOperation.SecureOperationState storage secureState
-    ) public {
-        MultiPhaseSecureOperation.loadDefinitionContract(
-            secureState,
-            getOperationTypes(),
-            getFunctionSchemas(),
-            getRoleHashes(),
-            getFunctionPermissions()
-        );
-    }
 }

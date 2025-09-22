@@ -56,12 +56,18 @@ abstract contract DynamicRBAC is Initializable, SecureOwnable {
         address recovery,
         uint256 timeLockPeriodInMinutes,
         address eventForwarder
-    ) public virtual override initializer {
+    ) public virtual override onlyInitializing {
         // Initialize SecureOwnable
         SecureOwnable.initialize(initialOwner, broadcaster, recovery, timeLockPeriodInMinutes, eventForwarder);
         
         // Load DynamicRBAC-specific definitions
-        DynamicRBACDefinitions.loadDefinitionContract(_getSecureState());
+        MultiPhaseSecureOperation.loadDefinitionContract(
+            _getSecureState(),
+            DynamicRBACDefinitions.getOperationTypes(),
+            DynamicRBACDefinitions.getFunctionSchemas(),
+            DynamicRBACDefinitions.getRoleHashes(),
+            DynamicRBACDefinitions.getFunctionPermissions()
+        );
         
         // Initialize role editing as enabled by default
         roleEditingEnabled = true;
@@ -144,7 +150,7 @@ abstract contract DynamicRBAC is Initializable, SecureOwnable {
         if (!roleEditingEnabled) revert SharedValidationLibrary.RoleEditingDisabled();
         
         // Validate that the role is not protected
-        if (_getSecureState().getRole(roleHash).isProtected) revert SharedValidationLibrary.CannotModifyProtectedRoles("role");
+        if (_getSecureState().getRole(roleHash).isProtected) revert SharedValidationLibrary.CannotModifyProtectedRoles();
         
         // MultiPhaseSecureOperation.addAuthorizedWalletToRole already validates:
         // - wallet is not zero address
@@ -166,7 +172,7 @@ abstract contract DynamicRBAC is Initializable, SecureOwnable {
         if (!roleEditingEnabled) revert SharedValidationLibrary.RoleEditingDisabled();
         
         // Validate that the role is not protected
-        if (_getSecureState().getRole(roleHash).isProtected) revert SharedValidationLibrary.CannotModifyProtectedRoles("role");
+        if (_getSecureState().getRole(roleHash).isProtected) revert SharedValidationLibrary.CannotModifyProtectedRoles();
         
         // MultiPhaseSecureOperation.removeWalletFromRole already validates:
         // - role exists

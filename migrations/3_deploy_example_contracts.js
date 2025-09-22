@@ -39,7 +39,7 @@ module.exports = async function(deployer, network, accounts) {
     // Initialize SimpleVault
     console.log("🔧 Initializing SimpleVault...");
     try {
-        await simpleVault.initialize(
+        const tx = await simpleVault.initialize(
             accounts[0],  // initialOwner
             accounts[0],  // broadcaster
             accounts[0],  // recovery
@@ -47,8 +47,27 @@ module.exports = async function(deployer, network, accounts) {
             "0x0000000000000000000000000000000000000000"  // eventForwarder (none)
         );
         console.log("✅ SimpleVault initialized successfully");
+        console.log("   Transaction hash:", tx.tx);
     } catch (error) {
-        console.log("❌ SimpleVault initialization failed:", error.message);
+        console.log("❌ SimpleVault initialization failed:");
+        console.log("   Error message:", error.message);
+        console.log("   Error reason:", error.reason);
+        console.log("   Error data:", error.data);
+        console.log("   Full error:", JSON.stringify(error, null, 2));
+        
+        // Try to decode the error if it's a revert
+        if (error.data) {
+            try {
+                const decodedError = await web3.eth.call({
+                    to: simpleVault.address,
+                    data: error.data
+                });
+                console.log("   Decoded error data:", decodedError);
+            } catch (decodeError) {
+                console.log("   Could not decode error data:", decodeError.message);
+            }
+        }
+        
         console.log("⚠️  Contract deployed but not initialized. This may be expected for upgradeable contracts.");
     }
 
@@ -64,7 +83,7 @@ module.exports = async function(deployer, network, accounts) {
     // Initialize SimpleRWA20
     console.log("🔧 Initializing SimpleRWA20...");
     try {
-        await simpleRWA20.initialize(
+        const tx = await simpleRWA20.initialize(
             "SimpleRWA20",  // name
             "SRWA",          // symbol
             accounts[0],     // initialOwner
@@ -74,8 +93,27 @@ module.exports = async function(deployer, network, accounts) {
             "0x0000000000000000000000000000000000000000"  // eventForwarder (none)
         );
         console.log("✅ SimpleRWA20 initialized successfully");
+        console.log("   Transaction hash:", tx.tx);
     } catch (error) {
-        console.log("❌ SimpleRWA20 initialization failed:", error.message);
+        console.log("❌ SimpleRWA20 initialization failed:");
+        console.log("   Error message:", error.message);
+        console.log("   Error reason:", error.reason);
+        console.log("   Error data:", error.data);
+        console.log("   Full error:", JSON.stringify(error, null, 2));
+        
+        // Try to decode the error if it's a revert
+        if (error.data) {
+            try {
+                const decodedError = await web3.eth.call({
+                    to: simpleRWA20.address,
+                    data: error.data
+                });
+                console.log("   Decoded error data:", decodedError);
+            } catch (decodeError) {
+                console.log("   Could not decode error data:", decodeError.message);
+            }
+        }
+        
         console.log("⚠️  Contract deployed but not initialized. This may be expected for upgradeable contracts.");
     }
 

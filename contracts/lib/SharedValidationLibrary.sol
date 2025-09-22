@@ -33,13 +33,10 @@ library SharedValidationLibrary {
     
     // Address validation errors with context
     error InvalidAddress(address provided);
-    error InvalidRoleAddress(address role, string roleType);
     error InvalidTargetAddress(address target);
     error InvalidRequesterAddress(address requester);
     error InvalidHandlerContract(address handler);
     error InvalidSignerAddress(address signer);
-    error CannotSetZeroAddress(string field);
-    error CannotAddZeroAddress(string role);
     error NotNewAddress(address newAddress, address currentAddress);
     
     // Time and deadline errors with context
@@ -52,7 +49,7 @@ library SharedValidationLibrary {
     
     // Permission and authorization errors with context
     error NoPermission(address caller);
-    error NoPermissionExecute(address caller, string functionName);
+    error NoPermissionExecute(address caller);
     error RestrictedOwner(address caller, address owner);
     error RestrictedOwnerRecovery(address caller, address owner, address recovery);
     error RestrictedRecovery(address caller, address recovery);
@@ -61,8 +58,8 @@ library SharedValidationLibrary {
     error OnlyCallableByContract(address caller, address contractAddress);
     
     // Transaction and operation errors with context
-    error OperationNotSupported(string operationType);
-    error OperationTypeExists(string operationType);
+    error OperationNotSupported();
+    error OperationTypeExists();
     error InvalidOperationType(bytes32 actualType, bytes32 expectedType);
     error TransactionNotFound(uint256 txId);
     error CanOnlyApprovePending(uint8 currentStatus);
@@ -85,21 +82,21 @@ library SharedValidationLibrary {
     error GasPriceExceedsMax(uint256 currentGasPrice, uint256 maxGasPrice);
     
     // Role and function errors with context
-    error RoleDoesNotExist(string roleName);
-    error RoleAlreadyExists(string roleName);
+    error RoleDoesNotExist();
+    error RoleAlreadyExists();
     error FunctionAlreadyExists(bytes4 functionSelector);
     error FunctionDoesNotExist(bytes4 functionSelector);
-    error WalletAlreadyInRole(address wallet, string role);
-    error RoleWalletLimitReached(string role, uint256 currentCount, uint256 maxWallets);
-    error OldWalletNotFound(address wallet, string role);
-    error CannotRemoveLastWallet(address wallet, string role);
+    error WalletAlreadyInRole(address wallet);
+    error RoleWalletLimitReached(uint256 currentCount, uint256 maxWallets);
+    error OldWalletNotFound(address wallet);
+    error CannotRemoveLastWallet(address wallet);
     error RoleNameEmpty();
     error MaxWalletsZero(uint256 provided);
-    error CannotModifyProtectedRoles(string role);
-    error CannotRemoveProtectedRole(string role);
+    error CannotModifyProtectedRoles();
+    error CannotRemoveProtectedRole();
     error RoleEditingDisabled();
-    error FunctionPermissionExists(bytes4 functionSelector, string role);
-    error ActionNotSupported(string action, string functionName);
+    error FunctionPermissionExists(bytes4 functionSelector);
+    error ActionNotSupported();
     error InvalidRange(uint256 from, uint256 to);
     
     // Payment and balance errors with context
@@ -120,14 +117,6 @@ library SharedValidationLibrary {
         if (addr == address(0)) revert InvalidAddress(addr);
     }
     
-    /**
-     * @dev Validates that an address is not the zero address with role context
-     * @param addr The address to validate
-     * @param roleType The type of role for context
-     */
-    function validateNotZeroAddress(address addr, string memory roleType) internal pure {
-        if (addr == address(0)) revert InvalidRoleAddress(addr, roleType);
-    }
     
     /**
      * @dev Validates that a new address is different from the current address
@@ -142,14 +131,12 @@ library SharedValidationLibrary {
      * @dev Validates that an address is not the zero address and is different from current
      * @param newAddress The proposed new address
      * @param currentAddress The current address to compare against
-     * @param addressType The type of address for error messaging
      */
     function validateAddressUpdate(
         address newAddress, 
-        address currentAddress, 
-        string memory addressType
+        address currentAddress
     ) internal pure {
-        validateNotZeroAddress(newAddress, addressType);
+        validateNotZeroAddress(newAddress);
         validateNewAddress(newAddress, currentAddress);
     }
     
@@ -323,10 +310,9 @@ library SharedValidationLibrary {
     /**
      * @dev Validates that the caller has permission to execute a specific function
      * @param caller The caller address
-     * @param functionName The function name being called
      */
-    function validatePermissionExecute(address caller, string memory functionName) internal pure {
-        revert NoPermissionExecute(caller, functionName);
+    function validatePermissionExecute(address caller) internal pure {
+        revert NoPermissionExecute(caller);
     }
     
     /**
@@ -341,18 +327,16 @@ library SharedValidationLibrary {
     
     /**
      * @dev Validates that an operation type is supported
-     * @param operationType The operation type to validate
      */
-    function validateOperationSupported(string memory operationType) internal pure {
-        revert OperationNotSupported(operationType);
+    function validateOperationSupported() internal pure {
+        revert OperationNotSupported();
     }
     
     /**
      * @dev Validates that an operation type doesn't already exist
-     * @param operationType The operation type to validate
      */
-    function validateOperationTypeNew(string memory operationType) internal pure {
-        revert OperationTypeExists(operationType);
+    function validateOperationTypeNew() internal pure {
+        revert OperationTypeExists();
     }
     
     /**
@@ -463,18 +447,16 @@ library SharedValidationLibrary {
     
     /**
      * @dev Validates that a role exists
-     * @param roleName The role name to validate
      */
-    function validateRoleExists(string memory roleName) internal pure {
-        if (bytes(roleName).length == 0) revert RoleDoesNotExist(roleName);
+    function validateRoleExists() internal pure {
+        revert RoleDoesNotExist();
     }
     
     /**
      * @dev Validates that a role doesn't already exist
-     * @param roleName The role name to validate
      */
-    function validateRoleNew(string memory roleName) internal pure {
-        revert RoleAlreadyExists(roleName);
+    function validateRoleNew() internal pure {
+        revert RoleAlreadyExists();
     }
     
     /**
@@ -496,38 +478,33 @@ library SharedValidationLibrary {
     /**
      * @dev Validates that a wallet is not already in a role
      * @param wallet The wallet address to validate
-     * @param role The role name
      */
-    function validateWalletNotInRole(address wallet, string memory role) internal pure {
-        revert WalletAlreadyInRole(wallet, role);
+    function validateWalletNotInRole(address wallet) internal pure {
+        revert WalletAlreadyInRole(wallet);
     }
     
     /**
      * @dev Validates that a role hasn't reached its wallet limit
      * @param currentCount The current number of wallets in the role
      * @param maxWallets The maximum number of wallets allowed
-     * @param role The role name
      */
-    function validateWalletLimit(uint256 currentCount, uint256 maxWallets, string memory role) internal pure {
-        if (currentCount >= maxWallets) revert RoleWalletLimitReached(role, currentCount, maxWallets);
+    function validateWalletLimit(uint256 currentCount, uint256 maxWallets) internal pure {
+        if (currentCount >= maxWallets) revert RoleWalletLimitReached(currentCount, maxWallets);
     }
     
     /**
      * @dev Validates that a function permission doesn't already exist
      * @param functionSelector The function selector
-     * @param role The role name
      */
-    function validatePermissionNew(bytes4 functionSelector, string memory role) internal pure {
-        revert FunctionPermissionExists(functionSelector, role);
+    function validatePermissionNew(bytes4 functionSelector) internal pure {
+        revert FunctionPermissionExists(functionSelector);
     }
     
     /**
      * @dev Validates that an action is supported by a function
-     * @param action The action to validate
-     * @param functionName The function name
      */
-    function validateActionSupported(string memory action, string memory functionName) internal pure {
-        revert ActionNotSupported(action, functionName);
+    function validateActionSupported() internal pure {
+        revert ActionNotSupported();
     }
     
     /**
@@ -540,10 +517,9 @@ library SharedValidationLibrary {
     
     /**
      * @dev Validates that a role is not protected
-     * @param role The role name
      */
-    function validateRoleNotProtected(string memory role) internal pure {
-        revert CannotModifyProtectedRoles(role);
+    function validateRoleNotProtected() internal pure {
+        revert CannotModifyProtectedRoles();
     }
     
     /**
@@ -564,27 +540,24 @@ library SharedValidationLibrary {
     /**
      * @dev Validates that a wallet can be removed from a role
      * @param wallet The wallet address
-     * @param role The role name
      */
-    function validateCanRemoveWallet(address wallet, string memory role) internal pure {
-        revert CannotRemoveLastWallet(wallet, role);
+    function validateCanRemoveWallet(address wallet) internal pure {
+        revert CannotRemoveLastWallet(wallet);
     }
     
     /**
      * @dev Validates that a wallet exists in a role
      * @param wallet The wallet address
-     * @param role The role name
      */
-    function validateWalletInRole(address wallet, string memory role) internal pure {
-        revert OldWalletNotFound(wallet, role);
+    function validateWalletInRole(address wallet) internal pure {
+        revert OldWalletNotFound(wallet);
     }
     
     /**
      * @dev Validates that a protected role cannot be removed
-     * @param role The role name
      */
-    function validateCanRemoveProtectedRole(string memory role) internal pure {
-        revert CannotRemoveProtectedRole(role);
+    function validateCanRemoveProtectedRole() internal pure {
+        revert CannotRemoveProtectedRole();
     }
     
     // ============ UTILITY FUNCTIONS ============

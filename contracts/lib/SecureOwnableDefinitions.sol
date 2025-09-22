@@ -84,23 +84,29 @@ library SecureOwnableDefinitions {
         MultiPhaseSecureOperation.FunctionSchema[] memory schemas = new MultiPhaseSecureOperation.FunctionSchema[](12);
         
         // Meta-transaction function schemas
-        MultiPhaseSecureOperation.TxAction[] memory metaApproveActions = new MultiPhaseSecureOperation.TxAction[](1);
+        MultiPhaseSecureOperation.TxAction[] memory metaApproveActions = new MultiPhaseSecureOperation.TxAction[](2);
         metaApproveActions[0] = MultiPhaseSecureOperation.TxAction.EXECUTE_META_APPROVE;
+        metaApproveActions[1] = MultiPhaseSecureOperation.TxAction.SIGN_META_APPROVE;
         
-        MultiPhaseSecureOperation.TxAction[] memory metaCancelActions = new MultiPhaseSecureOperation.TxAction[](1);
+        MultiPhaseSecureOperation.TxAction[] memory metaCancelActions = new MultiPhaseSecureOperation.TxAction[](2);
         metaCancelActions[0] = MultiPhaseSecureOperation.TxAction.EXECUTE_META_CANCEL;
+        metaCancelActions[1] = MultiPhaseSecureOperation.TxAction.SIGN_META_CANCEL;
         
-        MultiPhaseSecureOperation.TxAction[] memory metaRequestApproveActions = new MultiPhaseSecureOperation.TxAction[](1);
-        metaRequestApproveActions[0] = MultiPhaseSecureOperation.TxAction.EXECUTE_META_REQUEST_AND_APPROVE;
+        MultiPhaseSecureOperation.TxAction[] memory metaRequestApproveActions = new MultiPhaseSecureOperation.TxAction[](2);
+        metaRequestApproveActions[0] = MultiPhaseSecureOperation.TxAction.SIGN_META_REQUEST_AND_APPROVE;
+        metaRequestApproveActions[1] = MultiPhaseSecureOperation.TxAction.EXECUTE_META_REQUEST_AND_APPROVE;
         
-        MultiPhaseSecureOperation.TxAction[] memory timeDelayRequestActions = new MultiPhaseSecureOperation.TxAction[](1);
+        MultiPhaseSecureOperation.TxAction[] memory timeDelayRequestActions = new MultiPhaseSecureOperation.TxAction[](2);
         timeDelayRequestActions[0] = MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_REQUEST;
+        timeDelayRequestActions[1] = MultiPhaseSecureOperation.TxAction.SIGN_META_REQUEST_AND_APPROVE;
         
-        MultiPhaseSecureOperation.TxAction[] memory timeDelayApproveActions = new MultiPhaseSecureOperation.TxAction[](1);
+        MultiPhaseSecureOperation.TxAction[] memory timeDelayApproveActions = new MultiPhaseSecureOperation.TxAction[](2);
         timeDelayApproveActions[0] = MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_APPROVE;
+        timeDelayApproveActions[1] = MultiPhaseSecureOperation.TxAction.SIGN_META_APPROVE;
         
-        MultiPhaseSecureOperation.TxAction[] memory timeDelayCancelActions = new MultiPhaseSecureOperation.TxAction[](1);
+        MultiPhaseSecureOperation.TxAction[] memory timeDelayCancelActions = new MultiPhaseSecureOperation.TxAction[](2);
         timeDelayCancelActions[0] = MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_CANCEL;
+        timeDelayCancelActions[1] = MultiPhaseSecureOperation.TxAction.SIGN_META_CANCEL;
         
         // Meta-transaction functions
         schemas[0] = MultiPhaseSecureOperation.FunctionSchema({
@@ -196,7 +202,7 @@ library SecureOwnableDefinitions {
      * @return Array of role hashes
      */
     function getRoleHashes() public pure returns (bytes32[] memory) {
-        bytes32[] memory roleHashes = new bytes32[](18);
+        bytes32[] memory roleHashes = new bytes32[](19);
         
         // Broadcaster role permissions (6 entries)
         roleHashes[0] = MultiPhaseSecureOperation.BROADCASTER_ROLE;
@@ -206,7 +212,7 @@ library SecureOwnableDefinitions {
         roleHashes[4] = MultiPhaseSecureOperation.BROADCASTER_ROLE;
         roleHashes[5] = MultiPhaseSecureOperation.BROADCASTER_ROLE;
         
-        // Owner role permissions (9 entries)
+        // Owner role permissions (10 entries)
         roleHashes[6] = MultiPhaseSecureOperation.OWNER_ROLE;
         roleHashes[7] = MultiPhaseSecureOperation.OWNER_ROLE;
         roleHashes[8] = MultiPhaseSecureOperation.OWNER_ROLE;
@@ -216,11 +222,12 @@ library SecureOwnableDefinitions {
         roleHashes[12] = MultiPhaseSecureOperation.OWNER_ROLE;
         roleHashes[13] = MultiPhaseSecureOperation.OWNER_ROLE;
         roleHashes[14] = MultiPhaseSecureOperation.OWNER_ROLE;
+        roleHashes[15] = MultiPhaseSecureOperation.OWNER_ROLE;
         
         // Recovery role permissions (3 entries)
-        roleHashes[15] = MultiPhaseSecureOperation.RECOVERY_ROLE;
         roleHashes[16] = MultiPhaseSecureOperation.RECOVERY_ROLE;
         roleHashes[17] = MultiPhaseSecureOperation.RECOVERY_ROLE;
+        roleHashes[18] = MultiPhaseSecureOperation.RECOVERY_ROLE;
         
         return roleHashes;
     }
@@ -230,7 +237,7 @@ library SecureOwnableDefinitions {
      * @return Array of function permissions
      */
     function getFunctionPermissions() public pure returns (MultiPhaseSecureOperation.FunctionPermission[] memory) {
-        MultiPhaseSecureOperation.FunctionPermission[] memory permissions = new MultiPhaseSecureOperation.FunctionPermission[](18);
+        MultiPhaseSecureOperation.FunctionPermission[] memory permissions = new MultiPhaseSecureOperation.FunctionPermission[](19);
         
         // Broadcaster role permissions
         MultiPhaseSecureOperation.TxAction[] memory broadcasterMetaApproveActions = new MultiPhaseSecureOperation.TxAction[](1);
@@ -281,20 +288,29 @@ library SecureOwnableDefinitions {
         
         MultiPhaseSecureOperation.TxAction[] memory ownerTimeDelayCancelActions = new MultiPhaseSecureOperation.TxAction[](1);
         ownerTimeDelayCancelActions[0] = MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_CANCEL;
+
+        MultiPhaseSecureOperation.TxAction[] memory ownerMetaApproveActions = new MultiPhaseSecureOperation.TxAction[](1);
+        ownerMetaApproveActions[0] = MultiPhaseSecureOperation.TxAction.SIGN_META_APPROVE;
+
+        MultiPhaseSecureOperation.TxAction[] memory ownerMetaCancelActions = new MultiPhaseSecureOperation.TxAction[](1);
+        ownerMetaCancelActions[0] = MultiPhaseSecureOperation.TxAction.SIGN_META_CANCEL;
+
+        MultiPhaseSecureOperation.TxAction[] memory ownerMetaRequestApproveActions = new MultiPhaseSecureOperation.TxAction[](1);
+        ownerMetaRequestApproveActions[0] = MultiPhaseSecureOperation.TxAction.SIGN_META_REQUEST_AND_APPROVE;
         
         permissions[6] = MultiPhaseSecureOperation.FunctionPermission({
-            functionSelector: TRANSFER_OWNERSHIP_REQUEST_SELECTOR,
-            grantedActions: ownerTimeDelayRequestActions
-        });
-        
-        permissions[7] = MultiPhaseSecureOperation.FunctionPermission({
             functionSelector: TRANSFER_OWNERSHIP_DELAYED_APPROVAL_SELECTOR,
             grantedActions: ownerTimeDelayApproveActions
         });
-        
+
+        permissions[7] = MultiPhaseSecureOperation.FunctionPermission({
+            functionSelector: TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR,
+            grantedActions: ownerMetaApproveActions
+        });
+
         permissions[8] = MultiPhaseSecureOperation.FunctionPermission({
-            functionSelector: TRANSFER_OWNERSHIP_CANCELLATION_SELECTOR,
-            grantedActions: ownerTimeDelayCancelActions
+            functionSelector: TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR,
+            grantedActions: ownerMetaCancelActions
         });
         
         permissions[9] = MultiPhaseSecureOperation.FunctionPermission({
@@ -312,6 +328,26 @@ library SecureOwnableDefinitions {
             grantedActions: ownerTimeDelayCancelActions
         });
         
+        permissions[12] = MultiPhaseSecureOperation.FunctionPermission({
+            functionSelector: UPDATE_BROADCASTER_APPROVE_META_SELECTOR,
+            grantedActions: ownerMetaApproveActions
+        });
+              
+        permissions[13] = MultiPhaseSecureOperation.FunctionPermission({
+            functionSelector: UPDATE_BROADCASTER_CANCEL_META_SELECTOR,
+            grantedActions: ownerMetaCancelActions
+        });
+         
+        permissions[14] = MultiPhaseSecureOperation.FunctionPermission({
+            functionSelector: UPDATE_RECOVERY_META_SELECTOR,
+            grantedActions: ownerMetaRequestApproveActions
+        });
+
+        permissions[15] = MultiPhaseSecureOperation.FunctionPermission({
+            functionSelector: UPDATE_TIMELOCK_META_SELECTOR,
+            grantedActions: ownerMetaRequestApproveActions
+        });
+        
         // Recovery role permissions
         MultiPhaseSecureOperation.TxAction[] memory recoveryTimeDelayRequestActions = new MultiPhaseSecureOperation.TxAction[](1);
         recoveryTimeDelayRequestActions[0] = MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_REQUEST;
@@ -322,38 +358,21 @@ library SecureOwnableDefinitions {
         MultiPhaseSecureOperation.TxAction[] memory recoveryTimeDelayCancelActions = new MultiPhaseSecureOperation.TxAction[](1);
         recoveryTimeDelayCancelActions[0] = MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_CANCEL;
         
-        permissions[12] = MultiPhaseSecureOperation.FunctionPermission({
+        permissions[16] = MultiPhaseSecureOperation.FunctionPermission({
             functionSelector: TRANSFER_OWNERSHIP_REQUEST_SELECTOR,
             grantedActions: recoveryTimeDelayRequestActions
         });
         
-        permissions[13] = MultiPhaseSecureOperation.FunctionPermission({
+        permissions[17] = MultiPhaseSecureOperation.FunctionPermission({
             functionSelector: TRANSFER_OWNERSHIP_DELAYED_APPROVAL_SELECTOR,
             grantedActions: recoveryTimeDelayApproveActions
         });
         
-        permissions[14] = MultiPhaseSecureOperation.FunctionPermission({
+        permissions[18] = MultiPhaseSecureOperation.FunctionPermission({
             functionSelector: TRANSFER_OWNERSHIP_CANCELLATION_SELECTOR,
             grantedActions: recoveryTimeDelayCancelActions
         });
         
         return permissions;
-    }
-    
-    /**
-     * @dev Loads definitions directly into a SecureOperationState
-     * This function initializes the secure state with all predefined definitions
-     * @param secureState The SecureOperationState to initialize
-     */
-    function loadDefinitionContract(
-        MultiPhaseSecureOperation.SecureOperationState storage secureState
-    ) public {
-        MultiPhaseSecureOperation.loadDefinitionContract(
-            secureState,
-            getOperationTypes(),
-            getFunctionSchemas(),
-            getRoleHashes(),
-            getFunctionPermissions()
-        );
     }
 }

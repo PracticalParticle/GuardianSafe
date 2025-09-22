@@ -48,7 +48,11 @@ module.exports = {
       network_id: process.env.REMOTE_NETWORK_ID || "*",
       gas: process.env.REMOTE_GAS ? parseInt(process.env.REMOTE_GAS) : undefined,
       gasPrice: process.env.REMOTE_GAS_PRICE ? parseInt(process.env.REMOTE_GAS_PRICE) : undefined,
-      from: process.env.REMOTE_FROM || undefined
+      from: process.env.REMOTE_FROM || undefined,
+      // Enable detailed error reporting
+      verbose: false,
+      // Enable debug mode
+      debug: true
     },
     
 

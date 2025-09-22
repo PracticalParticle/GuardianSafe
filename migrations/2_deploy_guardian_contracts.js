@@ -40,7 +40,7 @@ module.exports = async function(deployer, network, accounts) {
     // Initialize GuardianAccountAbstraction
     console.log("🔧 Initializing GuardianAccountAbstraction...");
     try {
-        await guardianAccountAbstraction.initialize(
+        const tx = await guardianAccountAbstraction.initialize(
             accounts[0],  // initialOwner
             accounts[0],  // broadcaster (same as owner for simplicity)
             accounts[0],  // recovery (same as owner for simplicity)
@@ -48,8 +48,27 @@ module.exports = async function(deployer, network, accounts) {
             "0x0000000000000000000000000000000000000000"  // eventForwarder (none)
         );
         console.log("✅ GuardianAccountAbstraction initialized successfully");
+        console.log("   Transaction hash:", tx.tx);
     } catch (error) {
-        console.log("❌ GuardianAccountAbstraction initialization failed:", error.message);
+        console.log("❌ GuardianAccountAbstraction initialization failed:");
+        console.log("   Error message:", error.message);
+        console.log("   Error reason:", error.reason);
+        console.log("   Error data:", error.data);
+        console.log("   Full error:", JSON.stringify(error, null, 2));
+        
+        // Try to decode the error if it's a revert
+        if (error.data) {
+            try {
+                const decodedError = await web3.eth.call({
+                    to: guardianAccountAbstraction.address,
+                    data: error.data
+                });
+                console.log("   Decoded error data:", decodedError);
+            } catch (decodeError) {
+                console.log("   Could not decode error data:", decodeError.message);
+            }
+        }
+        
         console.log("⚠️  Contract deployed but not initialized. This may be expected for upgradeable contracts.");
     }
     
@@ -70,7 +89,7 @@ module.exports = async function(deployer, network, accounts) {
     // Initialize GuardianAccountAbstractionWithRoles
     console.log("🔧 Initializing GuardianAccountAbstractionWithRoles...");
     try {
-        await guardianAccountAbstractionWithRoles.initialize(
+        const tx = await guardianAccountAbstractionWithRoles.initialize(
             accounts[0],  // initialOwner
             accounts[0],  // broadcaster (same as owner for simplicity)
             accounts[0],  // recovery (same as owner for simplicity)
@@ -78,8 +97,27 @@ module.exports = async function(deployer, network, accounts) {
             "0x0000000000000000000000000000000000000000"  // eventForwarder (none)
         );
         console.log("✅ GuardianAccountAbstractionWithRoles initialized successfully");
+        console.log("   Transaction hash:", tx.tx);
     } catch (error) {
-        console.log("❌ GuardianAccountAbstractionWithRoles initialization failed:", error.message);
+        console.log("❌ GuardianAccountAbstractionWithRoles initialization failed:");
+        console.log("   Error message:", error.message);
+        console.log("   Error reason:", error.reason);
+        console.log("   Error data:", error.data);
+        console.log("   Full error:", JSON.stringify(error, null, 2));
+        
+        // Try to decode the error if it's a revert
+        if (error.data) {
+            try {
+                const decodedError = await web3.eth.call({
+                    to: guardianAccountAbstractionWithRoles.address,
+                    data: error.data
+                });
+                console.log("   Decoded error data:", decodedError);
+            } catch (decodeError) {
+                console.log("   Could not decode error data:", decodeError.message);
+            }
+        }
+        
         console.log("⚠️  Contract deployed but not initialized. This may be expected for upgradeable contracts.");
     }
     

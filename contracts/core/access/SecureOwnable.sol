@@ -89,14 +89,26 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
         address recovery,
         uint256 timeLockPeriodInMinutes,    
         address eventForwarder
-    ) public virtual initializer {
+    ) public virtual onlyInitializing {
         __ERC165_init();
         
         _secureState.initialize(initialOwner, broadcaster, recovery, timeLockPeriodInMinutes);
         
-        // Load definitions directly from SecureOwnableDefinitions library
-        MultiPhaseSecureOperationDefinitions.loadDefinitionContract(_secureState);
-        SecureOwnableDefinitions.loadDefinitionContract(_secureState);
+        // Load definitions directly from MultiPhaseSecureOperation library
+        MultiPhaseSecureOperation.loadDefinitionContract(
+            _secureState,
+            MultiPhaseSecureOperationDefinitions.getOperationTypes(),
+            MultiPhaseSecureOperationDefinitions.getFunctionSchemas(),
+            MultiPhaseSecureOperationDefinitions.getRoleHashes(),
+            MultiPhaseSecureOperationDefinitions.getFunctionPermissions()
+        );
+        MultiPhaseSecureOperation.loadDefinitionContract(
+            _secureState,
+            SecureOwnableDefinitions.getOperationTypes(),
+            SecureOwnableDefinitions.getFunctionSchemas(),
+            SecureOwnableDefinitions.getRoleHashes(),
+            SecureOwnableDefinitions.getFunctionPermissions()
+        );
 
         _secureState.setEventForwarder(eventForwarder);
     }
@@ -190,7 +202,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      */
     function updateBroadcasterRequest(address newBroadcaster) public onlyOwner returns (MultiPhaseSecureOperation.TxRecord memory) {
         if (_hasOpenBroadcasterRequest) revert SharedValidationLibrary.RequestAlreadyPending(0);
-        SharedValidationLibrary.validateAddressUpdate(newBroadcaster, getBroadcaster(), "broadcaster");
+        SharedValidationLibrary.validateAddressUpdate(newBroadcaster, getBroadcaster());
         
         bytes memory executionOptions = MultiPhaseSecureOperation.createStandardExecutionOptions(
             SecureOwnableDefinitions.UPDATE_BROADCASTER_SELECTOR,
@@ -275,7 +287,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
     function updateRecoveryExecutionOptions(
         address newRecoveryAddress
     ) public view returns (bytes memory) {
-        SharedValidationLibrary.validateAddressUpdate(newRecoveryAddress, getRecovery(), "recovery");
+        SharedValidationLibrary.validateAddressUpdate(newRecoveryAddress, getRecovery());
 
         return MultiPhaseSecureOperation.createStandardExecutionOptions(
             SecureOwnableDefinitions.UPDATE_RECOVERY_SELECTOR,

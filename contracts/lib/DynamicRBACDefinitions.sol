@@ -47,8 +47,9 @@ library DynamicRBACDefinitions {
         MultiPhaseSecureOperation.FunctionSchema[] memory schemas = new MultiPhaseSecureOperation.FunctionSchema[](1);
         
         // Meta-transaction function schemas
-        MultiPhaseSecureOperation.TxAction[] memory metaRequestApproveActions = new MultiPhaseSecureOperation.TxAction[](1);
-        metaRequestApproveActions[0] = MultiPhaseSecureOperation.TxAction.EXECUTE_META_REQUEST_AND_APPROVE;
+        MultiPhaseSecureOperation.TxAction[] memory metaRequestApproveActions = new MultiPhaseSecureOperation.TxAction[](2);
+        metaRequestApproveActions[0] = MultiPhaseSecureOperation.TxAction.SIGN_META_REQUEST_AND_APPROVE;
+        metaRequestApproveActions[1] = MultiPhaseSecureOperation.TxAction.EXECUTE_META_REQUEST_AND_APPROVE;
         
         schemas[0] = MultiPhaseSecureOperation.FunctionSchema({
             functionName: "updateRoleEditingToggleRequestAndApprove",
@@ -92,20 +93,4 @@ library DynamicRBACDefinitions {
         return permissions;
     }
     
-    /**
-     * @dev Loads definitions directly into a SecureOperationState
-     * This function initializes the secure state with all predefined definitions
-     * @param secureState The SecureOperationState to initialize
-     */
-    function loadDefinitionContract(
-        MultiPhaseSecureOperation.SecureOperationState storage secureState
-    ) public {
-        MultiPhaseSecureOperation.loadDefinitionContract(
-            secureState,
-            getOperationTypes(),
-            getFunctionSchemas(),
-            getRoleHashes(),
-            getFunctionPermissions()
-        );
-    }
 }
