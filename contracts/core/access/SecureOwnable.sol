@@ -540,6 +540,26 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
     }
 
     /**
+     * @dev Returns if a wallet is authorized for a role
+     * @param roleHash The hash of the role to check
+     * @param wallet The wallet address to check
+     * @return True if the wallet is authorized for the role, false otherwise
+     */
+    function isAuthorizedWalletInRole(bytes32 roleHash, address wallet) public view returns (bool) {
+        return _secureState.isAuthorizedWalletInRole(roleHash, wallet);
+    }
+
+    /**
+     * @dev Returns if an action is supported by a function
+     * @param functionSelector The function selector to check
+     * @param action The action to check
+     * @return True if the action is supported by the function, false otherwise
+     */
+    function isActionSupportedByFunction(bytes4 functionSelector, MultiPhaseSecureOperation.TxAction action) public view returns (bool) {
+        return _secureState.isActionSupportedByFunction(functionSelector, action);
+    }
+
+    /**
      * @dev Returns the time lock period
      * @return The time lock period in minutes
      */

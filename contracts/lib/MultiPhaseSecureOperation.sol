@@ -181,7 +181,7 @@ library MultiPhaseSecureOperation {
     bytes32 constant BROADCASTER_ROLE = keccak256(bytes("BROADCASTER_ROLE"));
     bytes32 constant RECOVERY_ROLE = keccak256(bytes("RECOVERY_ROLE"));
 
-       // Function Selector Constants for core MultiPhase functions
+    // Function Selector Constants for core MultiPhase functions
     bytes4 public constant TX_REQUEST_SELECTOR = bytes4(keccak256("txRequest(address,address,uint256,uint256,bytes32,uint8,bytes)"));
     bytes4 public constant TX_DELAYED_APPROVAL_SELECTOR = bytes4(keccak256("txDelayedApproval(uint256)"));
     bytes4 public constant TX_CANCELLATION_SELECTOR = bytes4(keccak256("txCancellation(uint256)"));
@@ -192,7 +192,6 @@ library MultiPhaseSecureOperation {
     // Payment-related function selectors
     bytes4 public constant UPDATE_PAYMENT_SELECTOR = bytes4(keccak256("updatePaymentForTransaction(uint256,(address,uint256,address,uint256))"));
    
-
     // EIP-712 Type Hashes
     bytes32 private constant TYPE_HASH = keccak256("MetaTransaction(TxRecord txRecord,MetaTxParams params,bytes data)TxRecord(uint256 txId,uint256 releaseTime,uint8 status,TxParams params,bytes32 message,bytes result,PaymentDetails payment)TxParams(address requester,address target,uint256 value,uint256 gasLimit,bytes32 operationType,uint8 executionType,bytes executionOptions)MetaTxParams(uint256 chainId,uint256 nonce,address handlerContract,bytes4 handlerSelector,uint8 action,uint256 deadline,uint256 maxGasPrice,address signer)PaymentDetails(address recipient,uint256 nativeTokenAmount,address erc20TokenAddress,uint256 erc20TokenAmount)");
     bytes32 private constant DOMAIN_SEPARATOR_TYPE_HASH = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
@@ -740,6 +739,17 @@ library MultiPhaseSecureOperation {
     }
 
     /**
+     * @dev Checks if a wallet is authorized for a role.
+     * @param self The SecureOperationState to check.
+     * @param roleHash The hash of the role to check.
+     * @param wallet The wallet address to check.
+     * @return True if the wallet is authorized for the role, false otherwise.
+     */
+    function isAuthorizedWalletInRole(SecureOperationState storage self, bytes32 roleHash, address wallet) public view returns (bool) {
+        return self.roles[roleHash].authorizedWallets.contains(wallet);
+    }
+
+    /**
      * @dev Adds a wallet address to a role in the roles mapping.
      * @param self The SecureOperationState to modify.
      * @param role The role hash to add the wallet to.
@@ -752,7 +762,7 @@ library MultiPhaseSecureOperation {
         Role storage roleData = self.roles[role];
         SharedValidationLibrary.validateWalletLimit(roleData.authorizedWallets.length(), roleData.maxWallets);
         
-        // Check if wallet is already in the role (O(1) operation)
+        // Check if wallet is already in the role
         if (roleData.authorizedWallets.contains(wallet)) revert SharedValidationLibrary.WalletAlreadyInRole(wallet);
         
         roleData.authorizedWallets.add(wallet);
@@ -971,7 +981,7 @@ library MultiPhaseSecureOperation {
         SecureOperationState storage self,
         bytes4 functionSelector,
         TxAction action
-    ) private view returns (bool) {
+    ) public view returns (bool) {
         FunctionSchema memory functionSchema = self.functions[functionSelector];
         if (functionSchema.functionSelector == bytes4(0)) {
             return false; 
@@ -1134,7 +1144,7 @@ library MultiPhaseSecureOperation {
 
         // txId validation for new meta transactions
         if (metaTx.params.action == TxAction.SIGN_META_REQUEST_AND_APPROVE) {
-            SharedValidationLibrary.validateTransactionId(metaTx.txRecord.txId, self.txCounter + 1);
+            SharedValidationLibrary.validateTransactionId(metaTx.txRecord.txId, self.txCounter);
         }
         
         // Signature verification
