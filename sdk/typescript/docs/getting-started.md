@@ -123,35 +123,6 @@ unwatch()
 
 ### **Basic Contract Analysis**
 
-```typescript
-import { WorkflowAnalyzer } from '@guardian/sdk/typescript/analyzer'
-
-// Create analyzer
-const analyzer = new WorkflowAnalyzer(publicClient)
-
-// Analyze a contract
-const analysis = await analyzer.analyzeContract('0x...')
-
-console.log('Contract Analysis:')
-console.log('- Definition Type:', analysis.definitionType)
-console.log('- Operation Types:', analysis.operationTypes.length)
-console.log('- Function Schemas:', analysis.functionSchemas.length)
-console.log('- Compliance Score:', analysis.complianceScore)
-```
-
-### **Workflow Generation**
-
-```typescript
-// Generate workflows for a contract
-const workflows = await analyzer.generateWorkflows('0x...')
-
-console.log('Generated Workflows:')
-workflows.forEach(workflow => {
-  console.log(`- ${workflow.name} (${workflow.type})`)
-  console.log(`  Valid: ${workflow.isValid}`)
-  console.log(`  Operations: ${workflow.operations.length}`)
-})
-```
 
 ## 🛠️ **Development Workflow**
 
@@ -170,7 +141,6 @@ npm run compile:truffle
 
 # Run tests
 npm run test:truffle
-npm run test:analyzer
 ```
 
 ### **2. Testing Your Integration**
@@ -247,7 +217,6 @@ try {
 1. **Read the API Reference**: [API Reference](./api-reference.md)
 2. **Explore SecureOwnable**: [SecureOwnable Guide](./secure-ownable.md)
 3. **Learn about DynamicRBAC**: [DynamicRBAC Guide](./dynamic-rbac.md)
-4. **Try Workflow Analysis**: [Analyzer Overview](./analyzer-overview.md)
 5. **Check Examples**: [Basic Examples](./examples-basic.md)
 
 ## ❓ **Common Issues**

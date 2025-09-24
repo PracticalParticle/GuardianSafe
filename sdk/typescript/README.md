@@ -17,7 +17,6 @@ Guardian Framework implements a **state machine architecture** with `SecureOpera
 - **SecureOwnable**: Multi-phase ownership management with time-locked operations
 - **DynamicRBAC**: Dynamic role-based access control system
 - **GuardianAccountAbstraction**: Account abstraction with secure operations
-- **Workflow Analyzer**: Comprehensive contract analysis and workflow generation
 - **Type Safety**: Full TypeScript support with comprehensive type definitions
 - **Viem Integration**: Built on top of Viem for modern Ethereum development
 
@@ -36,8 +35,7 @@ Comprehensive documentation is available in the [`docs/`](./docs/) directory:
 - **[SecureOwnable Guide](./docs/secure-ownable.md)** - Ownership management
 - **[DynamicRBAC Guide](./docs/dynamic-rbac.md)** - Role-based access control
 
-### **🔍 Analysis & Tools**
-- **[Workflow Analyzer](./docs/analyzer-overview.md)** - Contract analysis and workflow generation
+### **🔍 Development Tools**
 - **[Best Practices](./docs/best-practices.md)** - Development guidelines
 - **[Examples](./docs/examples-basic.md)** - Practical code samples
 - **[Types & Interfaces](./docs/types-interfaces.md)** - Type definitions
@@ -55,8 +53,7 @@ npm install viem
 ```typescript
 import { 
   SecureOwnable, 
-  DynamicRBAC, 
-  GuardianAccountAbstraction,
+  DynamicRBAC,
   type Address,
   type PublicClient,
   type WalletClient,
@@ -77,13 +74,6 @@ const secureOwnable = new SecureOwnable(
 );
 
 const dynamicRBAC = new DynamicRBAC(
-  publicClient,
-  walletClient,
-  contractAddress,
-  chain
-);
-
-const guardianAA = new GuardianAccountAbstraction(
   publicClient,
   walletClient,
   contractAddress,
@@ -231,34 +221,6 @@ const wallets = await dynamicRBAC.getWalletsInRole(roleHash);
 const permissions = await dynamicRBAC.getRolePermissions(roleHash);
 ```
 
-## GuardianAccountAbstraction Usage
-
-### Initialization
-
-```typescript
-// Initialize the contract
-const initResult = await guardianAA.initialize(
-  initialOwner,
-  broadcaster,
-  recovery,
-  timeLockPeriodSec,
-  { from: deployerAddress }
-);
-```
-
-### Operation Management
-
-```typescript
-// Get operation history
-const history = await guardianAA.getOperationHistory();
-
-// Get specific operation
-const operation = await guardianAA.getOperation(txId);
-
-// Check supported operation types
-const supportedTypes = await guardianAA.getSupportedOperationTypes();
-const isSupported = await guardianAA.isOperationTypeSupported(operationType);
-```
 
 ## Types and Constants
 

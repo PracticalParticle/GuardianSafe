@@ -274,7 +274,6 @@ class GuardianManager {
   constructor(
     private secureOwnable: SecureOwnable,
     private dynamicRBAC: DynamicRBAC,
-    private analyzer: WorkflowAnalyzer
   ) {}
 
   // Delegate to specific modules
@@ -286,9 +285,6 @@ class GuardianManager {
     return await this.dynamicRBAC.grantRole(roleHash, account)
   }
 
-  async analyzeContract(address: Address) {
-    return await this.analyzer.analyzeContract(address)
-  }
 }
 ```
 

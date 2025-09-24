@@ -333,33 +333,6 @@ const txHash = await secureOwnable.transferOwnershipRequest(
 )
 ```
 
-## 📊 **Workflow Analysis**
-
-### **Analyze SecureOwnable Contract**
-
-```typescript
-import { WorkflowAnalyzer } from '@guardian/sdk/typescript/analyzer'
-
-const analyzer = new WorkflowAnalyzer(publicClient)
-
-// Analyze the contract
-const analysis = await analyzer.analyzeContract(contractAddress)
-
-console.log('Contract Analysis:')
-console.log('- Definition Type:', analysis.definitionType) // Should be 'SecureOwnable'
-console.log('- Operation Types:', analysis.operationTypes.length)
-console.log('- Compliance Score:', analysis.complianceScore)
-
-// Generate workflows
-const workflows = await analyzer.generateWorkflows(contractAddress)
-
-workflows.forEach(workflow => {
-  console.log(`Workflow: ${workflow.name}`)
-  console.log(`- Type: ${workflow.type}`)
-  console.log(`- Valid: ${workflow.isValid}`)
-  console.log(`- Operations: ${workflow.operations.length}`)
-})
-```
 
 ## 🧪 **Testing**
 

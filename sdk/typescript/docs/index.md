@@ -19,11 +19,6 @@ Welcome to the comprehensive documentation for the Guardian TypeScript SDK. This
 - [**DynamicRBAC**](./dynamic-rbac.md) - DynamicRBAC contract integration
 - [**Types & Interfaces**](./types-interfaces.md) - TypeScript type definitions
 
-### **🔍 Workflow Analyzer**
-- [**Analyzer Overview**](./analyzer-overview.md) - Introduction to workflow analysis
-- [**Contract Analysis**](./contract-analysis.md) - Analyzing Guardian contracts
-- [**Workflow Generation**](./workflow-generation.md) - Generating and validating workflows
-- [**Protocol Compliance**](./protocol-compliance.md) - Compliance checking and validation
 
 ### **📖 Development Guides**
 - [**Best Practices**](./best-practices.md) - Development guidelines and patterns
@@ -52,7 +47,6 @@ Welcome to the comprehensive documentation for the Guardian TypeScript SDK. This
 - **Understand the API** → [API Reference](./api-reference.md)
 - **Use SecureOwnable** → [SecureOwnable Guide](./secure-ownable.md)
 - **Use DynamicRBAC** → [DynamicRBAC Guide](./dynamic-rbac.md)
-- **Analyze contracts** → [Analyzer Overview](./analyzer-overview.md)
 - **See examples** → [Basic Examples](./examples-basic.md)
 - **Follow best practices** → [Best Practices](./best-practices.md)
 - **Deploy contracts** → [Deployment Guide](./deployment.md)
@@ -64,11 +58,6 @@ Welcome to the comprehensive documentation for the Guardian TypeScript SDK. This
 - [DynamicRBAC](./dynamic-rbac.md) - Role-based access control
 - [Types & Interfaces](./types-interfaces.md) - Type definitions
 
-**Workflow Analyzer:**
-- [Analyzer Overview](./analyzer-overview.md) - Analysis system
-- [Contract Analysis](./contract-analysis.md) - Contract analysis
-- [Workflow Generation](./workflow-generation.md) - Workflow creation
-- [Protocol Compliance](./protocol-compliance.md) - Compliance checking
 
 **Development:**
 - [Best Practices](./best-practices.md) - Development guidelines
@@ -91,10 +80,6 @@ Welcome to the comprehensive documentation for the Guardian TypeScript SDK. This
 | [SecureOwnable](./secure-ownable.md) | ✅ Complete | Sep 2025 |
 | [DynamicRBAC](./dynamic-rbac.md) | ✅ Complete | Sep 2025 |
 | [Types & Interfaces](./types-interfaces.md) | ✅ Complete | Sep 2025 |
-| [Analyzer Overview](./analyzer-overview.md) | ✅ Complete | Sep 2025 |
-| [Contract Analysis](./contract-analysis.md) | 🚧 Planned | - |
-| [Workflow Generation](./workflow-generation.md) | 🚧 Planned | - |
-| [Protocol Compliance](./protocol-compliance.md) | 🚧 Planned | - |
 | [Best Practices](./best-practices.md) | ✅ Complete | Sep 2025 |
 | [Error Handling](./error-handling.md) | 🚧 Planned | - |
 | [Performance](./performance.md) | 🚧 Planned | - |
@@ -174,25 +159,12 @@ const owner = await secureOwnable.owner()
 console.log('Owner:', owner)
 ```
 
-### **Workflow Analysis**
-```typescript
-import { WorkflowAnalyzer } from '@guardian/sdk/typescript/analyzer'
-
-const analyzer = new WorkflowAnalyzer(client)
-const analysis = await analyzer.analyzeContract('0x...')
-
-console.log('Analysis:', {
-  type: analysis.definitionType,
-  compliance: analysis.complianceScore,
-  workflows: analysis.workflows.length
-})
-```
 
 ## 📊 **Documentation Metrics**
 
-- **Total Documents**: 19
-- **Completed**: 8 (42%)
-- **In Progress**: 11 (58%)
+- **Total Documents**: 15
+- **Completed**: 8 (53%)
+- **In Progress**: 7 (47%)
 - **Total Words**: ~50,000
 - **Code Examples**: 100+
 

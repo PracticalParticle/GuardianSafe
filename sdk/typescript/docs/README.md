@@ -11,11 +11,6 @@ Welcome to the Guardian TypeScript SDK documentation. This comprehensive guide c
 - [**DynamicRBAC**](./dynamic-rbac.md) - DynamicRBAC contract integration
 - [**Types & Interfaces**](./types-interfaces.md) - TypeScript type definitions
 
-### **Workflow Analyzer**
-- [**Analyzer Overview**](./analyzer-overview.md) - Introduction to workflow analysis
-- [**Contract Analysis**](./contract-analysis.md) - Analyzing Guardian contracts
-- [**Workflow Generation**](./workflow-generation.md) - Generating and validating workflows
-- [**Protocol Compliance**](./protocol-compliance.md) - Compliance checking and validation
 
 ### **Advanced Topics**
 - [**Best Practices**](./best-practices.md) - Development guidelines and patterns
@@ -66,20 +61,16 @@ console.log('Contract owner:', owner)
 3. [SecureOwnable](./secure-ownable.md)
 4. [DynamicRBAC](./dynamic-rbac.md)
 5. [Types & Interfaces](./types-interfaces.md)
-6. [Analyzer Overview](./analyzer-overview.md)
-7. [Contract Analysis](./contract-analysis.md)
-8. [Workflow Generation](./workflow-generation.md)
-9. [Protocol Compliance](./protocol-compliance.md)
-10. [Best Practices](./best-practices.md)
-11. [Error Handling](./error-handling.md)
-12. [Performance Optimization](./performance.md)
-13. [Testing Guide](./testing.md)
-14. [Basic Examples](./examples-basic.md)
-15. [Advanced Examples](./examples-advanced.md)
-16. [Integration Examples](./examples-integration.md)
-17. [Deployment Guide](./deployment.md)
-18. [Network Configuration](./network-config.md)
-19. [Migration Guide](./migration.md)
+6. [Best Practices](./best-practices.md)
+7. [Error Handling](./error-handling.md)
+8. [Performance Optimization](./performance.md)
+9. [Testing Guide](./testing.md)
+10. [Basic Examples](./examples-basic.md)
+11. [Advanced Examples](./examples-advanced.md)
+12. [Integration Examples](./examples-integration.md)
+13. [Deployment Guide](./deployment.md)
+14. [Network Configuration](./network-config.md)
+15. [Migration Guide](./migration.md)
 
 ## 🔗 **External Resources**
 

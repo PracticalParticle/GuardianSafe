@@ -313,192 +313,10 @@ await checkRoleMembership('0x...', '0x...') // account, role hash
 await getRoleCount()
 ```
 
-## 🔍 **Workflow Analysis Examples**
 
-### **Basic Contract Analysis**
 
-```typescript
-import { WorkflowAnalyzer } from '@guardian/sdk/typescript/analyzer'
 
-// Create analyzer
-const analyzer = new WorkflowAnalyzer(publicClient)
 
-// Analyze a contract
-async function analyzeContract(contractAddress: Address) {
-  try {
-    console.log(`Analyzing contract: ${contractAddress}`)
-    
-    const analysis = await analyzer.analyzeContract(contractAddress)
-    
-    console.log('Contract Analysis Results:')
-    console.log('- Definition Type:', analysis.definitionType)
-    console.log('- Operation Types:', analysis.operationTypes.length)
-    console.log('- Function Schemas:', analysis.functionSchemas.length)
-    console.log('- Role Permissions:', analysis.rolePermissions.length)
-    console.log('- Compliance Score:', analysis.complianceScore)
-    console.log('- Analysis Timestamp:', new Date(analysis.analysisTimestamp))
-    
-    return analysis
-  } catch (error) {
-    console.error('Contract analysis failed:', error.message)
-  }
-}
-
-// Usage
-const analysis = await analyzeContract('0x...')
-```
-
-### **Workflow Generation**
-
-```typescript
-// Generate workflows for a contract
-async function generateWorkflows(contractAddress: Address) {
-  try {
-    console.log(`Generating workflows for: ${contractAddress}`)
-    
-    const workflows = await analyzer.generateWorkflows(contractAddress)
-    
-    console.log(`Generated ${workflows.length} workflows:`)
-    
-    workflows.forEach((workflow, index) => {
-      console.log(`\nWorkflow ${index + 1}: ${workflow.name}`)
-      console.log(`- Type: ${workflow.type}`)
-      console.log(`- Valid: ${workflow.isValid}`)
-      console.log(`- Operations: ${workflow.operations.length}`)
-      console.log(`- State Transitions: ${workflow.stateTransitions.length}`)
-      
-      if (!workflow.isValid) {
-        console.log(`- Validation Errors: ${workflow.validationErrors.join(', ')}`)
-      }
-      
-      // Show operations
-      workflow.operations.forEach((operation, opIndex) => {
-        console.log(`  Operation ${opIndex + 1}: ${operation.name}`)
-        console.log(`    - Type: ${operation.type}`)
-        console.log(`    - Status: ${operation.status}`)
-        console.log(`    - Required Actions: ${operation.requiredActions.join(', ')}`)
-      })
-    })
-    
-    return workflows
-  } catch (error) {
-    console.error('Workflow generation failed:', error.message)
-  }
-}
-
-// Usage
-const workflows = await generateWorkflows('0x...')
-```
-
-### **Workflow Validation**
-
-```typescript
-// Validate individual workflows
-async function validateWorkflows(workflows: Workflow[]) {
-  try {
-    console.log('Validating workflows...')
-    
-    workflows.forEach((workflow, index) => {
-      const validation = analyzer.validateWorkflow(workflow)
-      
-      console.log(`\nWorkflow ${index + 1}: ${workflow.name}`)
-      console.log(`- Valid: ${validation.isValid}`)
-      console.log(`- Score: ${validation.score}`)
-      
-      if (validation.errors.length > 0) {
-        console.log(`- Errors: ${validation.errors.join(', ')}`)
-      }
-      
-      if (validation.warnings.length > 0) {
-        console.log(`- Warnings: ${validation.warnings.join(', ')}`)
-      }
-    })
-    
-  } catch (error) {
-    console.error('Workflow validation failed:', error.message)
-  }
-}
-
-// Usage
-await validateWorkflows(workflows)
-```
-
-### **Protocol Compliance**
-
-```typescript
-// Check protocol compliance
-async function checkCompliance(contractAddress: Address) {
-  try {
-    console.log(`Checking compliance for: ${contractAddress}`)
-    
-    const compliance = await analyzer.checkProtocolCompliance(contractAddress)
-    
-    console.log('Compliance Results:')
-    console.log('- Compliant:', compliance.isCompliant ? '✅ Yes' : '❌ No')
-    console.log('- Score:', compliance.score, '%')
-    console.log('- Violations:', compliance.violations.length)
-    console.log('- Recommendations:', compliance.recommendations.length)
-    
-    // Show violations
-    if (compliance.violations.length > 0) {
-      console.log('\nViolations:')
-      compliance.violations.forEach((violation, index) => {
-        console.log(`${index + 1}. ${violation.severity}: ${violation.description}`)
-        console.log(`   Recommendation: ${violation.recommendation}`)
-      })
-    }
-    
-    // Show recommendations
-    if (compliance.recommendations.length > 0) {
-      console.log('\nRecommendations:')
-      compliance.recommendations.forEach((recommendation, index) => {
-        console.log(`${index + 1}. ${recommendation}`)
-      })
-    }
-    
-    return compliance
-  } catch (error) {
-    console.error('Compliance check failed:', error.message)
-  }
-}
-
-// Usage
-const compliance = await checkCompliance('0x...')
-```
-
-### **Workflow Statistics**
-
-```typescript
-// Analyze workflow statistics
-async function analyzeStatistics(workflows: Workflow[]) {
-  try {
-    console.log('Analyzing workflow statistics...')
-    
-    const stats = analyzer.analyzeWorkflowStatistics(workflows)
-    
-    console.log('Workflow Statistics:')
-    console.log('- Total Workflows:', stats.totalWorkflows)
-    console.log('- Valid Workflows:', stats.validWorkflows)
-    console.log('- Broken Workflows:', stats.brokenWorkflows)
-    console.log('- Total Operations:', stats.totalOperations)
-    console.log('- Total State Transitions:', stats.totalStateTransitions)
-    console.log('- Average Operations per Workflow:', stats.averageOperationsPerWorkflow.toFixed(2))
-    console.log('- Average State Transitions per Workflow:', stats.averageStateTransitionsPerWorkflow.toFixed(2))
-    
-    console.log('\nWorkflow Types:')
-    Object.entries(stats.workflowTypes).forEach(([type, count]) => {
-      console.log(`- ${type}: ${count}`)
-    })
-    
-    return stats
-  } catch (error) {
-    console.error('Statistics analysis failed:', error.message)
-  }
-}
-
-// Usage
-const stats = await analyzeStatistics(workflows)
-```
 
 ## 📡 **Event Monitoring Examples**
 
@@ -688,7 +506,6 @@ const stopRoleMonitoring = await monitorRoleEvents('0x...')
 class GuardianContractManager {
   private secureOwnable: SecureOwnable
   private dynamicRBAC: DynamicRBAC
-  private analyzer: WorkflowAnalyzer
 
   constructor(
     publicClient: PublicClient,
@@ -711,7 +528,6 @@ class GuardianContractManager {
       chain
     )
     
-    this.analyzer = new WorkflowAnalyzer(publicClient)
   }
 
   // Get contract status
@@ -729,38 +545,13 @@ class GuardianContractManager {
     }
   }
 
-  // Analyze contracts
-  async analyzeContracts() {
-    const [secureOwnableAnalysis, dynamicRBACAnalysis] = await Promise.all([
-      this.analyzer.analyzeContract(this.secureOwnable.contractAddress),
-      this.analyzer.analyzeContract(this.dynamicRBAC.contractAddress)
-    ])
 
-    return {
-      secureOwnable: secureOwnableAnalysis,
-      dynamicRBAC: dynamicRBACAnalysis
-    }
-  }
-
-  // Transfer ownership with analysis
-  async transferOwnershipWithAnalysis(newOwner: Address) {
-    console.log('Starting ownership transfer with analysis...')
+  // Transfer ownership
+  async transferOwnership(newOwner: Address) {
+    console.log('Starting ownership transfer...')
     
-    // Analyze current state
-    const analysis = await this.analyzer.analyzeContract(
-      this.secureOwnable.contractAddress
-    )
-    console.log('Pre-transfer compliance score:', analysis.complianceScore)
-    
-    // Perform transfer
     const txHash = await this.secureOwnable.transferOwnershipRequest(newOwner)
     console.log('Ownership transfer requested:', txHash)
-    
-    // Analyze post-transfer
-    const postAnalysis = await this.analyzer.analyzeContract(
-      this.secureOwnable.contractAddress
-    )
-    console.log('Post-transfer compliance score:', postAnalysis.complianceScore)
     
     return txHash
   }

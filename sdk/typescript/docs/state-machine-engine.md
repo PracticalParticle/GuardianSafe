@@ -287,43 +287,6 @@ function _forwardEvent(bytes memory eventData) internal {
 
 ## Integration with TypeScript SDK
 
-### 1. **State Machine Analysis**
-```typescript
-import { WorkflowAnalyzer } from '@guardian/sdk'
-
-const analyzer = new WorkflowAnalyzer(client)
-
-// Analyze state machine configuration
-const analysis = await analyzer.analyzeContract(contractAddress)
-
-// Access state machine information
-console.log('State Machine Status:', analysis.definitionType)
-console.log('Operation Types:', analysis.operationTypes)
-console.log('Function Schemas:', analysis.functionSchemas)
-console.log('Role Permissions:', analysis.rolePermissions)
-```
-
-### 2. **Workflow Generation**
-```typescript
-// Generate workflows based on state machine rules
-const workflows = analyzer.generateWorkflows(contractAddress)
-
-// Each workflow represents a valid state transition path
-workflows.forEach(workflow => {
-  console.log(`Workflow: ${workflow.name}`)
-  console.log(`Type: ${workflow.type}`)
-  console.log(`State Transitions: ${workflow.operations.length}`)
-})
-```
-
-### 3. **Security Validation**
-```typescript
-// Validate state machine integrity
-const integrityResult = await analyzer.validateContractIntegrity(contractAddress)
-
-// Check state machine initialization
-const initResult = await analyzer.validateContractInitialization(contractAddress)
-```
 
 ## Best Practices
 

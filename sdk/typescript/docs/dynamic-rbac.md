@@ -373,37 +373,6 @@ const parentRoles = await dynamicRBAC.getParentRoles(childRoleHash)
 
 ## 📊 **Workflow Analysis**
 
-### **Analyze DynamicRBAC Contract**
-
-```typescript
-import { WorkflowAnalyzer } from '@guardian/sdk/typescript/analyzer'
-
-const analyzer = new WorkflowAnalyzer(publicClient)
-
-// Analyze the contract
-const analysis = await analyzer.analyzeContract(contractAddress)
-
-console.log('Contract Analysis:')
-console.log('- Definition Type:', analysis.definitionType) // Should be 'DynamicRBAC'
-console.log('- Operation Types:', analysis.operationTypes.length)
-console.log('- Role Permissions:', analysis.rolePermissions.length)
-console.log('- Compliance Score:', analysis.complianceScore)
-
-// Generate workflows
-const workflows = await analyzer.generateWorkflows(contractAddress)
-
-workflows.forEach(workflow => {
-  console.log(`Workflow: ${workflow.name}`)
-  console.log(`- Type: ${workflow.type}`)
-  console.log(`- Valid: ${workflow.isValid}`)
-  console.log(`- Operations: ${workflow.operations.length}`)
-  
-  // Check for role-specific workflows
-  if (workflow.operations.some(op => op.type === 'ROLE_EDITING_TOGGLE')) {
-    console.log('- Contains role editing operations')
-  }
-})
-```
 
 ### **Role Permission Analysis**
 
@@ -487,9 +456,7 @@ describe('DynamicRBAC Integration', () => {
 
 - [API Reference](./api-reference.md) - Complete API documentation
 - [SecureOwnable Guide](./secure-ownable.md) - Base contract functionality
-- [Workflow Analysis](./workflow-generation.md) - Analyzing DynamicRBAC workflows
 - [Best Practices](./best-practices.md) - Development guidelines
 
 ---
 
-**Ready to explore workflow analysis?** Check out the [Analyzer Overview](./analyzer-overview.md) for comprehensive contract analysis.

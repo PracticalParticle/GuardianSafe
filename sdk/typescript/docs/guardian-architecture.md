@@ -169,41 +169,30 @@ Approved Transaction → State Machine Execution → Function Call → State Upd
 
 ## Integration with TypeScript SDK
 
-The TypeScript SDK provides a comprehensive interface to interact with the Guardian state machine:
+The TypeScript SDK provides comprehensive interfaces to interact with Guardian contracts:
 
-### 1. **Contract Analysis**
+### **SecureOwnable Integration**
 ```typescript
-import { WorkflowAnalyzer } from '@guardian/sdk'
+import { SecureOwnable } from '@guardian/sdk'
 
-const analyzer = new WorkflowAnalyzer(client)
-const analysis = await analyzer.analyzeContract(contractAddress)
+const secureOwnable = new SecureOwnable(client, walletClient, contractAddress, chain)
 
-// Access state machine information
-console.log('Operation Types:', analysis.operationTypes)
-console.log('Function Schemas:', analysis.functionSchemas)
-console.log('Role Permissions:', analysis.rolePermissions)
+// Access ownership information
+const owner = await secureOwnable.owner()
+const broadcaster = await secureOwnable.getBroadcaster()
+const recoveryAddress = await secureOwnable.getRecoveryAddress()
 ```
 
-### 2. **Workflow Generation**
+### **DynamicRBAC Integration**
 ```typescript
-// Generate valid workflows based on state machine rules
-const workflows = analyzer.generateWorkflows(contractAddress)
+import { DynamicRBAC } from '@guardian/sdk'
 
-// Each workflow represents a valid state transition path
-workflows.forEach(workflow => {
-  console.log(`Workflow: ${workflow.name}`)
-  console.log(`Type: ${workflow.type}`)
-  console.log(`Operations: ${workflow.operations.length}`)
-})
-```
+const dynamicRBAC = new DynamicRBAC(client, walletClient, contractAddress, chain)
 
-### 3. **Security Validation**
-```typescript
-// Validate contract integrity against state machine definitions
-const integrityResult = await analyzer.validateContractIntegrity(contractAddress)
-
-// Check initialization status
-const initResult = await analyzer.validateContractInitialization(contractAddress)
+// Access role information
+const roles = await dynamicRBAC.getAllRoles()
+const roleInfo = await dynamicRBAC.getRoleInfo(roleHash)
+const hasRole = await dynamicRBAC.hasRole(roleHash, walletAddress)
 ```
 
 ## State Machine Security Features
