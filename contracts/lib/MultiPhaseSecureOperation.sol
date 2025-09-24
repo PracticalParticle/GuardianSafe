@@ -774,10 +774,13 @@ library MultiPhaseSecureOperation {
         if (!roleData.authorizedWallets.contains(oldWallet)) {
             revert SharedValidationLibrary.OldWalletNotFound(oldWallet);
         }
+
+        // update the wallet if it's not the same
+        if (oldWallet != newWallet) {
+            roleData.authorizedWallets.remove(oldWallet);
+            roleData.authorizedWallets.add(newWallet);
+        }
         
-        // Remove old wallet and add new wallet (O(1) operations)
-        roleData.authorizedWallets.remove(oldWallet);
-        roleData.authorizedWallets.add(newWallet);
     }
 
     /**
@@ -894,6 +897,15 @@ library MultiPhaseSecureOperation {
         bytes4 functionSelector,
         TxAction requestedAction
     ) private view returns (bool) {
+        // Enforce that only signing actions are allowed during signature verification
+        if (
+            requestedAction != TxAction.SIGN_META_REQUEST_AND_APPROVE &&
+            requestedAction != TxAction.SIGN_META_APPROVE &&
+            requestedAction != TxAction.SIGN_META_CANCEL
+        ) {
+            SharedValidationLibrary.validateActionSupported();
+        }
+
         // Check if signer has any role that grants meta-transaction signing permissions for this function
         uint256 rolesLength = self.supportedRolesSet.length();
         for (uint i = 0; i < rolesLength; i++) {
@@ -1120,8 +1132,10 @@ library MultiPhaseSecureOperation {
         // Validate signer-specific nonce
         SharedValidationLibrary.validateNonce(metaTx.params.nonce, getSignerNonce(self, metaTx.params.signer));
 
-        // Validate txId matches expected next transaction ID
-        SharedValidationLibrary.validateTransactionId(metaTx.txRecord.txId, self.txCounter + 1);
+        // txId validation for new meta transactions
+        if (metaTx.params.action == TxAction.SIGN_META_REQUEST_AND_APPROVE) {
+            SharedValidationLibrary.validateTransactionId(metaTx.txRecord.txId, self.txCounter + 1);
+        }
         
         // Signature verification
         bytes32 messageHash = generateMessageHash(metaTx);
@@ -1167,7 +1181,8 @@ library MultiPhaseSecureOperation {
             metaTx.params.handlerSelector,
             uint8(metaTx.params.action),
             metaTx.params.deadline,
-            metaTx.params.maxGasPrice
+            metaTx.params.maxGasPrice,
+            metaTx.params.signer
         ));
 
         return keccak256(abi.encodePacked(

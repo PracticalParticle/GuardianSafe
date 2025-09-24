@@ -572,6 +572,25 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
     }
 
     /**
+     * @dev Gets the current nonce for a specific signer
+     * @param signer The address of the signer
+     * @return The current nonce for the signer
+     */
+    function getSignerNonce(address signer) public view returns (uint256) {
+        return _secureState.getSignerNonce(signer);
+    }
+
+    /**
+     * @dev Gets the function permissions for a specific role
+     * @param roleHash The hash of the role to get permissions for
+     * @return The function permissions array for the role
+     */
+    function getRolePermission(bytes32 roleHash) public view returns (MultiPhaseSecureOperation.FunctionPermission[] memory) {
+        MultiPhaseSecureOperation.Role storage role = _secureState.getRole(roleHash);
+        return role.functionPermissions;
+    }
+
+    /**
      * @dev Internal function to get the secure state
      * @return secureState The secure state
      */
