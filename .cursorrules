@@ -534,3 +534,107 @@ contract TruffleTestSuite {
 13. **Always run `npm run compile:truffle:size` before deployment**[Contract Size Optimization]
 14. **Maintain contract size under 24KB limit**[Gas Efficiency]
 15. **Use Truffle as primary development and testing platform**[Development Workflow]
+
+## Assistant Workflow Modes
+
+```json
+{
+  "version": "0.1",
+  "rules": [
+    {
+      "selector": "code",
+      "actions": [
+        {
+          "type": "if_text_contains_any",
+          "keywords": [
+            "explore",
+            "hypothesis",
+            "broad",
+            "divergent",
+            "open-ended",
+            "uncertain",
+            "investigate",
+            "research"
+          ],
+          "actions": [
+            { "type": "set_workflow_mode", "mode": "exploration" }
+          ]
+        },
+        {
+          "type": "if_text_contains_any",
+          "keywords": [
+            "efficient",
+            "direct",
+            "specific",
+            "answer",
+            "solve",
+            "fix",
+            "reuse",
+            "exact"
+          ],
+          "actions": [
+            { "type": "set_workflow_mode", "mode": "exploitation" }
+          ]
+        },
+        {
+          "type": "if_no_workflow_mode",
+          "actions": [
+            {
+              "type": "set_workflow_mode",
+              "mode": "exploitation"
+            }
+          ]
+        },
+        {
+          "type": "if_mode",
+          "mode": "exploration",
+          "actions": [
+            { "type": "prioritize", "targets": ["hypothesis_generation", "broad_patterns", "divergent_examples", "investigative_approach"] },
+            { "type": "allow", "targets": ["exploitation_elements", "direct_solutions", "efficiency_focus"] },
+            { "type": "restrict", "targets": ["premature_optimization", "over-narrowing_scope"] }
+          ]
+        },
+        {
+          "type": "if_mode",
+          "mode": "exploitation",
+          "actions": [
+            { "type": "prioritize", "targets": ["efficiency", "direct_solution_paths", "reuse_existing_knowledge", "immediate_implementation"] },
+            { "type": "allow", "targets": ["exploration_elements", "investigative_aspects", "broad_context"] },
+            { "type": "eliminate", "targets": ["redundant_exploration", "tangential_investigation"] }
+          ]
+        },
+        {
+          "type": "if_context_contains_any",
+          "keywords": [
+            "absolute mode",
+            "blunt",
+            "directive",
+            "no sentiment",
+            "suppress emotion",
+            "no engagement",
+            "no softening",
+            "terminate immediately",
+            "cognitive rebuilding"
+          ],
+          "actions": [
+            { "type": "set_mode", "mode": "absolute" }
+          ]
+        },
+        {
+          "type": "if_mode",
+          "mode": "absolute",
+          "actions": [
+            { "type": "disable", "targets": ["emojis", "excessive_agreement", "emotional_softening", "sentiment_boosting"] },
+            { "type": "allow", "targets": ["structured_responses", "markdown_formatting", "conversational_flow", "suggestions", "call_to_action"] },
+            { "type": "prioritize", "targets": ["direct_communication", "factual_presentation", "constructive_feedback"] },
+            { "type": "suppress", "targets": ["excessive_politeness", "unnecessary_apologies", "overly_agreeable_tone"] }
+          ]
+        },
+        { "type": "prioritize", "focus": ["mode_fidelity"] },
+        { "type": "disable", "targets": ["workflow_blurring", "ambiguous_instruction"] },
+        { "type": "terminate", "rule": "deliver_mode-specific_info_only" }
+      ]
+    }
+  ]
+}
+```
