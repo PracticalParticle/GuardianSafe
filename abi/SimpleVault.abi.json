@@ -61,22 +61,6 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "role",
-        "type": "address"
-      },
-      {
-        "internalType": "string",
-        "name": "roleType",
-        "type": "string"
-      }
-    ],
-    "name": "InvalidRoleAddress",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "uint256",
         "name": "provided",
         "type": "uint256"
@@ -139,13 +123,7 @@
     "type": "error"
   },
   {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "operationType",
-        "type": "string"
-      }
-    ],
+    "inputs": [],
     "name": "OperationNotSupported",
     "type": "error"
   },
@@ -466,32 +444,6 @@
     ],
     "name": "TokenWithdrawn",
     "type": "event"
-  },
-  {
-    "inputs": [],
-    "name": "WITHDRAW_ETH",
-    "outputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "WITHDRAW_TOKEN",
-    "outputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
   },
   {
     "inputs": [

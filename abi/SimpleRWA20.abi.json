@@ -147,22 +147,6 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "role",
-        "type": "address"
-      },
-      {
-        "internalType": "string",
-        "name": "roleType",
-        "type": "string"
-      }
-    ],
-    "name": "InvalidRoleAddress",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "uint256",
         "name": "newPeriod",
         "type": "uint256"
@@ -214,13 +198,7 @@
     "type": "error"
   },
   {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "operationType",
-        "type": "string"
-      }
-    ],
+    "inputs": [],
     "name": "OperationNotSupported",
     "type": "error"
   },
@@ -555,32 +533,6 @@
     ],
     "name": "Transfer",
     "type": "event"
-  },
-  {
-    "inputs": [],
-    "name": "BURN_TOKENS",
-    "outputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "MINT_TOKENS",
-    "outputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
   },
   {
     "inputs": [

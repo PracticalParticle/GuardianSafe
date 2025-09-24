@@ -471,7 +471,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "newTimeLockPeriodInMinutes",
+        "name": "newTimeLockPeriodSec",
         "type": "uint256"
       }
     ],
@@ -1025,6 +1025,56 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "roleHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getRolePermission",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "bytes4",
+            "name": "functionSelector",
+            "type": "bytes4"
+          },
+          {
+            "internalType": "enum MultiPhaseSecureOperation.TxAction[]",
+            "name": "grantedActions",
+            "type": "uint8[]"
+          }
+        ],
+        "internalType": "struct MultiPhaseSecureOperation.FunctionPermission[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "signer",
+        "type": "address"
+      }
+    ],
+    "name": "getSignerNonce",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "getSupportedFunctions",
     "outputs": [
@@ -1065,7 +1115,7 @@
   },
   {
     "inputs": [],
-    "name": "getTimeLockPeriodInMinutes",
+    "name": "getTimeLockPeriodSec",
     "outputs": [
       {
         "internalType": "uint256",
@@ -1314,6 +1364,54 @@
   {
     "inputs": [],
     "name": "initialized",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes4",
+        "name": "functionSelector",
+        "type": "bytes4"
+      },
+      {
+        "internalType": "enum MultiPhaseSecureOperation.TxAction",
+        "name": "action",
+        "type": "uint8"
+      }
+    ],
+    "name": "isActionSupportedByFunction",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "roleHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "wallet",
+        "type": "address"
+      }
+    ],
+    "name": "isAuthorizedWalletInRole",
     "outputs": [
       {
         "internalType": "bool",
@@ -3463,7 +3561,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "newTimeLockPeriodInMinutes",
+        "name": "newTimeLockPeriodSec",
         "type": "uint256"
       }
     ],
@@ -3777,7 +3875,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "timeLockPeriodInMinutes",
+        "name": "timeLockPeriodSec",
         "type": "uint256"
       },
       {
