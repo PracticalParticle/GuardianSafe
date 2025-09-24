@@ -152,7 +152,7 @@ library MultiPhaseSecureOperation {
         // ============ SYSTEM STATE ============
         bool initialized;
         uint256 txCounter;
-        uint256 timeLockPeriodInMinutes;
+        uint256 timeLockPeriodSec;
         
         // ============ TRANSACTION MANAGEMENT ============
         mapping(uint256 => TxRecord) txRecords;
@@ -204,7 +204,7 @@ library MultiPhaseSecureOperation {
     /**
      * @dev Initializes the SecureOperationState with the specified time lock period and roles.
      * @param self The SecureOperationState to initialize.
-     * @param _timeLockPeriodInMinutes The time lock period in minutes.
+     * @param _timeLockPeriodSec The time lock period in seconds.
      * @param _owner The address of the owner.
      * @param _broadcaster The address of the broadcaster.
      * @param _recovery The address of the recovery.
@@ -214,15 +214,15 @@ library MultiPhaseSecureOperation {
         address _owner, 
         address _broadcaster,
         address _recovery,
-        uint256 _timeLockPeriodInMinutes
+        uint256 _timeLockPeriodSec
     ) public {
         if (self.initialized) revert SharedValidationLibrary.AlreadyInitialized();
         SharedValidationLibrary.validateNotZeroAddress(_owner);
         SharedValidationLibrary.validateNotZeroAddress(_broadcaster);
         SharedValidationLibrary.validateNotZeroAddress(_recovery);
-        SharedValidationLibrary.validateTimeLockPeriod(_timeLockPeriodInMinutes);
+        SharedValidationLibrary.validateTimeLockPeriod(_timeLockPeriodSec);
 
-        self.timeLockPeriodInMinutes = _timeLockPeriodInMinutes;
+        self.timeLockPeriodSec = _timeLockPeriodSec;
         self.txCounter = 0;
 
         // Create base roles first
@@ -242,11 +242,11 @@ library MultiPhaseSecureOperation {
     /**
      * @dev Updates the time lock period for the SecureOperationState.
      * @param self The SecureOperationState to modify.
-     * @param _newTimeLockPeriodInMinutes The new time lock period in minutes.
+     * @param _newTimeLockPeriodSec The new time lock period in seconds.
      */
-    function updateTimeLockPeriod(SecureOperationState storage self, uint256 _newTimeLockPeriodInMinutes) public {
-        SharedValidationLibrary.validateTimeLockPeriod(_newTimeLockPeriodInMinutes);
-        self.timeLockPeriodInMinutes = _newTimeLockPeriodInMinutes;
+    function updateTimeLockPeriod(SecureOperationState storage self, uint256 _newTimeLockPeriodSec) public {
+        SharedValidationLibrary.validateTimeLockPeriod(_newTimeLockPeriodSec);
+        self.timeLockPeriodSec = _newTimeLockPeriodSec;
     }
 
     // ============ TRANSACTION MANAGEMENT FUNCTIONS ============
@@ -603,7 +603,7 @@ library MultiPhaseSecureOperation {
     ) private view returns (TxRecord memory) {        
         return TxRecord({
             txId: self.txCounter + 1,
-            releaseTime: block.timestamp + (self.timeLockPeriodInMinutes * 1 minutes),
+            releaseTime: block.timestamp + self.timeLockPeriodSec,
             status: TxStatus.PENDING,
             params: TxParams({
                 requester: requester,

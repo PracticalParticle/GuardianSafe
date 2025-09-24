@@ -80,19 +80,19 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @param initialOwner The initial owner address
      * @param broadcaster The broadcaster address
      * @param recovery The recovery address
-     * @param timeLockPeriodInMinutes The timelock period in minutes
+     * @param timeLockPeriodSec The timelock period in seconds
      * @param eventForwarder The event forwarder address 
      */
     function initialize(
         address initialOwner,
         address broadcaster,
         address recovery,
-        uint256 timeLockPeriodInMinutes,    
+        uint256 timeLockPeriodSec,    
         address eventForwarder
     ) public virtual onlyInitializing {
         __ERC165_init();
         
-        _secureState.initialize(initialOwner, broadcaster, recovery, timeLockPeriodInMinutes);
+        _secureState.initialize(initialOwner, broadcaster, recovery, timeLockPeriodSec);
         
         // Load definitions directly from MultiPhaseSecureOperation library
         MultiPhaseSecureOperation.loadDefinitionContract(
@@ -311,17 +311,17 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
     // TimeLock Management
     /**
      * @dev Creates execution options for updating the time lock period
-     * @param newTimeLockPeriodInMinutes The new time lock period in minutes
+     * @param newTimeLockPeriodSec The new time lock period in seconds
      * @return The execution options
      */
     function updateTimeLockExecutionOptions(
-        uint256 newTimeLockPeriodInMinutes
+        uint256 newTimeLockPeriodSec
     ) public view returns (bytes memory) {
-        SharedValidationLibrary.validateTimeLockUpdate(newTimeLockPeriodInMinutes, getTimeLockPeriodInMinutes());
+        SharedValidationLibrary.validateTimeLockUpdate(newTimeLockPeriodSec, getTimeLockPeriodSec());
 
         return MultiPhaseSecureOperation.createStandardExecutionOptions(
             SecureOwnableDefinitions.UPDATE_TIMELOCK_SELECTOR,
-            abi.encode(newTimeLockPeriodInMinutes)
+            abi.encode(newTimeLockPeriodSec)
         );
     }
 
@@ -494,11 +494,11 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
 
     /**
      * @dev External function that can only be called by the contract itself to execute timelock update
-     * @param newTimeLockPeriodInMinutes The new timelock period in minutes
+     * @param newTimeLockPeriodSec The new timelock period in seconds
      */
-    function executeTimeLockUpdate(uint256 newTimeLockPeriodInMinutes) external {
+    function executeTimeLockUpdate(uint256 newTimeLockPeriodSec) external {
         SharedValidationLibrary.validateInternalCall(address(this));
-        _updateTimeLockPeriod(newTimeLockPeriodInMinutes);
+        _updateTimeLockPeriod(newTimeLockPeriodSec);
     }
 
     // Internal functions
@@ -561,10 +561,10 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
 
     /**
      * @dev Returns the time lock period
-     * @return The time lock period in minutes
+     * @return The time lock period in seconds
      */
-    function getTimeLockPeriodInMinutes() public view virtual override returns (uint256) {
-        return _secureState.timeLockPeriodInMinutes;
+    function getTimeLockPeriodSec() public view virtual returns (uint256) {
+        return _secureState.timeLockPeriodSec;
     }
 
     /**
@@ -650,12 +650,12 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
 
     /**
      * @dev Updates the time lock period
-     * @param newTimeLockPeriodInMinutes The new time lock period in minutes
+     * @param newTimeLockPeriodSec The new time lock period in seconds
      */
-    function _updateTimeLockPeriod(uint256 newTimeLockPeriodInMinutes) internal virtual {
-        uint256 oldPeriod = getTimeLockPeriodInMinutes();
-        _secureState.updateTimeLockPeriod(newTimeLockPeriodInMinutes);
-        emit TimeLockPeriodUpdated(oldPeriod, newTimeLockPeriodInMinutes);
+    function _updateTimeLockPeriod(uint256 newTimeLockPeriodSec) internal virtual {
+        uint256 oldPeriod = getTimeLockPeriodSec();
+        _secureState.updateTimeLockPeriod(newTimeLockPeriodSec);
+        emit TimeLockPeriodUpdated(oldPeriod, newTimeLockPeriodSec);
     }
 
     /**

@@ -78,7 +78,7 @@ export interface SecureOperationState {
   operationTypeNames: Map<Hex, string>;
   txCounter: bigint;
   metaTxNonce: bigint;
-  timeLockPeriodInMinutes: bigint;
+  timeLockPeriodSec: bigint;
   supportedOperationTypesList: Hex[];
 }
 

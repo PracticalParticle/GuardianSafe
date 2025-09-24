@@ -51,7 +51,7 @@ export interface SecureOwnableState {
   owner: Address;
   broadcaster: Address;
   recoveryAddress: Address;
-  timeLockPeriodInMinutes: bigint;
+  timeLockPeriodSec: bigint;
   operationHistory: Map<bigint, TxRecord>;
 }
 
@@ -78,7 +78,7 @@ export interface ISecureOwnable {
   updateRecoveryRequestAndApprove(metaTx: MetaTransaction, options: TransactionOptions): Promise<TransactionResult>;
 
   // TimeLock Management
-  updateTimeLockExecutionOptions(newTimeLockPeriodInMinutes: bigint): Promise<Hex>;
+  updateTimeLockExecutionOptions(newTimeLockPeriodSec: bigint): Promise<Hex>;
   updateTimeLockRequestAndApprove(metaTx: MetaTransaction, options: TransactionOptions): Promise<TransactionResult>;
 
   // Meta Transaction Management
@@ -113,7 +113,7 @@ export interface ISecureOwnable {
   getPendingTransactions(): Promise<bigint[]>;
   getBroadcaster(): Promise<Address>;
   getRecoveryAddress(): Promise<Address>;
-  getTimeLockPeriodInMinutes(): Promise<bigint>;
+  getTimeLockPeriodSec(): Promise<bigint>;
   owner(): Promise<Address>;
 
   // Operation Type Support

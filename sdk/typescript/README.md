@@ -241,7 +241,7 @@ const initResult = await guardianAA.initialize(
   initialOwner,
   broadcaster,
   recovery,
-  timeLockPeriodInMinutes,
+  timeLockPeriodSec,
   { from: deployerAddress }
 );
 ```
