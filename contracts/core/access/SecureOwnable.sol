@@ -288,7 +288,6 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
         address newRecoveryAddress
     ) public view returns (bytes memory) {
         SharedValidationLibrary.validateAddressUpdate(newRecoveryAddress, getRecovery());
-
         return MultiPhaseSecureOperation.createStandardExecutionOptions(
             SecureOwnableDefinitions.UPDATE_RECOVERY_SELECTOR,
             abi.encode(newRecoveryAddress)
@@ -304,7 +303,6 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
         MultiPhaseSecureOperation.MetaTransaction memory metaTx
     ) public onlyBroadcaster returns (MultiPhaseSecureOperation.TxRecord memory) {
         _secureState.checkPermission(SecureOwnableDefinitions.UPDATE_RECOVERY_META_SELECTOR);
-
         return _requestAndApprove(metaTx);
     }
 
@@ -318,7 +316,6 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
         uint256 newTimeLockPeriodSec
     ) public view returns (bytes memory) {
         SharedValidationLibrary.validateTimeLockUpdate(newTimeLockPeriodSec, getTimeLockPeriodSec());
-
         return MultiPhaseSecureOperation.createStandardExecutionOptions(
             SecureOwnableDefinitions.UPDATE_TIMELOCK_SELECTOR,
             abi.encode(newTimeLockPeriodSec)
@@ -334,7 +331,6 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
         MultiPhaseSecureOperation.MetaTransaction memory metaTx
     ) public onlyBroadcaster returns (MultiPhaseSecureOperation.TxRecord memory) {
         _secureState.checkPermission(SecureOwnableDefinitions.UPDATE_TIMELOCK_META_SELECTOR);
-
         return _requestAndApprove(metaTx);
     }
 

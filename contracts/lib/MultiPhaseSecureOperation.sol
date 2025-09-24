@@ -603,7 +603,7 @@ library MultiPhaseSecureOperation {
     ) private view returns (TxRecord memory) {        
         return TxRecord({
             txId: self.txCounter + 1,
-            releaseTime: block.timestamp + self.timeLockPeriodSec,
+            releaseTime: block.timestamp + self.timeLockPeriodSec * 1 seconds,
             status: TxStatus.PENDING,
             params: TxParams({
                 requester: requester,
