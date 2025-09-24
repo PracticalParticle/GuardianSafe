@@ -319,7 +319,7 @@ contract GuardianContract {
         require(period <= MAX_TIME_LOCK, "Time lock too long");
         require(period >= DEFAULT_TIME_LOCK, "Time lock too short");
         
-        _secureState.timeLockPeriodInMinutes = period / 60;
+        _secureState.timeLockPeriodSec = period;
     }
 }
 ```

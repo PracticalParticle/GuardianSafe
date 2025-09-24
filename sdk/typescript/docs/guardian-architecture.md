@@ -34,7 +34,7 @@ struct SecureOperationState {
     // ============ SYSTEM STATE ============
     bool initialized;
     uint256 txCounter;
-    uint256 timeLockPeriodInMinutes;
+    uint256 timeLockPeriodSec;
     
     // ============ TRANSACTION MANAGEMENT ============
     mapping(uint256 => TxRecord) txRecords;

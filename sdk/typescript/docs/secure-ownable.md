@@ -110,7 +110,7 @@ console.log('Contract initialized:', isInitialized)
 
 #### **Get Time Lock Period**
 ```typescript
-const timeLockPeriod = await secureOwnable.timeLockPeriod()
+const timeLockPeriod = await secureOwnable.getTimeLockPeriodSec()
 console.log('Time lock period:', timeLockPeriod, 'seconds')
 ```
 

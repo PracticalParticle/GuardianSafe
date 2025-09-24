@@ -72,7 +72,7 @@ const owner = await secureOwnable.owner()
 console.log('Contract owner:', owner)
 
 // Get time lock period
-const timeLockPeriod = await secureOwnable.timeLockPeriod()
+const timeLockPeriod = await secureOwnable.getTimeLockPeriodSec()
 console.log('Time lock period:', timeLockPeriod, 'seconds')
 
 // Get administrative addresses
@@ -113,7 +113,7 @@ async function transferOwnership(newOwner: Address) {
     
     // Step 3: Wait for time lock period
     console.log('Step 3: Waiting for time lock period...')
-    const timeLockPeriod = await secureOwnable.timeLockPeriod()
+    const timeLockPeriod = await secureOwnable.getTimeLockPeriodSec()
     console.log(`Waiting ${timeLockPeriod} seconds...`)
     
     await new Promise(resolve => 
@@ -220,7 +220,7 @@ async function updateTimeLock(newPeriod: bigint) {
     console.log('Time lock update completed:', txHash)
     
     // Verify update
-    const updatedPeriod = await secureOwnable.timeLockPeriod()
+    const updatedPeriod = await secureOwnable.getTimeLockPeriodSec()
     console.log('New time lock period:', updatedPeriod, 'seconds')
     
   } catch (error) {
@@ -718,7 +718,7 @@ class GuardianContractManager {
   async getStatus() {
     const [owner, timeLock, roleEditing] = await Promise.all([
       this.secureOwnable.owner(),
-      this.secureOwnable.timeLockPeriod(),
+      this.secureOwnable.getTimeLockPeriodSec(),
       this.dynamicRBAC.roleEditingEnabled()
     ])
 

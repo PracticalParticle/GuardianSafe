@@ -34,11 +34,11 @@ Returns the current owner of the contract.
 const owner = await secureOwnable.owner()
 ```
 
-##### `timeLockPeriod(): Promise<bigint>`
+##### `getTimeLockPeriodSec(): Promise<bigint>`
 Returns the time lock period in seconds.
 
 ```typescript
-const period = await secureOwnable.timeLockPeriod()
+const period = await secureOwnable.getTimeLockPeriodSec()
 ```
 
 ##### `broadcaster(): Promise<Address>`
@@ -487,7 +487,7 @@ const secureOwnable = new SecureOwnable(
 
 // Read operations
 const owner = await secureOwnable.owner()
-const timeLock = await secureOwnable.timeLockPeriod()
+const timeLock = await secureOwnable.getTimeLockPeriodSec()
 
 console.log('Owner:', owner)
 console.log('Time lock period:', timeLock)

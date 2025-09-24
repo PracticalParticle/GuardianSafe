@@ -31,7 +31,7 @@ State changes trigger events that can be:
 struct SystemState {
     bool initialized;           // State machine initialization status
     uint256 txCounter;         // Global transaction counter
-    uint256 timeLockPeriodInMinutes; // Default time lock period
+    uint256 timeLockPeriodSec; // Default time lock period
 }
 ```
 
@@ -141,7 +141,7 @@ function initializeStateMachine(
     address _eventForwarder
 ) external onlyInitializer {
     _secureState.initialized = true;
-    _secureState.timeLockPeriodInMinutes = _timeLockPeriod;
+    _secureState.timeLockPeriodSec = _timeLockPeriod;
     _secureState.eventForwarder = _eventForwarder;
 }
 ```
@@ -233,7 +233,7 @@ function _hasPermission(
 function _validateTimeLock(uint256 txId) internal view returns (bool) {
     TxRecord storage txRecord = _secureState.txRecords[txId];
     uint256 timeElapsed = block.timestamp - txRecord.createdAt;
-    uint256 requiredTime = _secureState.timeLockPeriodInMinutes * 60;
+    uint256 requiredTime = _secureState.timeLockPeriodSec;
     
     return timeElapsed >= requiredTime;
 }

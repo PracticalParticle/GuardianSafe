@@ -78,7 +78,7 @@ const owner = await secureOwnable.owner()
 console.log('Owner:', owner)
 
 // Get time lock period
-const timeLockPeriod = await secureOwnable.timeLockPeriod()
+const timeLockPeriod = await secureOwnable.getTimeLockPeriodSec()
 console.log('Time lock period:', timeLockPeriod)
 
 // Check if role editing is enabled
