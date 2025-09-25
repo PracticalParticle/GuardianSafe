@@ -1,5 +1,6 @@
 import { Address, Hex } from 'viem';
 import { TxStatus, ExecutionType } from '../types/lib.index';
+import { ReadableOperationType } from '../types/definition.index';
 
 /**
  * Interfaces for execution options
@@ -64,10 +65,6 @@ export interface MetaTransaction {
 /**
  * State management interfaces
  */
-export interface ReadableOperationType {
-  operationType: Hex;
-  name: string;
-}
 
 export interface SecureOperationState {
   txRecords: Map<bigint, TxRecord>;

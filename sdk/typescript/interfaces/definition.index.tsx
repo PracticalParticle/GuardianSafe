@@ -1,4 +1,5 @@
 import { Address, Hex } from 'viem';
+import { TransactionOptions } from './base.index';
 import { 
   ReadableOperationType, 
   FunctionSchema, 
@@ -59,15 +60,6 @@ export interface DefinitionContractConfig {
   rpcUrl?: string;
 }
 
-/**
- * Transaction options for contract interactions
- */
-export interface TransactionOptions {
-  from: Address;
-  gasLimit?: bigint;
-  gasPrice?: bigint;
-  value?: bigint;
-}
 
 /**
  * Result of contract method calls
