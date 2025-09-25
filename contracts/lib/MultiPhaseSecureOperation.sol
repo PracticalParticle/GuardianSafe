@@ -31,6 +31,10 @@ import "./IEventForwarder.sol";
  * that require high levels of security and flexibility.
  */
 library MultiPhaseSecureOperation {
+    // ============ VERSION INFORMATION ============
+    string public constant LIBRARY_NAME = "MultiPhaseSecureOperation";
+    string public constant VERSION = "1.0.0";
+    
     using MessageHashUtils for bytes32;
     using SharedValidationLibrary for *;
     using EnumerableSet for EnumerableSet.UintSet;
@@ -1167,8 +1171,8 @@ library MultiPhaseSecureOperation {
     function generateMessageHash(MetaTransaction memory metaTx) private view returns (bytes32) {
         bytes32 domainSeparator = keccak256(abi.encode(
             DOMAIN_SEPARATOR_TYPE_HASH,
-            keccak256("MultiPhaseSecureOperation"),
-            keccak256("1"),
+            keccak256(abi.encodePacked(LIBRARY_NAME)),
+            keccak256(abi.encodePacked(VERSION)),
             block.chainid,
             address(this)
         ));
