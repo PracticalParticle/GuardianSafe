@@ -24,6 +24,7 @@ export * from './types/definition.index';
 // Utilities
 export * from './utils/validations';
 export * from './utils/erc20/erc20Token';
+export { MetaTransactionSigner, MetaTransactionBuilder } from './utils/metaTx/metaTransaction';
 
 // Re-export commonly used types from viem
 export type { Address, Hex, PublicClient, WalletClient, Chain } from 'viem';
