@@ -9,8 +9,9 @@
     "compile:truffle": "truffle compile",
     "compile:truffle:size": "npm run compile:truffle && npx truffle run contract-size",
     "compile:hardhat": "hardhat compile",
-    "deploy:truffle": "npx truffle migrate --network development --reset",
+    "deploy:truffle": "npx truffle migrate --network development --reset && node scripts/extract-abi.js",
     "deploy:hardhat": "hardhat run scripts/deploy.js",
+    "test:sanity:secure-ownable": "node scripts/sanity/secure-ownable/run-tests.js --all",
     "docgen": "hardhat docgen",
     "format": "prettier --config .prettierrc --write \"contracts/**/*.sol\""
   },
