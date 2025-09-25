@@ -95,19 +95,24 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
         _secureState.initialize(initialOwner, broadcaster, recovery, timeLockPeriodSec);
         
         // Load definitions directly from MultiPhaseSecureOperation library
+        IDefinitionContract.RolePermission memory multiPhasePermissions = 
+            MultiPhaseSecureOperationDefinitions.getRolePermissions();
         MultiPhaseSecureOperation.loadDefinitionContract(
             _secureState,
             MultiPhaseSecureOperationDefinitions.getOperationTypes(),
             MultiPhaseSecureOperationDefinitions.getFunctionSchemas(),
-            MultiPhaseSecureOperationDefinitions.getRoleHashes(),
-            MultiPhaseSecureOperationDefinitions.getFunctionPermissions()
+            multiPhasePermissions.roleHashes,
+            multiPhasePermissions.functionPermissions
         );
+        
+        IDefinitionContract.RolePermission memory secureOwnablePermissions = 
+            SecureOwnableDefinitions.getRolePermissions();
         MultiPhaseSecureOperation.loadDefinitionContract(
             _secureState,
             SecureOwnableDefinitions.getOperationTypes(),
             SecureOwnableDefinitions.getFunctionSchemas(),
-            SecureOwnableDefinitions.getRoleHashes(),
-            SecureOwnableDefinitions.getFunctionPermissions()
+            secureOwnablePermissions.roleHashes,
+            secureOwnablePermissions.functionPermissions
         );
 
         _secureState.setEventForwarder(eventForwarder);

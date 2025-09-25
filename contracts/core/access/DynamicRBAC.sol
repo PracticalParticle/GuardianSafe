@@ -9,6 +9,7 @@ import "../../lib/MultiPhaseSecureOperation.sol";
 import "../../lib/SharedValidationLibrary.sol";
 import "../../lib/SecureOwnableDefinitions.sol";
 import "../../lib/DynamicRBACDefinitions.sol";
+import "../../lib/IDefinitionContract.sol";
 import "./SecureOwnable.sol";
 
 /**
@@ -61,12 +62,14 @@ abstract contract DynamicRBAC is Initializable, SecureOwnable {
         SecureOwnable.initialize(initialOwner, broadcaster, recovery, timeLockPeriodSec, eventForwarder);
         
         // Load DynamicRBAC-specific definitions
+        IDefinitionContract.RolePermission memory permissions = 
+            DynamicRBACDefinitions.getRolePermissions();
         MultiPhaseSecureOperation.loadDefinitionContract(
             _getSecureState(),
             DynamicRBACDefinitions.getOperationTypes(),
             DynamicRBACDefinitions.getFunctionSchemas(),
-            DynamicRBACDefinitions.getRoleHashes(),
-            DynamicRBACDefinitions.getFunctionPermissions()
+            permissions.roleHashes,
+            permissions.functionPermissions
         );
         
         // Initialize role editing as enabled by default

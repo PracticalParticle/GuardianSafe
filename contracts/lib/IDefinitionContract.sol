@@ -16,6 +16,15 @@ import "./MultiPhaseSecureOperation.sol";
  */
 interface IDefinitionContract {
     /**
+     * @dev Struct to hold role permission data
+     * @param roleHashes Array of role hashes
+     * @param functionPermissions Array of function permissions (parallel to roleHashes)
+     */
+    struct RolePermission {
+        bytes32[] roleHashes;
+        MultiPhaseSecureOperation.FunctionPermission[] functionPermissions;
+    }
+    /**
      * @dev Returns all operation type definitions
      * @return Array of operation type definitions
      */
@@ -28,14 +37,8 @@ interface IDefinitionContract {
     function getFunctionSchemas() external pure returns (MultiPhaseSecureOperation.FunctionSchema[] memory);
     
     /**
-     * @dev Returns all role hashes
-     * @return Array of role hashes
+     * @dev Returns all role hashes and their corresponding function permissions
+     * @return RolePermission struct containing roleHashes and functionPermissions arrays
      */
-    function getRoleHashes() external pure returns (bytes32[] memory);
-    
-    /**
-     * @dev Returns all function permissions (parallel to role hashes)
-     * @return Array of function permissions
-     */
-    function getFunctionPermissions() external pure returns (MultiPhaseSecureOperation.FunctionPermission[] memory);
+    function getRolePermissions() external pure returns (RolePermission memory);
 }

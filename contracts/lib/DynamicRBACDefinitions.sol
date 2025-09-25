@@ -62,35 +62,30 @@ library DynamicRBACDefinitions {
     }
     
     /**
-     * @dev Returns predefined role hashes
-     * @return Array of role hashes
+     * @dev Returns predefined role hashes and their corresponding function permissions
+     * @return RolePermission struct containing roleHashes and functionPermissions arrays
      */
-    function getRoleHashes() public pure returns (bytes32[] memory) {
-        bytes32[] memory roleHashes = new bytes32[](1);
-        
-        // Role editing toggle permission (only broadcaster can execute)
-        roleHashes[0] = MultiPhaseSecureOperation.BROADCASTER_ROLE;
-        
-        return roleHashes;
-    }
-    
-    /**
-     * @dev Returns predefined function permissions (parallel to role hashes)
-     * @return Array of function permissions
-     */
-    function getFunctionPermissions() public pure returns (MultiPhaseSecureOperation.FunctionPermission[] memory) {
-        MultiPhaseSecureOperation.FunctionPermission[] memory permissions = new MultiPhaseSecureOperation.FunctionPermission[](1);
+    function getRolePermissions() public pure returns (IDefinitionContract.RolePermission memory) {
+        bytes32[] memory roleHashes;
+        MultiPhaseSecureOperation.FunctionPermission[] memory functionPermissions;
+        roleHashes = new bytes32[](1);
+        functionPermissions = new MultiPhaseSecureOperation.FunctionPermission[](1);
         
         // Role editing toggle permission (only broadcaster can execute)
         MultiPhaseSecureOperation.TxAction[] memory broadcasterActions = new MultiPhaseSecureOperation.TxAction[](1);
         broadcasterActions[0] = MultiPhaseSecureOperation.TxAction.EXECUTE_META_REQUEST_AND_APPROVE;
         
-        permissions[0] = MultiPhaseSecureOperation.FunctionPermission({
+        // Broadcaster: Role Editing Toggle Meta
+        roleHashes[0] = MultiPhaseSecureOperation.BROADCASTER_ROLE;
+        functionPermissions[0] = MultiPhaseSecureOperation.FunctionPermission({
             functionSelector: ROLE_EDITING_TOGGLE_META_SELECTOR,
             grantedActions: broadcasterActions
         });
         
-        return permissions;
+        return IDefinitionContract.RolePermission({
+            roleHashes: roleHashes,
+            functionPermissions: functionPermissions
+        });
     }
     
 }
