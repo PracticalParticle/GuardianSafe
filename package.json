@@ -12,15 +12,7 @@
     "deploy:truffle": "npx truffle migrate --network development --reset",
     "deploy:hardhat": "hardhat run scripts/deploy.js",
     "docgen": "hardhat docgen",
-    "format": "prettier --config .prettierrc --write \"contracts/**/*.sol\"",
-    "test:analyzer": "cd sdk/typescript/analyzer/__tests__ && npx jest --config jest.config.js",
-    "test:analyzer:unit": "cd sdk/typescript/analyzer/__tests__ && npx jest --config jest.config.js --testPathPattern=\"(WorkflowValidator|ContractInitializationValidator)\\.test\\.ts$\"",
-    "test:analyzer:integration": "cd sdk/typescript/analyzer/__tests__ && npx jest --config jest.config.js --testPathPattern=\"enhanced-integration\\.test\\.ts$\"",
-    "test:analyzer:coverage": "cd sdk/typescript/analyzer/__tests__ && npx jest --config jest.config.js --coverage",
-    "test:analyzer:legacy": "cd sdk/typescript/analyzer/__tests__ && npx jest --config jest.config.js --testPathPattern=\"(integration|comprehensive-contract-analysis|ContractDefinitionAnalyzer)\\.test\\.ts$\"",
-    "deploy:development": "npx truffle migrate --network development --reset",
-    "analyze:contract": "node scripts/analyze-contract-simple.js",
-    "check:initialization": "node scripts/check-guardian-initialization.js"
+    "format": "prettier --config .prettierrc --write \"contracts/**/*.sol\""
   },
   "keywords": [
     "solidity",
