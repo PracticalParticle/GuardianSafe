@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
 pragma solidity ^0.8.2;
 
-import "./MultiPhaseSecureOperation.sol";
-import "./IDefinitionContract.sol";
+import "../MultiPhaseSecureOperation.sol";
+import "../../interfaces/IDefinitionContract.sol";
 
 /**
  * @title MultiPhaseSecureOperationDefinitions

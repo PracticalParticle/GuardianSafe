@@ -2,7 +2,7 @@
 pragma solidity ^0.8.2;
 
 // Import TxRecord struct from MultiPhaseSecureOperation
-import "./MultiPhaseSecureOperation.sol";
+import "../lib/MultiPhaseSecureOperation.sol";
 
 /**
  * @title IEventForwarder

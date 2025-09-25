@@ -6,10 +6,10 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 // Contract imports
 import "../../lib/MultiPhaseSecureOperation.sol";
-import "../../lib/SharedValidationLibrary.sol";
-import "../../lib/SecureOwnableDefinitions.sol";
-import "../../lib/DynamicRBACDefinitions.sol";
-import "../../lib/IDefinitionContract.sol";
+import "../../utils/SharedValidationLibrary.sol";
+import "../../lib/definitions/SecureOwnableDefinitions.sol";
+import "../../lib/definitions/DynamicRBACDefinitions.sol";
+import "../../interfaces/IDefinitionContract.sol";
 import "./SecureOwnable.sol";
 
 /**

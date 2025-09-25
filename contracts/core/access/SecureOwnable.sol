@@ -7,10 +7,10 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 // Contracts imports
 import "../../lib/MultiPhaseSecureOperation.sol";
-import "../../lib/MultiPhaseSecureOperationDefinitions.sol";
-import "../../lib/SecureOwnableDefinitions.sol";
-import "../../lib/IDefinitionContract.sol";
-import "../../lib/SharedValidationLibrary.sol";
+import "../../lib/definitions/MultiPhaseSecureOperationDefinitions.sol";
+import "../../lib/definitions/SecureOwnableDefinitions.sol";
+import "../../interfaces/IDefinitionContract.sol";
+import "../../utils/SharedValidationLibrary.sol";
 import "./interface/ISecureOwnable.sol";
 
 /**
