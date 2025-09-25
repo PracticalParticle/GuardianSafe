@@ -17,6 +17,7 @@ Welcome to the comprehensive documentation for the Guardian TypeScript SDK. This
 ### **🔧 Core SDK Components**
 - [**SecureOwnable**](./secure-ownable.md) - SecureOwnable contract integration
 - [**DynamicRBAC**](./dynamic-rbac.md) - DynamicRBAC contract integration
+- [**DefinitionContract**](./definition-contract.md) - Dynamic definition library interaction
 - [**Types & Interfaces**](./types-interfaces.md) - TypeScript type definitions
 
 
@@ -47,6 +48,7 @@ Welcome to the comprehensive documentation for the Guardian TypeScript SDK. This
 - **Understand the API** → [API Reference](./api-reference.md)
 - **Use SecureOwnable** → [SecureOwnable Guide](./secure-ownable.md)
 - **Use DynamicRBAC** → [DynamicRBAC Guide](./dynamic-rbac.md)
+- **Use DefinitionContract** → [DefinitionContract Guide](./definition-contract.md)
 - **See examples** → [Basic Examples](./examples-basic.md)
 - **Follow best practices** → [Best Practices](./best-practices.md)
 - **Deploy contracts** → [Deployment Guide](./deployment.md)
@@ -56,6 +58,7 @@ Welcome to the comprehensive documentation for the Guardian TypeScript SDK. This
 **Core SDK:**
 - [SecureOwnable](./secure-ownable.md) - Ownership management
 - [DynamicRBAC](./dynamic-rbac.md) - Role-based access control
+- [DefinitionContract](./definition-contract.md) - Dynamic definition library interaction
 - [Types & Interfaces](./types-interfaces.md) - Type definitions
 
 
@@ -79,6 +82,7 @@ Welcome to the comprehensive documentation for the Guardian TypeScript SDK. This
 | [API Reference](./api-reference.md) | ✅ Complete | Sep 2025 |
 | [SecureOwnable](./secure-ownable.md) | ✅ Complete | Sep 2025 |
 | [DynamicRBAC](./dynamic-rbac.md) | ✅ Complete | Sep 2025 |
+| [DefinitionContract](./definition-contract.md) | ✅ Complete | Sep 2025 |
 | [Types & Interfaces](./types-interfaces.md) | ✅ Complete | Sep 2025 |
 | [Best Practices](./best-practices.md) | ✅ Complete | Sep 2025 |
 | [Error Handling](./error-handling.md) | 🚧 Planned | - |

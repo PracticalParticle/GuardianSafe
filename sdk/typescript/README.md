@@ -16,6 +16,7 @@ Guardian Framework implements a **state machine architecture** with `SecureOpera
 
 - **SecureOwnable**: Multi-phase ownership management with time-locked operations
 - **DynamicRBAC**: Dynamic role-based access control system
+- **DefinitionContract**: Dynamic interaction with any definition library implementing IDefinitionContract
 - **GuardianAccountAbstraction**: Account abstraction with secure operations
 - **Type Safety**: Full TypeScript support with comprehensive type definitions
 - **Viem Integration**: Built on top of Viem for modern Ethereum development
@@ -54,6 +55,7 @@ npm install viem
 import { 
   SecureOwnable, 
   DynamicRBAC,
+  DefinitionContract,
   type Address,
   type PublicClient,
   type WalletClient,
@@ -77,6 +79,13 @@ const dynamicRBAC = new DynamicRBAC(
   publicClient,
   walletClient,
   contractAddress,
+  chain
+);
+
+const definitionContract = new DefinitionContract(
+  publicClient,
+  walletClient,
+  definitionContractAddress,
   chain
 );
 ```
@@ -221,6 +230,86 @@ const wallets = await dynamicRBAC.getWalletsInRole(roleHash);
 const permissions = await dynamicRBAC.getRolePermissions(roleHash);
 ```
 
+## DefinitionContract Usage
+
+The `DefinitionContract` class provides dynamic interaction with any definition library that implements the `IDefinitionContract` interface. This allows you to query operation types, function schemas, role permissions, and workflow definitions from any compatible contract.
+
+### Basic Usage
+
+```typescript
+// Initialize DefinitionContract
+const definitionContract = new DefinitionContract(
+  publicClient,
+  walletClient,
+  definitionContractAddress,
+  chain
+);
+
+// Get all operation types
+const operationTypes = await definitionContract.getOperationTypes();
+console.log('Available operations:', operationTypes);
+
+// Get all function schemas
+const functionSchemas = await definitionContract.getFunctionSchemas();
+console.log('Function schemas:', functionSchemas);
+
+// Get role permissions
+const rolePermissions = await definitionContract.getRolePermissions();
+console.log('Role permissions:', rolePermissions);
+```
+
+### Workflow Management
+
+```typescript
+// Get all operation workflows
+const workflows = await definitionContract.getOperationWorkflows();
+console.log('Available workflows:', workflows);
+
+// Get workflow for specific operation
+const operationType = '0x1234...'; // operation type hash
+const workflow = await definitionContract.getWorkflowForOperation(operationType);
+console.log('Workflow for operation:', workflow);
+
+// Get all workflow paths
+const paths = await definitionContract.getWorkflowPaths();
+console.log('Available paths:', paths);
+```
+
+### Utility Functions
+
+```typescript
+// Find operation type by name
+const operationType = await definitionContract.getOperationTypeByName('TRANSFER_OWNERSHIP');
+console.log('Operation type hash:', operationType);
+
+// Get function schema by selector
+const functionSelector = '0xabcd...';
+const schema = await definitionContract.getFunctionSchemaBySelector(functionSelector);
+console.log('Function schema:', schema);
+
+// Check role permission for function
+const roleHash = '0xefgh...';
+const hasPermission = await definitionContract.hasRolePermission(roleHash, functionSelector);
+console.log('Has permission:', hasPermission);
+
+// Get all roles that can execute a function
+const allowedRoles = await definitionContract.getRolesForFunction(functionSelector);
+console.log('Allowed roles:', allowedRoles);
+```
+
+### Configuration Management
+
+```typescript
+// Get current configuration
+const config = definitionContract.getConfig();
+console.log('Current config:', config);
+
+// Update configuration
+definitionContract.updateConfig({
+  chainId: 137, // Polygon
+  rpcUrl: 'https://polygon-rpc.com'
+});
+```
 
 ## Types and Constants
 

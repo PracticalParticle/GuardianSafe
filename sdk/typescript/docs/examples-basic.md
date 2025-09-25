@@ -316,7 +316,354 @@ await getRoleCount()
 
 
 
+```
 
+## 🔍 **DefinitionContract Examples**
+
+### **Basic Setup**
+
+```typescript
+import { DefinitionContract } from '@guardian/sdk/typescript'
+
+// Initialize DefinitionContract
+const definitionContract = new DefinitionContract(
+  publicClient,
+  walletClient,
+  '0x1234...', // Definition contract address
+  mainnet
+)
+```
+
+### **Getting Operation Types**
+
+```typescript
+// Get all available operation types
+async function getOperationTypes() {
+  try {
+    const operationTypes = await definitionContract.getOperationTypes()
+    
+    console.log('Available operations:')
+    operationTypes.forEach(op => {
+      console.log(`- ${op.name}: ${op.operationType}`)
+    })
+    
+    return operationTypes
+  } catch (error) {
+    console.error('Failed to get operation types:', error)
+    throw error
+  }
+}
+
+// Usage
+const operations = await getOperationTypes()
+```
+
+### **Getting Function Schemas**
+
+```typescript
+// Get all function schemas
+async function getFunctionSchemas() {
+  try {
+    const functionSchemas = await definitionContract.getFunctionSchemas()
+    
+    console.log('Function schemas:')
+    functionSchemas.forEach(schema => {
+      console.log(`- ${schema.functionName}: ${schema.functionSelector}`)
+      console.log(`  Parameters: ${schema.parameters.join(', ')}`)
+      console.log(`  Returns: ${schema.returnTypes.join(', ')}`)
+      console.log(`  Description: ${schema.description}`)
+    })
+    
+    return functionSchemas
+  } catch (error) {
+    console.error('Failed to get function schemas:', error)
+    throw error
+  }
+}
+
+// Usage
+const schemas = await getFunctionSchemas()
+```
+
+### **Getting Role Permissions**
+
+```typescript
+// Get role permissions
+async function getRolePermissions() {
+  try {
+    const rolePermissions = await definitionContract.getRolePermissions()
+    
+    console.log('Role permissions:')
+    console.log(`Total roles: ${rolePermissions.roleHashes.length}`)
+    console.log(`Total function permissions: ${rolePermissions.functionPermissions.length}`)
+    
+    rolePermissions.functionPermissions.forEach(permission => {
+      console.log(`Function: ${permission.functionSelector}`)
+      console.log(`Allowed roles: ${permission.allowedRoles.length}`)
+      console.log(`Requires signature: ${permission.requiresSignature}`)
+      console.log(`Off-chain: ${permission.isOffChain}`)
+    })
+    
+    return rolePermissions
+  } catch (error) {
+    console.error('Failed to get role permissions:', error)
+    throw error
+  }
+}
+
+// Usage
+const permissions = await getRolePermissions()
+```
+
+### **Getting Workflows**
+
+```typescript
+// Get all operation workflows
+async function getOperationWorkflows() {
+  try {
+    const workflows = await definitionContract.getOperationWorkflows()
+    
+    console.log('Operation workflows:')
+    workflows.forEach(workflow => {
+      console.log(`- ${workflow.operationName}: ${workflow.paths.length} paths`)
+      workflow.paths.forEach(path => {
+        console.log(`  - ${path.name}: ${path.steps.length} steps`)
+        console.log(`    Estimated time: ${path.estimatedTimeSec}s`)
+        console.log(`    Requires signature: ${path.requiresSignature}`)
+        console.log(`    Has off-chain phase: ${path.hasOffChainPhase}`)
+      })
+    })
+    
+    return workflows
+  } catch (error) {
+    console.error('Failed to get operation workflows:', error)
+    throw error
+  }
+}
+
+// Usage
+const workflows = await getOperationWorkflows()
+```
+
+### **Getting Workflow for Specific Operation**
+
+```typescript
+// Get workflow for specific operation
+async function getWorkflowForOperation(operationType: Hex) {
+  try {
+    const workflow = await definitionContract.getWorkflowForOperation(operationType)
+    
+    console.log(`Workflow for operation: ${workflow.operationName}`)
+    console.log(`Operation type: ${workflow.operationType}`)
+    console.log(`Supported roles: ${workflow.supportedRoles.join(', ')}`)
+    console.log(`Available paths: ${workflow.paths.length}`)
+    
+    workflow.paths.forEach((path, index) => {
+      console.log(`\nPath ${index + 1}: ${path.name}`)
+      console.log(`Description: ${path.description}`)
+      console.log(`Workflow type: ${path.workflowType}`)
+      console.log(`Steps: ${path.steps.length}`)
+      
+      path.steps.forEach((step, stepIndex) => {
+        console.log(`  ${stepIndex + 1}. ${step.functionName}`)
+        console.log(`     Action: ${step.action}`)
+        console.log(`     Roles: ${step.roles.join(', ')}`)
+        console.log(`     Off-chain: ${step.isOffChain}`)
+        console.log(`     Phase: ${step.phaseType}`)
+      })
+    })
+    
+    return workflow
+  } catch (error) {
+    console.error('Failed to get workflow for operation:', error)
+    throw error
+  }
+}
+
+// Usage
+const workflow = await getWorkflowForOperation('0x1234...')
+```
+
+### **Utility Functions**
+
+```typescript
+// Find operation type by name
+async function findOperationByName(operationName: string) {
+  try {
+    const operationType = await definitionContract.getOperationTypeByName(operationName)
+    
+    if (operationType) {
+      console.log(`Found operation: ${operationName} -> ${operationType}`)
+      return operationType
+    } else {
+      console.log(`Operation not found: ${operationName}`)
+      return undefined
+    }
+  } catch (error) {
+    console.error('Failed to find operation by name:', error)
+    throw error
+  }
+}
+
+// Get function schema by selector
+async function getFunctionBySelector(functionSelector: Hex) {
+  try {
+    const schema = await definitionContract.getFunctionSchemaBySelector(functionSelector)
+    
+    if (schema) {
+      console.log(`Found function: ${schema.functionName}`)
+      console.log(`Parameters: ${schema.parameters.join(', ')}`)
+      console.log(`Returns: ${schema.returnTypes.join(', ')}`)
+      return schema
+    } else {
+      console.log(`Function not found: ${functionSelector}`)
+      return undefined
+    }
+  } catch (error) {
+    console.error('Failed to get function by selector:', error)
+    throw error
+  }
+}
+
+// Check role permission
+async function checkRolePermission(roleHash: Hex, functionSelector: Hex) {
+  try {
+    const hasPermission = await definitionContract.hasRolePermission(roleHash, functionSelector)
+    
+    console.log(`Role ${roleHash} has permission for function ${functionSelector}: ${hasPermission}`)
+    return hasPermission
+  } catch (error) {
+    console.error('Failed to check role permission:', error)
+    throw error
+  }
+}
+
+// Get roles for function
+async function getRolesForFunction(functionSelector: Hex) {
+  try {
+    const allowedRoles = await definitionContract.getRolesForFunction(functionSelector)
+    
+    console.log(`Function ${functionSelector} can be executed by ${allowedRoles.length} roles:`)
+    allowedRoles.forEach(roleHash => {
+      console.log(`- ${roleHash}`)
+    })
+    
+    return allowedRoles
+  } catch (error) {
+    console.error('Failed to get roles for function:', error)
+    throw error
+  }
+}
+
+// Usage examples
+const operationType = await findOperationByName('TRANSFER_OWNERSHIP')
+const schema = await getFunctionBySelector('0xabcd...')
+const hasPermission = await checkRolePermission('0xefgh...', '0xabcd...')
+const allowedRoles = await getRolesForFunction('0xabcd...')
+```
+
+### **Configuration Management**
+
+```typescript
+// Get current configuration
+function getCurrentConfig() {
+  const config = definitionContract.getConfig()
+  console.log('Current configuration:', config)
+  return config
+}
+
+// Update configuration
+function updateConfig() {
+  definitionContract.updateConfig({
+    chainId: 137, // Polygon
+    rpcUrl: 'https://polygon-rpc.com'
+  })
+  
+  console.log('Configuration updated')
+}
+
+// Usage
+const currentConfig = getCurrentConfig()
+updateConfig()
+```
+
+### **Complete Workflow Analysis**
+
+```typescript
+// Analyze complete workflow
+async function analyzeWorkflow(operationType: Hex) {
+  try {
+    const workflow = await definitionContract.getWorkflowForOperation(operationType)
+    
+    const analysis = {
+      operationName: workflow.operationName,
+      operationType: workflow.operationType,
+      totalPaths: workflow.paths.length,
+      totalSteps: workflow.paths.reduce((sum, path) => sum + path.steps.length, 0),
+      averageStepsPerPath: 0,
+      hasOffChainSteps: workflow.paths.some(path => path.hasOffChainPhase),
+      requiresSignature: workflow.paths.some(path => path.requiresSignature),
+      supportedRoles: workflow.supportedRoles.length
+    }
+    
+    analysis.averageStepsPerPath = analysis.totalSteps / analysis.totalPaths
+    
+    console.log('Workflow Analysis:', analysis)
+    return analysis
+  } catch (error) {
+    console.error('Failed to analyze workflow:', error)
+    throw error
+  }
+}
+
+// Usage
+const analysis = await analyzeWorkflow('0x1234...')
+```
+
+### **Permission Matrix**
+
+```typescript
+// Build permission matrix
+async function buildPermissionMatrix() {
+  try {
+    const rolePermissions = await definitionContract.getRolePermissions()
+    const functionSchemas = await definitionContract.getFunctionSchemas()
+    
+    const matrix = new Map<string, Map<string, boolean>>()
+    
+    // Initialize matrix
+    rolePermissions.roleHashes.forEach(roleHash => {
+      matrix.set(roleHash, new Map())
+      functionSchemas.forEach(schema => {
+        matrix.get(roleHash)!.set(schema.functionSelector, false)
+      })
+    })
+    
+    // Fill matrix
+    rolePermissions.functionPermissions.forEach(permission => {
+      permission.allowedRoles.forEach(roleHash => {
+        matrix.get(roleHash)?.set(permission.functionSelector, true)
+      })
+    })
+    
+    console.log('Permission Matrix:')
+    matrix.forEach((rolePermissions, roleHash) => {
+      console.log(`Role: ${roleHash}`)
+      rolePermissions.forEach((hasPermission, functionSelector) => {
+        console.log(`  ${functionSelector}: ${hasPermission}`)
+      })
+    })
+    
+    return matrix
+  } catch (error) {
+    console.error('Failed to build permission matrix:', error)
+    throw error
+  }
+}
+
+// Usage
+const permissionMatrix = await buildPermissionMatrix()
+```
 
 ## 📡 **Event Monitoring Examples**
 

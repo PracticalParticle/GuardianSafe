@@ -9,6 +9,7 @@ Welcome to the Guardian TypeScript SDK documentation. This comprehensive guide c
 - [**API Reference**](./api-reference.md) - Complete API documentation
 - [**SecureOwnable**](./secure-ownable.md) - SecureOwnable contract integration
 - [**DynamicRBAC**](./dynamic-rbac.md) - DynamicRBAC contract integration
+- [**DefinitionContract**](./definition-contract.md) - Dynamic definition library interaction
 - [**Types & Interfaces**](./types-interfaces.md) - TypeScript type definitions
 
 
@@ -60,17 +61,18 @@ console.log('Contract owner:', owner)
 2. [API Reference](./api-reference.md)
 3. [SecureOwnable](./secure-ownable.md)
 4. [DynamicRBAC](./dynamic-rbac.md)
-5. [Types & Interfaces](./types-interfaces.md)
-6. [Best Practices](./best-practices.md)
-7. [Error Handling](./error-handling.md)
-8. [Performance Optimization](./performance.md)
-9. [Testing Guide](./testing.md)
-10. [Basic Examples](./examples-basic.md)
-11. [Advanced Examples](./examples-advanced.md)
-12. [Integration Examples](./examples-integration.md)
-13. [Deployment Guide](./deployment.md)
-14. [Network Configuration](./network-config.md)
-15. [Migration Guide](./migration.md)
+5. [DefinitionContract](./definition-contract.md)
+6. [Types & Interfaces](./types-interfaces.md)
+7. [Best Practices](./best-practices.md)
+8. [Error Handling](./error-handling.md)
+9. [Performance Optimization](./performance.md)
+10. [Testing Guide](./testing.md)
+11. [Basic Examples](./examples-basic.md)
+12. [Advanced Examples](./examples-advanced.md)
+13. [Integration Examples](./examples-integration.md)
+14. [Deployment Guide](./deployment.md)
+15. [Network Configuration](./network-config.md)
+16. [Migration Guide](./migration.md)
 
 ## 🔗 **External Resources**
 

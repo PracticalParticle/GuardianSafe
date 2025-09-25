@@ -383,6 +383,529 @@ library SecureOwnableDefinitions {
         });
     }
 
+        // ============ WORKFLOW INFORMATION STRUCTURES ============
+    
+    struct WorkflowStep {
+        string functionName;
+        bytes4 functionSelector;
+        MultiPhaseSecureOperation.TxAction action;
+        string[] roles;         // CHANGED: Array of roles (e.g., ["OWNER", "RECOVERY"] for OWNER_OR_RECOVERY)
+        string description;
+        bool isOffChain;        // NEW: Indicates off-chain step
+        string phaseType;       // NEW: "SIGNING" or "EXECUTION"
+    }
+    
+    struct WorkflowPath {
+        string name;
+        string description;
+        WorkflowStep[] steps;
+        uint8 workflowType; // 0=TIME_DELAY_ONLY, 1=META_TX_ONLY, 2=HYBRID
+        uint256 estimatedTimeSec;
+        bool requiresSignature;
+        bool hasOffChainPhase;  // NEW: Indicates if path has off-chain steps
+    }
+    
+    struct OperationWorkflow {
+        bytes32 operationType;
+        string operationName;
+        WorkflowPath[] paths;
+        string[] supportedRoles;
+    }
+    
+    // ============ WORKFLOW INFORMATION FUNCTIONS ============
+    
+    /**
+     * @dev Returns complete workflow information for all SecureOwnable operations
+     * @return Array of operation workflows with all possible paths
+     */
+    function getOperationWorkflows() public pure returns (OperationWorkflow[] memory) {
+        OperationWorkflow[] memory workflows = new OperationWorkflow[](4);
+        
+        workflows[0] = getOwnershipTransferWorkflow();
+        workflows[1] = getBroadcasterUpdateWorkflow();
+        workflows[2] = getRecoveryUpdateWorkflow();
+        workflows[3] = getTimeLockUpdateWorkflow();
+        
+        return workflows;
+    }
+    
+    /**
+     * @dev Returns workflow information for a specific operation type
+     * @param operationType The operation type to get workflow for
+     * @return Complete workflow information for the operation
+     */
+    function getWorkflowForOperation(bytes32 operationType) public pure returns (OperationWorkflow memory) {
+        if (operationType == OWNERSHIP_TRANSFER) {
+            return getOwnershipTransferWorkflow();
+        } else if (operationType == BROADCASTER_UPDATE) {
+            return getBroadcasterUpdateWorkflow();
+        } else if (operationType == RECOVERY_UPDATE) {
+            return getRecoveryUpdateWorkflow();
+        } else if (operationType == TIMELOCK_UPDATE) {
+            return getTimeLockUpdateWorkflow();
+        } else {
+            revert("Operation type not supported");
+        }
+    }
+    
+    /**
+     * @dev Returns all available workflow paths for an operation type
+     * @param operationType The operation type to get paths for
+     * @return Array of workflow paths
+     */
+    function getWorkflowPaths(bytes32 operationType) public pure returns (WorkflowPath[] memory) {
+        OperationWorkflow memory workflow = getWorkflowForOperation(operationType);
+        return workflow.paths;
+    }
+    
+    /**
+     * @dev Returns workflow information for OWNERSHIP_TRANSFER operation
+     * Based on actual sanity test workflows
+     * @return Complete workflow information
+     */
+    function getOwnershipTransferWorkflow() private pure returns (OperationWorkflow memory) {
+        WorkflowPath[] memory paths = new WorkflowPath[](4);
+        
+        // Time-Delay Only Workflow (from sanity tests)
+        WorkflowStep[] memory timeDelaySteps = new WorkflowStep[](2);
+        string[] memory recoveryRoles = new string[](1);
+        recoveryRoles[0] = "RECOVERY";
+        timeDelaySteps[0] = WorkflowStep({
+            functionName: "transferOwnershipRequest",
+            functionSelector: TRANSFER_OWNERSHIP_REQUEST_SELECTOR, // 0x572be39b
+            action: MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_REQUEST, // 0
+            roles: recoveryRoles,
+            description: "Recovery creates ownership transfer request",
+            isOffChain: false,
+            phaseType: "EXECUTION"
+        });
+        string[] memory ownerOrRecoveryRoles = new string[](2);
+        ownerOrRecoveryRoles[0] = "OWNER";
+        ownerOrRecoveryRoles[1] = "RECOVERY";
+        timeDelaySteps[1] = WorkflowStep({
+            functionName: "transferOwnershipDelayedApproval",
+            functionSelector: TRANSFER_OWNERSHIP_DELAYED_APPROVAL_SELECTOR, // 0x6cd71b38
+            action: MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_APPROVE, // 1
+            roles: ownerOrRecoveryRoles,
+            description: "Owner or Recovery approves after time delay",
+            isOffChain: false,
+            phaseType: "EXECUTION"
+        });
+        
+        paths[0] = WorkflowPath({
+            name: "Time-Delay Only",
+            description: "Traditional two-phase operation with mandatory waiting period",
+            steps: timeDelaySteps,
+            workflowType: 0, // TIME_DELAY_ONLY
+            estimatedTimeSec: 86400, // 24 hours
+            requiresSignature: false,
+            hasOffChainPhase: false
+        });
+        
+        // Meta-Transaction Approval Workflow (from sanity tests) - Enhanced with off-chain signing
+        WorkflowStep[] memory metaTxSteps = new WorkflowStep[](3); // Changed from 2 to 3
+        metaTxSteps[0] = WorkflowStep({
+            functionName: "transferOwnershipRequest",
+            functionSelector: TRANSFER_OWNERSHIP_REQUEST_SELECTOR, // 0x572be39b
+            action: MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_REQUEST, // 0
+            roles: recoveryRoles,
+            description: "Recovery creates ownership transfer request",
+            isOffChain: false,
+            phaseType: "EXECUTION"
+        });
+        string[] memory ownerRoles = new string[](1);
+        ownerRoles[0] = "OWNER";
+        metaTxSteps[1] = WorkflowStep({
+            functionName: "signTransferOwnershipApproval",
+            functionSelector: bytes4(0), // No selector for off-chain
+            action: MultiPhaseSecureOperation.TxAction.SIGN_META_APPROVE, // 4
+            roles: ownerRoles,
+            description: "Owner signs approval off-chain",
+            isOffChain: true,
+            phaseType: "SIGNING"
+        });
+        string[] memory broadcasterRoles = new string[](1);
+        broadcasterRoles[0] = "BROADCASTER";
+        metaTxSteps[2] = WorkflowStep({
+            functionName: "transferOwnershipApprovalWithMetaTx",
+            functionSelector: TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR, // 0xb51ff5ce
+            action: MultiPhaseSecureOperation.TxAction.EXECUTE_META_APPROVE, // 7
+            roles: broadcasterRoles,
+            description: "Broadcaster executes signed approval",
+            isOffChain: false,
+            phaseType: "EXECUTION"
+        });
+        
+        paths[1] = WorkflowPath({
+            name: "Meta-Transaction Approval",
+            description: "Owner signs approval off-chain, Broadcaster executes on-chain",
+            steps: metaTxSteps,
+            workflowType: 2, // HYBRID
+            estimatedTimeSec: 0, // Immediate execution after signing
+            requiresSignature: true,
+            hasOffChainPhase: true
+        });
+        
+        // Meta-Transaction Cancellation Workflow (from sanity tests) - Enhanced with off-chain signing
+        WorkflowStep[] memory metaCancelSteps = new WorkflowStep[](3); // Changed from 2 to 3
+        metaCancelSteps[0] = WorkflowStep({
+            functionName: "transferOwnershipRequest",
+            functionSelector: TRANSFER_OWNERSHIP_REQUEST_SELECTOR, // 0x572be39b
+            action: MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_REQUEST, // 0
+            roles: recoveryRoles,
+            description: "Recovery creates ownership transfer request",
+            isOffChain: false,
+            phaseType: "EXECUTION"
+        });
+        metaCancelSteps[1] = WorkflowStep({
+            functionName: "signTransferOwnershipCancellation",
+            functionSelector: bytes4(0), // No selector for off-chain
+            action: MultiPhaseSecureOperation.TxAction.SIGN_META_CANCEL, // 5
+            roles: ownerRoles,
+            description: "Owner signs cancellation off-chain",
+            isOffChain: true,
+            phaseType: "SIGNING"
+        });
+        metaCancelSteps[2] = WorkflowStep({
+            functionName: "transferOwnershipCancellationWithMetaTx",
+            functionSelector: TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR, // 0x1ef7c2ec
+            action: MultiPhaseSecureOperation.TxAction.EXECUTE_META_CANCEL, // 8
+            roles: broadcasterRoles,
+            description: "Broadcaster executes signed cancellation",
+            isOffChain: false,
+            phaseType: "EXECUTION"
+        });
+        
+        paths[2] = WorkflowPath({
+            name: "Meta-Transaction Cancellation",
+            description: "Owner signs cancellation off-chain, Broadcaster executes on-chain",
+            steps: metaCancelSteps,
+            workflowType: 2, // HYBRID
+            estimatedTimeSec: 0, // Immediate execution after signing
+            requiresSignature: true,
+            hasOffChainPhase: true
+        });
+        
+        // Time-Delay Cancellation Workflow (from sanity tests)
+        WorkflowStep[] memory timeCancelSteps = new WorkflowStep[](2);
+        timeCancelSteps[0] = WorkflowStep({
+            functionName: "transferOwnershipRequest",
+            functionSelector: TRANSFER_OWNERSHIP_REQUEST_SELECTOR, // 0x572be39b
+            action: MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_REQUEST, // 0
+            roles: recoveryRoles,
+            description: "Recovery creates ownership transfer request",
+            isOffChain: false,
+            phaseType: "EXECUTION"
+        });
+        timeCancelSteps[1] = WorkflowStep({
+            functionName: "transferOwnershipCancellation",
+            functionSelector: TRANSFER_OWNERSHIP_CANCELLATION_SELECTOR, // 0x9d8f6f90
+            action: MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_CANCEL, // 2
+            roles: recoveryRoles,
+            description: "Recovery cancels pending request",
+            isOffChain: false,
+            phaseType: "EXECUTION"
+        });
+        
+        paths[3] = WorkflowPath({
+            name: "Time-Delay Cancellation",
+            description: "Cancel pending ownership transfer request after timelock",
+            steps: timeCancelSteps,
+            workflowType: 0, // TIME_DELAY_ONLY
+            estimatedTimeSec: 0, // Immediate (no timelock for cancellation)
+            requiresSignature: false,
+            hasOffChainPhase: false
+        });
+        
+        string[] memory supportedRoles = new string[](3);
+        supportedRoles[0] = "OWNER";
+        supportedRoles[1] = "BROADCASTER";
+        supportedRoles[2] = "RECOVERY";
+        
+        return OperationWorkflow({
+            operationType: OWNERSHIP_TRANSFER,
+            operationName: "OWNERSHIP_TRANSFER",
+            paths: paths,
+            supportedRoles: supportedRoles
+        });
+    }
+    
+    /**
+     * @dev Returns workflow information for BROADCASTER_UPDATE operation
+     * Based on actual sanity test workflows
+     * @return Complete workflow information
+     */
+    function getBroadcasterUpdateWorkflow() private pure returns (OperationWorkflow memory) {
+        WorkflowPath[] memory paths = new WorkflowPath[](4);
+        
+        // Declare role arrays for reuse
+        string[] memory ownerRoles = new string[](1);
+        ownerRoles[0] = "OWNER";
+        string[] memory broadcasterRoles = new string[](1);
+        broadcasterRoles[0] = "BROADCASTER";
+        
+        // Meta-Transaction Cancellation Workflow (from sanity tests) - Enhanced with off-chain signing
+        WorkflowStep[] memory metaCancelSteps = new WorkflowStep[](3); // Changed from 2 to 3
+        metaCancelSteps[0] = WorkflowStep({
+            functionName: "updateBroadcasterRequest",
+            functionSelector: UPDATE_BROADCASTER_REQUEST_SELECTOR, // 0x... (from tests)
+            action: MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_REQUEST, // 0
+            roles: ownerRoles,
+            description: "Owner creates broadcaster update request",
+            isOffChain: false,
+            phaseType: "EXECUTION"
+        });
+        metaCancelSteps[1] = WorkflowStep({
+            functionName: "signBroadcasterCancellation",
+            functionSelector: bytes4(0), // No selector for off-chain
+            action: MultiPhaseSecureOperation.TxAction.SIGN_META_CANCEL, // 5
+            roles: ownerRoles,
+            description: "Owner signs cancellation off-chain",
+            isOffChain: true,
+            phaseType: "SIGNING"
+        });
+        metaCancelSteps[2] = WorkflowStep({
+            functionName: "updateBroadcasterCancellationWithMetaTx",
+            functionSelector: UPDATE_BROADCASTER_CANCEL_META_SELECTOR, // 0xf1209daa
+            action: MultiPhaseSecureOperation.TxAction.EXECUTE_META_CANCEL, // 8
+            roles: broadcasterRoles,
+            description: "Broadcaster executes signed cancellation",
+            isOffChain: false,
+            phaseType: "EXECUTION"
+        });
+        
+        paths[0] = WorkflowPath({
+            name: "Meta-Transaction Cancellation",
+            description: "Owner signs cancellation off-chain, Broadcaster executes on-chain",
+            steps: metaCancelSteps,
+            workflowType: 2, // HYBRID
+            estimatedTimeSec: 0, // Immediate execution after signing
+            requiresSignature: true,
+            hasOffChainPhase: true
+        });
+        
+        // Time-Delay Cancellation Workflow (from sanity tests)
+        WorkflowStep[] memory timeCancelSteps = new WorkflowStep[](2);
+        timeCancelSteps[0] = WorkflowStep({
+            functionName: "updateBroadcasterRequest",
+            functionSelector: UPDATE_BROADCASTER_REQUEST_SELECTOR, // 0x... (from tests)
+            action: MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_REQUEST, // 0
+            roles: ownerRoles,
+            description: "Owner creates broadcaster update request",
+            isOffChain: false,
+            phaseType: "EXECUTION"
+        });
+        timeCancelSteps[1] = WorkflowStep({
+            functionName: "updateBroadcasterCancellation",
+            functionSelector: UPDATE_BROADCASTER_CANCELLATION_SELECTOR, // 0x62544d90
+            action: MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_CANCEL, // 2
+            roles: ownerRoles,
+            description: "Owner cancels pending request",
+            isOffChain: false,
+            phaseType: "EXECUTION"
+        });
+        
+        paths[1] = WorkflowPath({
+            name: "Time-Delay Cancellation",
+            description: "Cancel pending broadcaster update request after timelock",
+            steps: timeCancelSteps,
+            workflowType: 0, // TIME_DELAY_ONLY
+            estimatedTimeSec: 0, // Immediate (no timelock for cancellation)
+            requiresSignature: false,
+            hasOffChainPhase: false
+        });
+        
+        // Meta-Transaction Approval Workflow (from sanity tests) - Enhanced with off-chain signing
+        WorkflowStep[] memory metaTxSteps = new WorkflowStep[](3); // Changed from 2 to 3
+        metaTxSteps[0] = WorkflowStep({
+            functionName: "updateBroadcasterRequest",
+            functionSelector: UPDATE_BROADCASTER_REQUEST_SELECTOR, // 0x... (from tests)
+            action: MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_REQUEST, // 0
+            roles: ownerRoles,
+            description: "Owner creates broadcaster update request",
+            isOffChain: false,
+            phaseType: "EXECUTION"
+        });
+        metaTxSteps[1] = WorkflowStep({
+            functionName: "signBroadcasterApproval",
+            functionSelector: bytes4(0), // No selector for off-chain
+            action: MultiPhaseSecureOperation.TxAction.SIGN_META_APPROVE, // 4
+            roles: ownerRoles,
+            description: "Owner signs approval off-chain",
+            isOffChain: true,
+            phaseType: "SIGNING"
+        });
+        metaTxSteps[2] = WorkflowStep({
+            functionName: "updateBroadcasterApprovalWithMetaTx",
+            functionSelector: UPDATE_BROADCASTER_APPROVE_META_SELECTOR, // 0xd04d6238
+            action: MultiPhaseSecureOperation.TxAction.EXECUTE_META_APPROVE, // 7
+            roles: broadcasterRoles,
+            description: "Broadcaster executes signed approval",
+            isOffChain: false,
+            phaseType: "EXECUTION"
+        });
+        
+        paths[2] = WorkflowPath({
+            name: "Meta-Transaction Approval",
+            description: "Owner signs approval off-chain, Broadcaster executes on-chain",
+            steps: metaTxSteps,
+            workflowType: 2, // HYBRID
+            estimatedTimeSec: 0, // Immediate execution after signing
+            requiresSignature: true,
+            hasOffChainPhase: true
+        });
+        
+        // Time-Delay Approval Workflow (from sanity tests)
+        WorkflowStep[] memory timeDelaySteps = new WorkflowStep[](2);
+        timeDelaySteps[0] = WorkflowStep({
+            functionName: "updateBroadcasterRequest",
+            functionSelector: UPDATE_BROADCASTER_REQUEST_SELECTOR, // 0x... (from tests)
+            action: MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_REQUEST, // 0
+            roles: ownerRoles,
+            description: "Owner creates broadcaster update request",
+            isOffChain: false,
+            phaseType: "EXECUTION"
+        });
+        timeDelaySteps[1] = WorkflowStep({
+            functionName: "updateBroadcasterDelayedApproval",
+            functionSelector: UPDATE_BROADCASTER_DELAYED_APPROVAL_SELECTOR, // 0xb7d254d6
+            action: MultiPhaseSecureOperation.TxAction.EXECUTE_TIME_DELAY_APPROVE, // 1
+            roles: ownerRoles,
+            description: "Owner approves after time delay",
+            isOffChain: false,
+            phaseType: "EXECUTION"
+        });
+        
+        paths[3] = WorkflowPath({
+            name: "Time-Delay Approval",
+            description: "Traditional two-phase operation with mandatory waiting period",
+            steps: timeDelaySteps,
+            workflowType: 0, // TIME_DELAY_ONLY
+            estimatedTimeSec: 86400, // 24 hours
+            requiresSignature: false,
+            hasOffChainPhase: false
+        });
+        
+        string[] memory supportedRoles = new string[](2);
+        supportedRoles[0] = "OWNER";
+        supportedRoles[1] = "BROADCASTER";
+        
+        return OperationWorkflow({
+            operationType: BROADCASTER_UPDATE,
+            operationName: "BROADCASTER_UPDATE",
+            paths: paths,
+            supportedRoles: supportedRoles
+        });
+    }
+    
+    /**
+     * @dev Returns workflow information for RECOVERY_UPDATE operation
+     * Based on actual sanity test workflows
+     * @return Complete workflow information
+     */
+    function getRecoveryUpdateWorkflow() private pure returns (OperationWorkflow memory) {
+        WorkflowPath[] memory paths = new WorkflowPath[](1);
+        
+        // Declare role arrays for reuse
+        string[] memory ownerRoles = new string[](1);
+        ownerRoles[0] = "OWNER";
+        string[] memory broadcasterRoles = new string[](1);
+        broadcasterRoles[0] = "BROADCASTER";
+        
+        // Single-Phase Meta-Transaction Workflow (from sanity tests) - Enhanced with off-chain signing
+        WorkflowStep[] memory singlePhaseSteps = new WorkflowStep[](2); // Changed from 1 to 2
+        singlePhaseSteps[0] = WorkflowStep({
+            functionName: "signRecoveryRequestAndApprove",
+            functionSelector: bytes4(0), // No selector for off-chain
+            action: MultiPhaseSecureOperation.TxAction.SIGN_META_REQUEST_AND_APPROVE, // 3
+            roles: ownerRoles,
+            description: "Owner signs request and approval off-chain",
+            isOffChain: true,
+            phaseType: "SIGNING"
+        });
+        singlePhaseSteps[1] = WorkflowStep({
+            functionName: "updateRecoveryRequestAndApprove",
+            functionSelector: UPDATE_RECOVERY_META_SELECTOR, // 0x2aa09cf6
+            action: MultiPhaseSecureOperation.TxAction.EXECUTE_META_REQUEST_AND_APPROVE, // 6
+            roles: broadcasterRoles,
+            description: "Broadcaster executes signed request and approval",
+            isOffChain: false,
+            phaseType: "EXECUTION"
+        });
+        
+        paths[0] = WorkflowPath({
+            name: "Single-Phase Meta-Transaction",
+            description: "Owner signs request and approval off-chain, Broadcaster executes on-chain",
+            steps: singlePhaseSteps,
+            workflowType: 1, // META_TX_ONLY
+            estimatedTimeSec: 0, // Immediate execution after signing
+            requiresSignature: true,
+            hasOffChainPhase: true
+        });
+        
+        string[] memory supportedRoles = new string[](1);
+        supportedRoles[0] = "BROADCASTER";
+        
+        return OperationWorkflow({
+            operationType: RECOVERY_UPDATE,
+            operationName: "RECOVERY_UPDATE",
+            paths: paths,
+            supportedRoles: supportedRoles
+        });
+    }
+    
+    /**
+     * @dev Returns workflow information for TIMELOCK_UPDATE operation
+     * Based on actual sanity test workflows
+     * @return Complete workflow information
+     */
+    function getTimeLockUpdateWorkflow() private pure returns (OperationWorkflow memory) {
+        WorkflowPath[] memory paths = new WorkflowPath[](1);
+        
+        // Declare role arrays for reuse
+        string[] memory ownerRoles = new string[](1);
+        ownerRoles[0] = "OWNER";
+        string[] memory broadcasterRoles = new string[](1);
+        broadcasterRoles[0] = "BROADCASTER";
+        
+        // Single-Phase Meta-Transaction Workflow (from sanity tests) - Enhanced with off-chain signing
+        WorkflowStep[] memory singlePhaseSteps = new WorkflowStep[](2); // Changed from 1 to 2
+        singlePhaseSteps[0] = WorkflowStep({
+            functionName: "signTimeLockRequestAndApprove",
+            functionSelector: bytes4(0), // No selector for off-chain
+            action: MultiPhaseSecureOperation.TxAction.SIGN_META_REQUEST_AND_APPROVE, // 3
+            roles: ownerRoles,
+            description: "Owner signs request and approval off-chain",
+            isOffChain: true,
+            phaseType: "SIGNING"
+        });
+        singlePhaseSteps[1] = WorkflowStep({
+            functionName: "updateTimeLockRequestAndApprove",
+            functionSelector: UPDATE_TIMELOCK_META_SELECTOR, // 0x... (from tests)
+            action: MultiPhaseSecureOperation.TxAction.EXECUTE_META_REQUEST_AND_APPROVE, // 6
+            roles: broadcasterRoles,
+            description: "Broadcaster executes signed request and approval",
+            isOffChain: false,
+            phaseType: "EXECUTION"
+        });
+        
+        paths[0] = WorkflowPath({
+            name: "Single-Phase Meta-Transaction",
+            description: "Owner signs request and approval off-chain, Broadcaster executes on-chain",
+            steps: singlePhaseSteps,
+            workflowType: 1, // META_TX_ONLY
+            estimatedTimeSec: 0, // Immediate execution after signing
+            requiresSignature: true,
+            hasOffChainPhase: true
+        });
+        
+        string[] memory supportedRoles = new string[](1);
+        supportedRoles[0] = "BROADCASTER";
+        
+        return OperationWorkflow({
+            operationType: TIMELOCK_UPDATE,
+            operationName: "TIMELOCK_UPDATE",
+            paths: paths,
             supportedRoles: supportedRoles
         });
     }

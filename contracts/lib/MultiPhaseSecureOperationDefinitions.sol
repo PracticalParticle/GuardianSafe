@@ -253,4 +253,42 @@ library MultiPhaseSecureOperationDefinitions {
         });
     }
     
+    /**
+     * @dev Returns all operation workflows
+     * @return Array of operation workflow definitions
+     */
+    function getOperationWorkflows() public pure returns (IDefinitionContract.OperationWorkflow[] memory) {
+        IDefinitionContract.OperationWorkflow[] memory workflows = new IDefinitionContract.OperationWorkflow[](0);
+        
+        return workflows;
+    }
+    
+    /**
+     * @dev Returns workflow information for a specific operation type
+     * @param operationType The operation type hash to get workflow for
+     * @return OperationWorkflow struct containing workflow information for the operation
+     */
+    function getWorkflowForOperation(bytes32 operationType) public pure returns (IDefinitionContract.OperationWorkflow memory) {
+        // Return empty workflow for now
+        IDefinitionContract.WorkflowPath[] memory emptyPaths = new IDefinitionContract.WorkflowPath[](0);
+        string[] memory emptyRoles = new string[](0);
+        
+        return IDefinitionContract.OperationWorkflow({
+            operationType: operationType,
+            operationName: "",
+            paths: emptyPaths,
+            supportedRoles: emptyRoles
+        });
+    }
+    
+    /**
+     * @dev Returns all available workflow paths
+     * @return Array of workflow path definitions
+     */
+    function getWorkflowPaths() public pure returns (IDefinitionContract.WorkflowPath[] memory) {
+        IDefinitionContract.WorkflowPath[] memory paths = new IDefinitionContract.WorkflowPath[](0);
+        
+        return paths;
+    }
+    
 }

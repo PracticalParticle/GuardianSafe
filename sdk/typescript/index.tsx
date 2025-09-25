@@ -4,11 +4,13 @@
 // Core Classes
 export { default as SecureOwnable } from './SecureOwnable';
 export { default as DynamicRBAC } from './DynamicRBAC';
+export { DefinitionContract } from './DefinitionContract';
 
 // Interfaces
 export * from './interfaces/base.index';
 export * from './interfaces/core.access.index';
 export * from './interfaces/lib.index';
+export * from './interfaces/definition.index';
 
 // Types and Constants
 export { 
@@ -17,6 +19,7 @@ export {
   DYNAMIC_RBAC_FUNCTION_SELECTORS
 } from './types/core.access.index';
 export * from './types/lib.index';
+export * from './types/definition.index';
 
 // Utilities
 export * from './utils/validations';

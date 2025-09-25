@@ -68,6 +68,167 @@ type RoleType =
   | 'CUSTOM'
 ```
 
+## 🔍 **DefinitionContract Types**
+
+### **Definition Contract Types**
+
+```typescript
+// Function permission structure
+interface FunctionPermission {
+  functionSelector: Hex;
+  allowedRoles: Hex[];
+  requiresSignature: boolean;
+  isOffChain: boolean;
+}
+
+// Function schema structure
+interface FunctionSchema {
+  functionName: string;
+  functionSelector: Hex;
+  parameters: string[];
+  returnTypes: string[];
+  description: string;
+}
+
+// Role permission structure containing role hashes and their function permissions
+interface RolePermission {
+  roleHashes: Hex[];
+  functionPermissions: FunctionPermission[];
+}
+
+// Single step in a workflow
+interface WorkflowStep {
+  functionName: string;
+  functionSelector: Hex;
+  action: TxAction;
+  roles: string[];
+  description: string;
+  isOffChain: boolean;
+  phaseType: string;
+}
+
+// Complete workflow path
+interface WorkflowPath {
+  name: string;
+  description: string;
+  steps: WorkflowStep[];
+  workflowType: number; // 0=TIME_DELAY_ONLY, 1=META_TX_ONLY, 2=HYBRID
+  estimatedTimeSec: bigint;
+  requiresSignature: boolean;
+  hasOffChainPhase: boolean;
+}
+
+// Complete operation workflow
+interface OperationWorkflow {
+  operationType: Hex;
+  operationName: string;
+  paths: WorkflowPath[];
+  supportedRoles: string[];
+}
+
+// Readable operation type (from MultiPhaseSecureOperation)
+interface ReadableOperationType {
+  operationType: Hex;
+  name: string;
+}
+```
+
+### **DefinitionContract Interface**
+
+```typescript
+// Main interface for DefinitionContract
+interface IDefinitionContract {
+  getOperationTypes(): Promise<ReadableOperationType[]>;
+  getFunctionSchemas(): Promise<FunctionSchema[]>;
+  getRolePermissions(): Promise<RolePermission>;
+  getOperationWorkflows(): Promise<OperationWorkflow[]>;
+  getWorkflowForOperation(operationType: Hex): Promise<OperationWorkflow>;
+  getWorkflowPaths(): Promise<WorkflowPath[]>;
+}
+
+// Configuration options for DefinitionContract client
+interface DefinitionContractConfig {
+  contractAddress: Address;
+  chainId: number;
+  rpcUrl?: string;
+}
+
+// Transaction options for contract interactions
+interface TransactionOptions {
+  from: Address;
+  gasLimit?: bigint;
+  gasPrice?: bigint;
+  value?: bigint;
+}
+
+// Result of contract method calls
+interface ContractResult<T> {
+  data: T;
+  blockNumber: bigint;
+  transactionHash: Hex;
+}
+```
+
+### **Workflow Type Constants**
+
+```typescript
+// Workflow type constants
+const WorkflowType = {
+  TIME_DELAY_ONLY: 0,
+  META_TX_ONLY: 1,
+  HYBRID: 2
+} as const;
+
+export type WorkflowType = typeof WorkflowType[keyof typeof WorkflowType];
+
+// Phase type constants
+const PhaseType = {
+  SIGNING: "SIGNING",
+  EXECUTION: "EXECUTION"
+} as const;
+
+export type PhaseType = typeof PhaseType[keyof typeof PhaseType];
+```
+
+### **DefinitionContract Class**
+
+```typescript
+// DefinitionContract class implementation
+class DefinitionContract implements IDefinitionContract {
+  protected client: PublicClient;
+  protected walletClient: WalletClient | undefined;
+  protected contractAddress: Address;
+  protected chain: Chain;
+  protected config: DefinitionContractConfig;
+
+  constructor(
+    client: PublicClient,
+    walletClient: WalletClient | undefined,
+    contractAddress: Address,
+    chain: Chain,
+    config?: Partial<DefinitionContractConfig>
+  );
+
+  // Core methods
+  async getOperationTypes(): Promise<ReadableOperationType[]>;
+  async getFunctionSchemas(): Promise<FunctionSchema[]>;
+  async getRolePermissions(): Promise<RolePermission>;
+  async getOperationWorkflows(): Promise<OperationWorkflow[]>;
+  async getWorkflowForOperation(operationType: Hex): Promise<OperationWorkflow>;
+  async getWorkflowPaths(): Promise<WorkflowPath[]>;
+
+  // Utility methods
+  async getOperationTypeByName(operationName: string): Promise<Hex | undefined>;
+  async getFunctionSchemaBySelector(functionSelector: Hex): Promise<FunctionSchema | undefined>;
+  async hasRolePermission(roleHash: Hex, functionSelector: Hex): Promise<boolean>;
+  async getRolesForFunction(functionSelector: Hex): Promise<Hex[]>;
+
+  // Configuration methods
+  getConfig(): DefinitionContractConfig;
+  updateConfig(config: Partial<DefinitionContractConfig>): void;
+}
+```
+
 ## 📊 **Contract Analysis Types**
 
 ### **ContractAnalysis Interface**
