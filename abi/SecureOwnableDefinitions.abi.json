@@ -1,6 +1,286 @@
 [
   {
     "inputs": [],
+    "name": "BROADCASTER_UPDATE",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [],
+    "name": "OWNERSHIP_TRANSFER",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [],
+    "name": "RECOVERY_UPDATE",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [],
+    "name": "TIMELOCK_UPDATE",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [],
+    "name": "TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR",
+    "outputs": [
+      {
+        "internalType": "bytes4",
+        "name": "",
+        "type": "bytes4"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [],
+    "name": "TRANSFER_OWNERSHIP_CANCELLATION_SELECTOR",
+    "outputs": [
+      {
+        "internalType": "bytes4",
+        "name": "",
+        "type": "bytes4"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [],
+    "name": "TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR",
+    "outputs": [
+      {
+        "internalType": "bytes4",
+        "name": "",
+        "type": "bytes4"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [],
+    "name": "TRANSFER_OWNERSHIP_DELAYED_APPROVAL_SELECTOR",
+    "outputs": [
+      {
+        "internalType": "bytes4",
+        "name": "",
+        "type": "bytes4"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [],
+    "name": "TRANSFER_OWNERSHIP_REQUEST_SELECTOR",
+    "outputs": [
+      {
+        "internalType": "bytes4",
+        "name": "",
+        "type": "bytes4"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [],
+    "name": "TRANSFER_OWNERSHIP_SELECTOR",
+    "outputs": [
+      {
+        "internalType": "bytes4",
+        "name": "",
+        "type": "bytes4"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [],
+    "name": "UPDATE_BROADCASTER_APPROVE_META_SELECTOR",
+    "outputs": [
+      {
+        "internalType": "bytes4",
+        "name": "",
+        "type": "bytes4"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [],
+    "name": "UPDATE_BROADCASTER_CANCELLATION_SELECTOR",
+    "outputs": [
+      {
+        "internalType": "bytes4",
+        "name": "",
+        "type": "bytes4"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [],
+    "name": "UPDATE_BROADCASTER_CANCEL_META_SELECTOR",
+    "outputs": [
+      {
+        "internalType": "bytes4",
+        "name": "",
+        "type": "bytes4"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [],
+    "name": "UPDATE_BROADCASTER_DELAYED_APPROVAL_SELECTOR",
+    "outputs": [
+      {
+        "internalType": "bytes4",
+        "name": "",
+        "type": "bytes4"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [],
+    "name": "UPDATE_BROADCASTER_REQUEST_SELECTOR",
+    "outputs": [
+      {
+        "internalType": "bytes4",
+        "name": "",
+        "type": "bytes4"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [],
+    "name": "UPDATE_BROADCASTER_SELECTOR",
+    "outputs": [
+      {
+        "internalType": "bytes4",
+        "name": "",
+        "type": "bytes4"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [],
+    "name": "UPDATE_RECOVERY_META_SELECTOR",
+    "outputs": [
+      {
+        "internalType": "bytes4",
+        "name": "",
+        "type": "bytes4"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [],
+    "name": "UPDATE_RECOVERY_SELECTOR",
+    "outputs": [
+      {
+        "internalType": "bytes4",
+        "name": "",
+        "type": "bytes4"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [],
+    "name": "UPDATE_TIMELOCK_META_SELECTOR",
+    "outputs": [
+      {
+        "internalType": "bytes4",
+        "name": "",
+        "type": "bytes4"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [],
+    "name": "UPDATE_TIMELOCK_SELECTOR",
+    "outputs": [
+      {
+        "internalType": "bytes4",
+        "name": "",
+        "type": "bytes4"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [],
     "name": "getOperationTypes",
     "outputs": [
       {
@@ -22,7 +302,8 @@
       }
     ],
     "stateMutability": "pure",
-    "type": "function"
+    "type": "function",
+    "constant": true
   },
   {
     "inputs": [],
@@ -48,7 +329,7 @@
           {
             "internalType": "enum MultiPhaseSecureOperation.TxAction[]",
             "name": "supportedActions",
-            "type": "uint8[]"
+            "type": "MultiPhaseSecureOperation.TxAction[]"
           }
         ],
         "internalType": "struct MultiPhaseSecureOperation.FunctionSchema[]",
@@ -57,7 +338,8 @@
       }
     ],
     "stateMutability": "pure",
-    "type": "function"
+    "type": "function",
+    "constant": true
   },
   {
     "inputs": [],
@@ -80,7 +362,7 @@
               {
                 "internalType": "enum MultiPhaseSecureOperation.TxAction[]",
                 "name": "grantedActions",
-                "type": "uint8[]"
+                "type": "MultiPhaseSecureOperation.TxAction[]"
               }
             ],
             "internalType": "struct MultiPhaseSecureOperation.FunctionPermission[]",
@@ -94,7 +376,8 @@
       }
     ],
     "stateMutability": "pure",
-    "type": "function"
+    "type": "function",
+    "constant": true
   },
   {
     "inputs": [],
@@ -139,7 +422,7 @@
                   {
                     "internalType": "enum MultiPhaseSecureOperation.TxAction",
                     "name": "action",
-                    "type": "uint8"
+                    "type": "MultiPhaseSecureOperation.TxAction"
                   },
                   {
                     "internalType": "string[]",
@@ -162,7 +445,7 @@
                     "type": "string"
                   }
                 ],
-                "internalType": "struct IDefinitionContract.WorkflowStep[]",
+                "internalType": "struct SecureOwnableDefinitions.WorkflowStep[]",
                 "name": "steps",
                 "type": "tuple[]"
               },
@@ -187,7 +470,7 @@
                 "type": "bool"
               }
             ],
-            "internalType": "struct IDefinitionContract.WorkflowPath[]",
+            "internalType": "struct SecureOwnableDefinitions.WorkflowPath[]",
             "name": "paths",
             "type": "tuple[]"
           },
@@ -197,13 +480,14 @@
             "type": "string[]"
           }
         ],
-        "internalType": "struct IDefinitionContract.OperationWorkflow[]",
+        "internalType": "struct SecureOwnableDefinitions.OperationWorkflow[]",
         "name": "",
         "type": "tuple[]"
       }
     ],
     "stateMutability": "pure",
-    "type": "function"
+    "type": "function",
+    "constant": true
   },
   {
     "inputs": [
@@ -254,7 +538,7 @@
                   {
                     "internalType": "enum MultiPhaseSecureOperation.TxAction",
                     "name": "action",
-                    "type": "uint8"
+                    "type": "MultiPhaseSecureOperation.TxAction"
                   },
                   {
                     "internalType": "string[]",
@@ -277,7 +561,7 @@
                     "type": "string"
                   }
                 ],
-                "internalType": "struct IDefinitionContract.WorkflowStep[]",
+                "internalType": "struct SecureOwnableDefinitions.WorkflowStep[]",
                 "name": "steps",
                 "type": "tuple[]"
               },
@@ -302,7 +586,7 @@
                 "type": "bool"
               }
             ],
-            "internalType": "struct IDefinitionContract.WorkflowPath[]",
+            "internalType": "struct SecureOwnableDefinitions.WorkflowPath[]",
             "name": "paths",
             "type": "tuple[]"
           },
@@ -312,16 +596,23 @@
             "type": "string[]"
           }
         ],
-        "internalType": "struct IDefinitionContract.OperationWorkflow",
+        "internalType": "struct SecureOwnableDefinitions.OperationWorkflow",
         "name": "",
         "type": "tuple"
       }
     ],
     "stateMutability": "pure",
-    "type": "function"
+    "type": "function",
+    "constant": true
   },
   {
-    "inputs": [],
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "operationType",
+        "type": "bytes32"
+      }
+    ],
     "name": "getWorkflowPaths",
     "outputs": [
       {
@@ -351,7 +642,7 @@
               {
                 "internalType": "enum MultiPhaseSecureOperation.TxAction",
                 "name": "action",
-                "type": "uint8"
+                "type": "MultiPhaseSecureOperation.TxAction"
               },
               {
                 "internalType": "string[]",
@@ -374,7 +665,7 @@
                 "type": "string"
               }
             ],
-            "internalType": "struct IDefinitionContract.WorkflowStep[]",
+            "internalType": "struct SecureOwnableDefinitions.WorkflowStep[]",
             "name": "steps",
             "type": "tuple[]"
           },
@@ -399,12 +690,13 @@
             "type": "bool"
           }
         ],
-        "internalType": "struct IDefinitionContract.WorkflowPath[]",
+        "internalType": "struct SecureOwnableDefinitions.WorkflowPath[]",
         "name": "",
         "type": "tuple[]"
       }
     ],
     "stateMutability": "pure",
-    "type": "function"
+    "type": "function",
+    "constant": true
   }
 ]
