@@ -62,8 +62,7 @@ abstract contract DynamicRBAC is Initializable, SecureOwnable {
         SecureOwnable.initialize(initialOwner, broadcaster, recovery, timeLockPeriodSec, eventForwarder);
         
         // Load DynamicRBAC-specific definitions
-        IDefinitionContract.RolePermission memory permissions = 
-            DynamicRBACDefinitions.getRolePermissions();
+        IDefinitionContract.RolePermission memory permissions = DynamicRBACDefinitions.getRolePermissions();
         MultiPhaseSecureOperation.loadDefinitionContract(
             _getSecureState(),
             DynamicRBACDefinitions.getOperationTypes(),
