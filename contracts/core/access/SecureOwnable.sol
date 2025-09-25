@@ -462,7 +462,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @param operationType The operation type to check
      * @return bool True if the operation type is supported
      */
-    function isOperationTypeSupported(bytes32 operationType) public view override returns (bool) {
+    function isOperationTypeSupported(bytes32 operationType) public view returns (bool) {
         return _secureState.isOperationTypeSupported(operationType);
     }
 

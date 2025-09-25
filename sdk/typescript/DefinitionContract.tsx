@@ -1,9 +1,7 @@
 import { PublicClient, WalletClient, Address, Chain, Hex } from 'viem';
 import { 
   IDefinitionContract, 
-  DefinitionContractConfig, 
-  TransactionOptions, 
-  ContractResult 
+  DefinitionContractConfig
 } from './interfaces/definition.index';
 import { 
   ReadableOperationType, 
