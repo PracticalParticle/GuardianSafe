@@ -128,12 +128,7 @@ export class SecureOwnable implements ISecureOwnable {
 
   async updateBroadcasterDelayedApproval(txId: bigint, options: TransactionOptions): Promise<TransactionResult> {
     if (!this.walletClient) throw new Error('Wallet client is required');
-    console.log('updateBroadcasterDelayedApproval', txId);
-    console.log('options', options);
-    console.log('this.contractAddress', this.contractAddress);
-    console.log('this.chain', this.chain);
-    console.log('SecureOwnableABIJson', SecureOwnableABIJson);
-    console.log('args', [txId]);
+    
     const hash = await this.walletClient.writeContract({
       chain: this.chain,
       address: this.contractAddress,
@@ -142,7 +137,7 @@ export class SecureOwnable implements ISecureOwnable {
       args: [txId],
       account: options.from
     });
-    console.log('hash', hash);
+
     return {
       hash,
       wait: () => this.client.waitForTransactionReceipt({ hash })
@@ -350,19 +345,20 @@ export class SecureOwnable implements ISecureOwnable {
     }) as Address;
   }
 
-  async getRecoveryAddress(): Promise<Address> {
+  async getRecovery(): Promise<Address> {
     return await this.client.readContract({
       address: this.contractAddress,
       abi: SecureOwnableABIJson,
-      functionName: 'getRecoveryAddress'
+      functionName: 'getRecovery'
     }) as Address;
   }
 
-  async getTimeLockPeriodInMinutes(): Promise<bigint> {
+
+  async getTimeLockPeriodSec(): Promise<bigint> {
     return await this.client.readContract({
       address: this.contractAddress,
       abi: SecureOwnableABIJson,
-      functionName: 'getTimeLockPeriodInMinutes'
+      functionName: 'getTimeLockPeriodSec'
     }) as bigint;
   }
 
@@ -404,6 +400,50 @@ export class SecureOwnable implements ISecureOwnable {
       abi: SecureOwnableABIJson,
       functionName: 'isOperationTypeSupported',
       args: [operationType]
+    }) as boolean;
+  }
+
+  async hasRole(roleHash: Hex, wallet: Address): Promise<boolean> {
+    return await this.client.readContract({
+      address: this.contractAddress,
+      abi: SecureOwnableABIJson,
+      functionName: 'hasRole',
+      args: [roleHash, wallet]
+    }) as boolean;
+  }
+
+  async isActionSupportedByFunction(functionSelector: Hex, action: TxAction): Promise<boolean> {
+    return await this.client.readContract({
+      address: this.contractAddress,
+      abi: SecureOwnableABIJson,
+      functionName: 'isActionSupportedByFunction',
+      args: [functionSelector, action]
+    }) as boolean;
+  }
+
+  async getSignerNonce(signer: Address): Promise<bigint> {
+    return await this.client.readContract({
+      address: this.contractAddress,
+      abi: SecureOwnableABIJson,
+      functionName: 'getSignerNonce',
+      args: [signer]
+    }) as bigint;
+  }
+
+  async getRolePermission(roleHash: Hex): Promise<any[]> {
+    return await this.client.readContract({
+      address: this.contractAddress,
+      abi: SecureOwnableABIJson,
+      functionName: 'getRolePermission',
+      args: [roleHash]
+    }) as any[];
+  }
+
+  async initialized(): Promise<boolean> {
+    return await this.client.readContract({
+      address: this.contractAddress,
+      abi: SecureOwnableABIJson,
+      functionName: 'initialized'
     }) as boolean;
   }
 

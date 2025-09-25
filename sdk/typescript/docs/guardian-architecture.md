@@ -180,7 +180,7 @@ const secureOwnable = new SecureOwnable(client, walletClient, contractAddress, c
 // Access ownership information
 const owner = await secureOwnable.owner()
 const broadcaster = await secureOwnable.getBroadcaster()
-const recoveryAddress = await secureOwnable.getRecoveryAddress()
+const recovery = await secureOwnable.getRecovery()
 ```
 
 ### **DynamicRBAC Integration**

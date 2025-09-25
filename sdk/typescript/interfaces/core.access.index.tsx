@@ -112,7 +112,7 @@ export interface ISecureOwnable {
   getTransaction(txId: bigint): Promise<TxRecord>;
   getPendingTransactions(): Promise<bigint[]>;
   getBroadcaster(): Promise<Address>;
-  getRecoveryAddress(): Promise<Address>;
+  getRecovery(): Promise<Address>;
   getTimeLockPeriodSec(): Promise<bigint>;
   owner(): Promise<Address>;
 
@@ -121,6 +121,13 @@ export interface ISecureOwnable {
   getSupportedRoles(): Promise<Hex[]>;
   getSupportedFunctions(): Promise<Hex[]>;
   isOperationTypeSupported(operationType: Hex): Promise<boolean>;
+
+  // Additional Query Functions
+  hasRole(roleHash: Hex, wallet: Address): Promise<boolean>;
+  isActionSupportedByFunction(functionSelector: Hex, action: TxAction): Promise<boolean>;
+  getSignerNonce(signer: Address): Promise<bigint>;
+  getRolePermission(roleHash: Hex): Promise<any[]>;
+  initialized(): Promise<boolean>;
 
   // Interface Support
   supportsInterface(interfaceId: Hex): Promise<boolean>;
@@ -137,7 +144,7 @@ export interface IDynamicRBAC {
 
   // Wallet Management Functions
   addWalletToRole(roleHash: Hex, wallet: Address, options: TransactionOptions): Promise<TransactionResult>;
-  removeWalletFromRole(roleHash: Hex, wallet: Address, options: TransactionOptions): Promise<TransactionResult>;
+  removeAuthorizedWalletFromRole(roleHash: Hex, wallet: Address, options: TransactionOptions): Promise<TransactionResult>;
   replaceWalletInRole(roleHash: Hex, newWallet: Address, oldWallet: Address, options: TransactionOptions): Promise<TransactionResult>;
 
   // Permission Management Functions

@@ -39,7 +39,7 @@ export const DYNAMIC_RBAC_FUNCTION_SELECTORS = {
   UPDATE_ROLE: keccak256(new TextEncoder().encode("updateRole(bytes32,string,uint256)")).slice(0, 10),
   DELETE_ROLE: keccak256(new TextEncoder().encode("deleteRole(bytes32)")).slice(0, 10),
   ADD_WALLET_TO_ROLE: keccak256(new TextEncoder().encode("addWalletToRole(bytes32,address)")).slice(0, 10),
-  REMOVE_WALLET_FROM_ROLE: keccak256(new TextEncoder().encode("removeWalletFromRole(bytes32,address)")).slice(0, 10),
+  REMOVE_WALLET_FROM_ROLE: keccak256(new TextEncoder().encode("removeAuthorizedWalletFromRole(bytes32,address)")).slice(0, 10),
   REPLACE_WALLET_IN_ROLE: keccak256(new TextEncoder().encode("replaceWalletInRole(bytes32,address,address)")).slice(0, 10),
   ADD_FUNCTION_PERMISSION_TO_ROLE: keccak256(new TextEncoder().encode("addFunctionPermissionToRole(bytes32,bytes4,uint8)")).slice(0, 10),
   REMOVE_FUNCTION_PERMISSION_FROM_ROLE: keccak256(new TextEncoder().encode("removeFunctionPermissionFromRole(bytes32,bytes4)")).slice(0, 10)

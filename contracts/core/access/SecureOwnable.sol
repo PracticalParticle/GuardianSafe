@@ -457,14 +457,14 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
         return _secureState.generateUnsignedForExistingMetaTx(txId, metaTxParams);
     }
 
-    // /**
-    //  * @dev Checks if an operation type is supported
-    //  * @param operationType The operation type to check
-    //  * @return bool True if the operation type is supported
-    //  */
-    // function isOperationTypeSupported(bytes32 operationType) public view override returns (bool) {
-    //     return _secureState.isOperationTypeSupported(operationType);
-    // }
+    /**
+     * @dev Checks if an operation type is supported
+     * @param operationType The operation type to check
+     * @return bool True if the operation type is supported
+     */
+    function isOperationTypeSupported(bytes32 operationType) public view override returns (bool) {
+        return _secureState.isOperationTypeSupported(operationType);
+    }
 
     /**
      * @dev External function that can only be called by the contract itself to execute ownership transfer
@@ -546,8 +546,8 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @param wallet The wallet address to check
      * @return True if the wallet is authorized for the role, false otherwise
      */
-    function isAuthorizedWalletInRole(bytes32 roleHash, address wallet) public view returns (bool) {
-        return _secureState.isAuthorizedWalletInRole(roleHash, wallet);
+    function hasRole(bytes32 roleHash, address wallet) public view returns (bool) {
+        return _secureState.hasRole(roleHash, wallet);
     }
 
     /**

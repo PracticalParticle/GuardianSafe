@@ -170,17 +170,17 @@ abstract contract DynamicRBAC is Initializable, SecureOwnable {
      * @param wallet The wallet address to remove
      * @notice Security: Cannot remove the last wallet from a role to prevent empty roles
      */
-    function removeWalletFromRole(bytes32 roleHash, address wallet) external onlyOwner {
+    function removeAuthorizedWalletFromRole(bytes32 roleHash, address wallet) external onlyOwner {
         // Validate that role editing is enabled
         if (!roleEditingEnabled) revert SharedValidationLibrary.RoleEditingDisabled();
         
         // Validate that the role is not protected
         if (_getSecureState().getRole(roleHash).isProtected) revert SharedValidationLibrary.CannotModifyProtectedRoles();
         
-        // MultiPhaseSecureOperation.removeWalletFromRole already validates:
+        // MultiPhaseSecureOperation.removeAuthorizedWalletFromRole already validates:
         // - role exists
         // - wallet exists in role
-        MultiPhaseSecureOperation.removeWalletFromRole(_getSecureState(), roleHash, wallet);
+        MultiPhaseSecureOperation.removeAuthorizedWalletFromRole(_getSecureState(), roleHash, wallet);
         emit WalletRemovedFromRole(roleHash, wallet);
     }
 

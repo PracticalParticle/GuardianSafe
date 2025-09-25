@@ -176,7 +176,7 @@ const addResult = await dynamicRBAC.addWalletToRole(
 );
 
 // Remove wallet from role
-const removeResult = await dynamicRBAC.removeWalletFromRole(
+const removeResult = await dynamicRBAC.removeAuthorizedWalletFromRole(
   roleHash,
   walletAddress,
   { from: ownerAddress }

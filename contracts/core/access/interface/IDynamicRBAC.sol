@@ -72,7 +72,7 @@ interface IDynamicRBAC {
      * @param roleHash The hash of the role
      * @param wallet The wallet address to remove
      */
-    function removeWalletFromRole(bytes32 roleHash, address wallet) external;
+    function removeAuthorizedWalletFromRole(bytes32 roleHash, address wallet) external;
 
     /**
      * @dev Replaces a wallet in a role with a new wallet

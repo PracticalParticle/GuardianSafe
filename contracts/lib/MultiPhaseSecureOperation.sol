@@ -749,7 +749,7 @@ library MultiPhaseSecureOperation {
      * @param wallet The wallet address to check.
      * @return True if the wallet is authorized for the role, false otherwise.
      */
-    function isAuthorizedWalletInRole(SecureOperationState storage self, bytes32 roleHash, address wallet) public view returns (bool) {
+    function hasRole(SecureOperationState storage self, bytes32 roleHash, address wallet) public view returns (bool) {
         return self.roles[roleHash].authorizedWallets.contains(wallet);
     }
 
@@ -804,7 +804,7 @@ library MultiPhaseSecureOperation {
      * @param wallet The wallet address to remove.
      * @notice Security: Cannot remove the last wallet from a role to prevent empty roles.
      */
-    function removeWalletFromRole(SecureOperationState storage self, bytes32 role, address wallet) public {
+    function removeAuthorizedWalletFromRole(SecureOperationState storage self, bytes32 role, address wallet) public {
         if (self.roles[role].roleHash == bytes32(0)) revert SharedValidationLibrary.RoleNameEmpty();
         
         // Check if wallet exists in the role
@@ -1021,7 +1021,7 @@ library MultiPhaseSecureOperation {
      * @param operationType The operation type to check
      * @return bool True if the operation type is supported
      */
-    function isOperationTypeSupported(SecureOperationState storage self, bytes32 operationType) private view returns (bool) {
+    function isOperationTypeSupported(SecureOperationState storage self, bytes32 operationType) public view returns (bool) {
         return self.supportedOperationTypes[operationType].operationType != bytes32(0);
     }
 

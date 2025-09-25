@@ -1,5 +1,5 @@
 import { Address, Hex } from 'viem';
-import { TxStatus, ExecutionType } from '../types/lib.index';
+import { TxStatus, ExecutionType, TxAction } from '../types/lib.index';
 import { ReadableOperationType } from '../types/definition.index';
 
 /**
@@ -39,6 +39,7 @@ export interface MetaTxParams {
   nonce: bigint;
   handlerContract: Address;
   handlerSelector: Hex;
+  action: TxAction;
   deadline: bigint;
   maxGasPrice: bigint;
   signer: Address;

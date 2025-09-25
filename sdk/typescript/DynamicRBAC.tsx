@@ -91,14 +91,14 @@ export class DynamicRBAC implements IDynamicRBAC {
     };
   }
 
-  async removeWalletFromRole(roleHash: Hex, wallet: Address, options: TransactionOptions): Promise<TransactionResult> {
+  async removeAuthorizedWalletFromRole(roleHash: Hex, wallet: Address, options: TransactionOptions): Promise<TransactionResult> {
     if (!this.walletClient) throw new Error('Wallet client is required');
     
     const hash = await this.walletClient.writeContract({
       chain: this.chain,
       address: this.contractAddress,
       abi: DynamicRBACABIJson,
-      functionName: 'removeWalletFromRole',
+      functionName: 'removeAuthorizedWalletFromRole',
       args: [roleHash, wallet],
       account: options.from
     });
