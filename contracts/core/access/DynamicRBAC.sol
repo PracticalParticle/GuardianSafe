@@ -6,7 +6,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 // Contract imports
 import "../../lib/StateAbstraction.sol";
-import "../../utils/SharedValidationLibrary.sol";
+import "../../utils/SharedValidation.sol";
 import "../../lib/definitions/SecureOwnableDefinitions.sol";
 import "../../lib/definitions/DynamicRBACDefinitions.sol";
 import "../../interfaces/IDefinitionContract.sol";
@@ -30,7 +30,7 @@ import "./SecureOwnable.sol";
  */
 abstract contract DynamicRBAC is Initializable, SecureOwnable {
     using StateAbstraction for StateAbstraction.SecureOperationState;
-    using SharedValidationLibrary for *;
+    using SharedValidation for *;
     
     // State variables
     bool public roleEditingEnabled;
@@ -118,10 +118,10 @@ abstract contract DynamicRBAC is Initializable, SecureOwnable {
         StateAbstraction.FunctionPermission[] memory functionPermissions
     ) external onlyOwner returns (bytes32) {
         // Validate that role editing is enabled
-        if (!roleEditingEnabled) revert SharedValidationLibrary.RoleEditingDisabled();
+        if (!roleEditingEnabled) revert SharedValidation.RoleEditingDisabled();
         
-        SharedValidationLibrary.validateRoleNameNotEmpty(roleName);
-        SharedValidationLibrary.validateMaxWalletsGreaterThanZero(maxWallets);
+        SharedValidation.validateRoleNameNotEmpty(roleName);
+        SharedValidation.validateMaxWalletsGreaterThanZero(maxWallets);
         
         bytes32 roleHash = keccak256(bytes(roleName));
         
@@ -149,10 +149,10 @@ abstract contract DynamicRBAC is Initializable, SecureOwnable {
      */
     function addWalletToRole(bytes32 roleHash, address wallet) external onlyOwner {
         // Validate that role editing is enabled
-        if (!roleEditingEnabled) revert SharedValidationLibrary.RoleEditingDisabled();
+        if (!roleEditingEnabled) revert SharedValidation.RoleEditingDisabled();
         
         // Validate that the role is not protected
-        if (_getSecureState().getRole(roleHash).isProtected) revert SharedValidationLibrary.CannotModifyProtectedRoles();
+        if (_getSecureState().getRole(roleHash).isProtected) revert SharedValidation.CannotModifyProtectedRoles();
         
         // StateAbstraction.addAuthorizedWalletToRole already validates:
         // - wallet is not zero address
@@ -171,10 +171,10 @@ abstract contract DynamicRBAC is Initializable, SecureOwnable {
      */
     function removeAuthorizedWalletFromRole(bytes32 roleHash, address wallet) external onlyOwner {
         // Validate that role editing is enabled
-        if (!roleEditingEnabled) revert SharedValidationLibrary.RoleEditingDisabled();
+        if (!roleEditingEnabled) revert SharedValidation.RoleEditingDisabled();
         
         // Validate that the role is not protected
-        if (_getSecureState().getRole(roleHash).isProtected) revert SharedValidationLibrary.CannotModifyProtectedRoles();
+        if (_getSecureState().getRole(roleHash).isProtected) revert SharedValidation.CannotModifyProtectedRoles();
         
         // StateAbstraction.removeAuthorizedWalletFromRole already validates:
         // - role exists
@@ -199,7 +199,7 @@ abstract contract DynamicRBAC is Initializable, SecureOwnable {
      * @param enabled True to enable role editing, false to disable
      */
     function executeRoleEditingToggle(bool enabled) external {
-        SharedValidationLibrary.validateInternalCall(address(this));
+        SharedValidation.validateInternalCall(address(this));
         _toggleRoleEditing(enabled);
     }
 

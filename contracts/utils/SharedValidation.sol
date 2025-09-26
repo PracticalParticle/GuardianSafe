@@ -2,7 +2,7 @@
 pragma solidity ^0.8.2;
 
 /**
- * @title SharedValidationLibrary
+ * @title SharedValidation
  * @dev Optimized shared library containing common validation functions using enhanced custom errors
  * 
  * This library is designed to reduce contract size by centralizing common validation logic
@@ -27,7 +27,7 @@ pragma solidity ^0.8.2;
  * - Enhanced error context with parameters
  * - Modern Solidity best practices (0.8.4+)
  */
-library SharedValidationLibrary {
+library SharedValidation {
     
     // ============ ENHANCED CUSTOM ERRORS ============
     

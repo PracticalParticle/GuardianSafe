@@ -93,7 +93,7 @@ struct SecureOperationState {
 **Purpose**: Provide foundational security and state management
 
 - **`StateAbstraction.sol`**: Core state machine implementation
-- **`SharedValidationLibrary.sol`**: Common validation functions
+- **`SharedValidation.sol`**: Common validation functions
 - **`BaseDefinitionLoader.sol`**: Base functionality for definition loading
 
 ### Layer 2: Definition Libraries

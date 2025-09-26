@@ -7,7 +7,7 @@ import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/Mes
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 // Local imports
-import "../utils/SharedValidationLibrary.sol";
+import "../utils/SharedValidation.sol";
 import "../interfaces/IEventForwarder.sol";
 
 /**
@@ -37,7 +37,7 @@ library StateAbstraction {
     string public constant VERSION = "1.0.0";
     
     using MessageHashUtils for bytes32;
-    using SharedValidationLibrary for *;
+    using SharedValidation for *;
     using EnumerableSet for EnumerableSet.UintSet;
     using EnumerableSet for EnumerableSet.Bytes32Set;
     using EnumerableSet for EnumerableSet.AddressSet;
@@ -221,11 +221,11 @@ library StateAbstraction {
         address _recovery,
         uint256 _timeLockPeriodSec
     ) public {
-        if (self.initialized) revert SharedValidationLibrary.AlreadyInitialized();
-        SharedValidationLibrary.validateNotZeroAddress(_owner);
-        SharedValidationLibrary.validateNotZeroAddress(_broadcaster);
-        SharedValidationLibrary.validateNotZeroAddress(_recovery);
-        SharedValidationLibrary.validateTimeLockPeriod(_timeLockPeriodSec);
+        if (self.initialized) revert SharedValidation.AlreadyInitialized();
+        SharedValidation.validateNotZeroAddress(_owner);
+        SharedValidation.validateNotZeroAddress(_broadcaster);
+        SharedValidation.validateNotZeroAddress(_recovery);
+        SharedValidation.validateTimeLockPeriod(_timeLockPeriodSec);
 
         self.timeLockPeriodSec = _timeLockPeriodSec;
         self.txCounter = 0;
@@ -250,7 +250,7 @@ library StateAbstraction {
      * @param _newTimeLockPeriodSec The new time lock period in seconds.
      */
     function updateTimeLockPeriod(SecureOperationState storage self, uint256 _newTimeLockPeriodSec) public {
-        SharedValidationLibrary.validateTimeLockPeriod(_newTimeLockPeriodSec);
+        SharedValidation.validateTimeLockPeriod(_newTimeLockPeriodSec);
         self.timeLockPeriodSec = _newTimeLockPeriodSec;
     }
 
@@ -289,10 +289,10 @@ library StateAbstraction {
         bytes memory executionOptions
     ) public returns (TxRecord memory) {
         if (!checkPermissionPermissive(self, TX_REQUEST_SELECTOR) && !checkPermissionPermissive(self, META_TX_REQUEST_AND_APPROVE_SELECTOR)) {
-            revert SharedValidationLibrary.NoPermissionExecute(msg.sender);
+            revert SharedValidation.NoPermissionExecute(msg.sender);
         }
-        SharedValidationLibrary.validateTargetAddress(target);
-        if (!isOperationTypeSupported(self, operationType)) revert SharedValidationLibrary.OperationNotSupported();
+        SharedValidation.validateTargetAddress(target);
+        if (!isOperationTypeSupported(self, operationType)) revert SharedValidation.OperationNotSupported();
 
         TxRecord memory txRequestRecord = createNewTxRecord(
             self,
@@ -324,8 +324,8 @@ library StateAbstraction {
      */
     function txDelayedApproval(SecureOperationState storage self, uint256 txId) public returns (TxRecord memory) {
         checkPermission(self, TX_DELAYED_APPROVAL_SELECTOR);
-        SharedValidationLibrary.validatePendingTransaction(uint8(self.txRecords[txId].status));
-        SharedValidationLibrary.validateReleaseTime(self.txRecords[txId].releaseTime);
+        SharedValidation.validatePendingTransaction(uint8(self.txRecords[txId].status));
+        SharedValidation.validateReleaseTime(self.txRecords[txId].releaseTime);
         
         (bool success, bytes memory result) = executeTransaction(self.txRecords[txId]);
         
@@ -352,7 +352,7 @@ library StateAbstraction {
      */
     function txCancellation(SecureOperationState storage self, uint256 txId) public returns (TxRecord memory) {
         checkPermission(self, TX_CANCELLATION_SELECTOR);
-        SharedValidationLibrary.validatePendingTransaction(uint8(self.txRecords[txId].status));
+        SharedValidation.validatePendingTransaction(uint8(self.txRecords[txId].status));
         
         self.txRecords[txId].status = TxStatus.CANCELLED;
         
@@ -373,8 +373,8 @@ library StateAbstraction {
     function txCancellationWithMetaTx(SecureOperationState storage self, MetaTransaction memory metaTx) public returns (TxRecord memory) {
         uint256 txId = metaTx.txRecord.txId;
         checkPermission(self, META_TX_CANCELLATION_SELECTOR);
-        SharedValidationLibrary.validatePendingTransaction(uint8(self.txRecords[txId].status));
-        if (!verifySignature(self, metaTx)) revert SharedValidationLibrary.InvalidSignature(metaTx.signature);
+        SharedValidation.validatePendingTransaction(uint8(self.txRecords[txId].status));
+        if (!verifySignature(self, metaTx)) revert SharedValidation.InvalidSignature(metaTx.signature);
         
         incrementSignerNonce(self, metaTx.params.signer);
         self.txRecords[txId].status = TxStatus.CANCELLED;
@@ -396,8 +396,8 @@ library StateAbstraction {
     function txApprovalWithMetaTx(SecureOperationState storage self, MetaTransaction memory metaTx) public returns (TxRecord memory) {
         uint256 txId = metaTx.txRecord.txId;
         checkPermission(self, META_TX_APPROVAL_SELECTOR);
-        SharedValidationLibrary.validatePendingTransaction(uint8(self.txRecords[txId].status));
-        if (!verifySignature(self, metaTx)) revert SharedValidationLibrary.InvalidSignature(metaTx.signature);
+        SharedValidation.validatePendingTransaction(uint8(self.txRecords[txId].status));
+        if (!verifySignature(self, metaTx)) revert SharedValidation.InvalidSignature(metaTx.signature);
         
         incrementSignerNonce(self, metaTx.params.signer);
         (bool success, bytes memory result) = executeTransaction(self.txRecords[txId]);
@@ -487,22 +487,22 @@ library StateAbstraction {
         // Execute native token payment if specified
         if (payment.nativeTokenAmount > 0) {
             if (address(this).balance < payment.nativeTokenAmount) {
-                revert SharedValidationLibrary.InsufficientBalance(address(this).balance, payment.nativeTokenAmount);
+                revert SharedValidation.InsufficientBalance(address(this).balance, payment.nativeTokenAmount);
             }
             
             (bool success, bytes memory result) = payment.recipient.call{value: payment.nativeTokenAmount}("");
             if (!success) {
-                revert SharedValidationLibrary.PaymentFailed(payment.recipient, payment.nativeTokenAmount, result);
+                revert SharedValidation.PaymentFailed(payment.recipient, payment.nativeTokenAmount, result);
             }
         }
         
         // Execute ERC20 token payment if specified
         if (payment.erc20TokenAmount > 0) {
-            SharedValidationLibrary.validateNotZeroAddress(payment.erc20TokenAddress);
+            SharedValidation.validateNotZeroAddress(payment.erc20TokenAddress);
             
             IERC20 erc20Token = IERC20(payment.erc20TokenAddress);
             if (erc20Token.balanceOf(address(this)) < payment.erc20TokenAmount) {
-                revert SharedValidationLibrary.InsufficientBalance(erc20Token.balanceOf(address(this)), payment.erc20TokenAmount);
+                revert SharedValidation.InsufficientBalance(erc20Token.balanceOf(address(this)), payment.erc20TokenAmount);
             }
             
             erc20Token.safeTransfer(payment.recipient, payment.erc20TokenAmount);
@@ -522,7 +522,7 @@ library StateAbstraction {
             RawExecutionOptions memory options = abi.decode(record.params.executionOptions, (RawExecutionOptions));
             return options.rawTxData;
         } else {
-            revert SharedValidationLibrary.OperationNotSupported();
+            revert SharedValidation.OperationNotSupported();
         }
     }
 
@@ -636,11 +636,11 @@ library StateAbstraction {
      * @param txId The transaction ID to add to the pending set.
      */
     function addToPendingTransactionsList(SecureOperationState storage self, uint256 txId) private {
-        SharedValidationLibrary.validateTransactionExists(txId);
-        SharedValidationLibrary.validatePendingTransaction(uint8(self.txRecords[txId].status));
+        SharedValidation.validateTransactionExists(txId);
+        SharedValidation.validatePendingTransaction(uint8(self.txRecords[txId].status));
         
         // Check if transaction ID is already in the set (O(1) operation)
-        if (self.pendingTransactionsSet.contains(txId)) revert SharedValidationLibrary.RequestAlreadyPending(txId);
+        if (self.pendingTransactionsSet.contains(txId)) revert SharedValidation.RequestAlreadyPending(txId);
         
         self.pendingTransactionsSet.add(txId);
     }
@@ -651,11 +651,11 @@ library StateAbstraction {
      * @param txId The transaction ID to remove from the pending set.
      */
     function removeFromPendingTransactionsList(SecureOperationState storage self, uint256 txId) private {
-        SharedValidationLibrary.validateTransactionExists(txId);
+        SharedValidation.validateTransactionExists(txId);
         
         // Remove the transaction ID from the set (O(1) operation)
         if (!self.pendingTransactionsSet.remove(txId)) {
-            revert SharedValidationLibrary.TransactionNotFound(txId);
+            revert SharedValidation.TransactionNotFound(txId);
         }
     }
 
@@ -673,7 +673,7 @@ library StateAbstraction {
         PaymentDetails memory paymentDetails
     ) public {
         checkPermission(self, UPDATE_PAYMENT_SELECTOR);
-        SharedValidationLibrary.validatePendingTransaction(uint8(self.txRecords[txId].status));
+        SharedValidation.validatePendingTransaction(uint8(self.txRecords[txId].status));
            
         self.txRecords[txId].payment = paymentDetails;
         
@@ -707,7 +707,7 @@ library StateAbstraction {
         bool isProtected
     ) public {
         bytes32 roleHash = keccak256(bytes(roleName));
-        if (self.roles[roleHash].roleHash == roleHash) revert SharedValidationLibrary.RoleAlreadyExists();
+        if (self.roles[roleHash].roleHash == roleHash) revert SharedValidation.RoleAlreadyExists();
         
         // Create the role with empty arrays
         self.roles[roleHash].roleName = roleName;
@@ -729,11 +729,11 @@ library StateAbstraction {
         bytes32 roleHash
     ) public {
         // Validate that the role exists
-        if (self.roles[roleHash].roleHash == bytes32(0)) revert SharedValidationLibrary.RoleNameEmpty();
+        if (self.roles[roleHash].roleHash == bytes32(0)) revert SharedValidation.RoleNameEmpty();
         
         // Security check: Prevent removing protected roles
         if (self.roles[roleHash].isProtected) {
-            revert SharedValidationLibrary.CannotRemoveProtectedRole();
+            revert SharedValidation.CannotRemoveProtectedRole();
         }
         
         // Remove the role from the supported roles set (O(1) operation)
@@ -761,14 +761,14 @@ library StateAbstraction {
      * @param wallet The wallet address to add.
      */
     function addAuthorizedWalletToRole(SecureOperationState storage self, bytes32 role, address wallet) public {
-        SharedValidationLibrary.validateNotZeroAddress(wallet);
-        if (self.roles[role].roleHash == bytes32(0)) revert SharedValidationLibrary.RoleNameEmpty();
+        SharedValidation.validateNotZeroAddress(wallet);
+        if (self.roles[role].roleHash == bytes32(0)) revert SharedValidation.RoleNameEmpty();
         
         Role storage roleData = self.roles[role];
-        SharedValidationLibrary.validateWalletLimit(roleData.authorizedWallets.length(), roleData.maxWallets);
+        SharedValidation.validateWalletLimit(roleData.authorizedWallets.length(), roleData.maxWallets);
         
         // Check if wallet is already in the role
-        if (roleData.authorizedWallets.contains(wallet)) revert SharedValidationLibrary.WalletAlreadyInRole(wallet);
+        if (roleData.authorizedWallets.contains(wallet)) revert SharedValidation.WalletAlreadyInRole(wallet);
         
         roleData.authorizedWallets.add(wallet);
     }
@@ -781,13 +781,13 @@ library StateAbstraction {
      * @param oldWallet The old wallet address to remove from the role.
      */
     function updateAuthorizedWalletInRole(SecureOperationState storage self, bytes32 role, address newWallet, address oldWallet) public {
-        if (self.roles[role].roleHash == bytes32(0)) revert SharedValidationLibrary.RoleNameEmpty();
-        SharedValidationLibrary.validateNotZeroAddress(newWallet);
+        if (self.roles[role].roleHash == bytes32(0)) revert SharedValidation.RoleNameEmpty();
+        SharedValidation.validateNotZeroAddress(newWallet);
         
         // Check if old wallet exists in the role
         Role storage roleData = self.roles[role];
         if (!roleData.authorizedWallets.contains(oldWallet)) {
-            revert SharedValidationLibrary.OldWalletNotFound(oldWallet);
+            revert SharedValidation.OldWalletNotFound(oldWallet);
         }
 
         // update the wallet if it's not the same
@@ -806,17 +806,17 @@ library StateAbstraction {
      * @notice Security: Cannot remove the last wallet from a role to prevent empty roles.
      */
     function removeAuthorizedWalletFromRole(SecureOperationState storage self, bytes32 role, address wallet) public {
-        if (self.roles[role].roleHash == bytes32(0)) revert SharedValidationLibrary.RoleNameEmpty();
+        if (self.roles[role].roleHash == bytes32(0)) revert SharedValidation.RoleNameEmpty();
         
         // Check if wallet exists in the role
         Role storage roleData = self.roles[role];
         if (!roleData.authorizedWallets.contains(wallet)) {
-            revert SharedValidationLibrary.OldWalletNotFound(wallet);
+            revert SharedValidation.OldWalletNotFound(wallet);
         }
         
         // Security check: Prevent removing the last wallet from a role
         if (roleData.authorizedWallets.length() <= 1) {
-            revert SharedValidationLibrary.CannotRemoveLastWallet(wallet);
+            revert SharedValidation.CannotRemoveLastWallet(wallet);
         }
         
         // Remove the wallet (O(1) operation)
@@ -835,17 +835,17 @@ library StateAbstraction {
         FunctionPermission memory functionPermission
     ) public {
         // Check if role exists by checking if it's in the supported roles set
-        if (!self.supportedRolesSet.contains(roleHash)) revert SharedValidationLibrary.RoleNameEmpty();
+        if (!self.supportedRolesSet.contains(roleHash)) revert SharedValidation.RoleNameEmpty();
         
         // Check if function exists by checking if it's in the supported functions set
         if (self.functions[functionPermission.functionSelector].functionSelector != functionPermission.functionSelector) {
-            revert SharedValidationLibrary.FunctionDoesNotExist(functionPermission.functionSelector);
+            revert SharedValidation.FunctionDoesNotExist(functionPermission.functionSelector);
         }
         
         // Validate that all grantedActions are supported by the function
         for (uint i = 0; i < functionPermission.grantedActions.length; i++) {
             if (!isActionSupportedByFunction(self, functionPermission.functionSelector, functionPermission.grantedActions[i])) {
-                revert SharedValidationLibrary.ActionNotSupported();
+                revert SharedValidation.ActionNotSupported();
             }
         }
         
@@ -854,7 +854,7 @@ library StateAbstraction {
         // Check if permission already exists
         for (uint i = 0; i < role.functionPermissions.length; i++) {
             if (role.functionPermissions[i].functionSelector == functionPermission.functionSelector) {
-                revert SharedValidationLibrary.FunctionPermissionExists(functionPermission.functionSelector);
+                revert SharedValidation.FunctionPermissionExists(functionPermission.functionSelector);
             }
         }
         
@@ -869,7 +869,7 @@ library StateAbstraction {
      */
     function checkPermission(SecureOperationState storage self, bytes4 functionSelector) public view {
         bool hasPermission = checkPermissionPermissive(self,functionSelector);       
-        if (!hasPermission) revert SharedValidationLibrary.NoPermission(msg.sender);
+        if (!hasPermission) revert SharedValidation.NoPermission(msg.sender);
     }
 
     /**
@@ -918,7 +918,7 @@ library StateAbstraction {
             requestedAction != TxAction.SIGN_META_APPROVE &&
             requestedAction != TxAction.SIGN_META_CANCEL
         ) {
-            SharedValidationLibrary.validateActionSupported();
+            SharedValidation.validateActionSupported();
         }
 
         // Check if signer has any role that grants meta-transaction signing permissions for this function
@@ -963,7 +963,7 @@ library StateAbstraction {
         TxAction[] memory supportedActions
     ) public {
         if (self.functions[functionSelector].functionSelector == functionSelector) {
-            revert SharedValidationLibrary.FunctionAlreadyExists(functionSelector);
+            revert SharedValidation.FunctionAlreadyExists(functionSelector);
         }
         
         self.functions[functionSelector] = FunctionSchema({
@@ -1011,7 +1011,7 @@ library StateAbstraction {
         SecureOperationState storage self,
         ReadableOperationType memory readableType
     ) public {
-        if (self.supportedOperationTypes[readableType.operationType].operationType == readableType.operationType) revert SharedValidationLibrary.OperationTypeExists();
+        if (self.supportedOperationTypes[readableType.operationType].operationType == readableType.operationType) revert SharedValidation.OperationTypeExists();
         self.supportedOperationTypes[readableType.operationType] = readableType;
         self.supportedOperationTypesSet.add(readableType.operationType);
     }
@@ -1093,7 +1093,7 @@ library StateAbstraction {
      */
     function getAuthorizedWalletAt(SecureOperationState storage self, bytes32 roleHash, uint256 index) public view returns (address) {
         Role storage role = self.roles[roleHash];
-        SharedValidationLibrary.validateIndexInBounds(index, role.authorizedWallets.length());
+        SharedValidation.validateIndexInBounds(index, role.authorizedWallets.length());
         return role.authorizedWallets.at(index);
     }
 
@@ -1129,37 +1129,37 @@ library StateAbstraction {
         MetaTransaction memory metaTx
     ) public view returns (bool) {
         // Basic validation
-        SharedValidationLibrary.validateSignatureLength(metaTx.signature);
-        SharedValidationLibrary.validatePendingTransaction(uint8(metaTx.txRecord.status));
+        SharedValidation.validateSignatureLength(metaTx.signature);
+        SharedValidation.validatePendingTransaction(uint8(metaTx.txRecord.status));
         
         // Transaction parameters validation
-        SharedValidationLibrary.validateRequesterAddress(metaTx.txRecord.params.requester);
-        if (!isOperationTypeSupported(self, metaTx.txRecord.params.operationType)) revert SharedValidationLibrary.OperationNotSupported();
+        SharedValidation.validateRequesterAddress(metaTx.txRecord.params.requester);
+        if (!isOperationTypeSupported(self, metaTx.txRecord.params.operationType)) revert SharedValidation.OperationNotSupported();
         
         // Meta-transaction parameters validation
-        SharedValidationLibrary.validateChainId(metaTx.params.chainId);
-        SharedValidationLibrary.validateHandlerContractMatch(metaTx.params.handlerContract, metaTx.txRecord.params.target);
-        SharedValidationLibrary.validateMetaTxDeadline(metaTx.params.deadline);
+        SharedValidation.validateChainId(metaTx.params.chainId);
+        SharedValidation.validateHandlerContractMatch(metaTx.params.handlerContract, metaTx.txRecord.params.target);
+        SharedValidation.validateMetaTxDeadline(metaTx.params.deadline);
         
         // Gas price validation (if applicable)
-        // SharedValidationLibrary.validateGasPrice(metaTx.params.maxGasPrice);
+        // SharedValidation.validateGasPrice(metaTx.params.maxGasPrice);
         
         // Validate signer-specific nonce
-        SharedValidationLibrary.validateNonce(metaTx.params.nonce, getSignerNonce(self, metaTx.params.signer));
+        SharedValidation.validateNonce(metaTx.params.nonce, getSignerNonce(self, metaTx.params.signer));
 
         // txId validation for new meta transactions
         if (metaTx.params.action == TxAction.SIGN_META_REQUEST_AND_APPROVE) {
-            SharedValidationLibrary.validateTransactionId(metaTx.txRecord.txId, self.txCounter);
+            SharedValidation.validateTransactionId(metaTx.txRecord.txId, self.txCounter);
         }
         
         // Signature verification
         bytes32 messageHash = generateMessageHash(metaTx);
         address recoveredSigner = recoverSigner(messageHash, metaTx.signature);
-        if (recoveredSigner != metaTx.params.signer) revert SharedValidationLibrary.InvalidSignature(metaTx.signature);
+        if (recoveredSigner != metaTx.params.signer) revert SharedValidation.InvalidSignature(metaTx.signature);
 
         // Authorization check - verify signer has meta-transaction signing permissions for the function and action
         bool isAuthorized = hasMetaTxSigningPermission(self, metaTx.params.signer, metaTx.params.handlerSelector, metaTx.params.action);
-        if (!isAuthorized) revert SharedValidationLibrary.SignerNotAuthorized(metaTx.params.signer);
+        if (!isAuthorized) revert SharedValidation.SignerNotAuthorized(metaTx.params.signer);
         
         return true;
     }
@@ -1214,7 +1214,7 @@ library StateAbstraction {
      * @return The address of the signer.
      */
     function recoverSigner(bytes32 messageHash, bytes memory signature) private pure returns (address) {
-        SharedValidationLibrary.validateSignatureLength(signature);
+        SharedValidation.validateSignatureLength(signature);
 
         bytes32 r;
         bytes32 s;
@@ -1238,10 +1238,10 @@ library StateAbstraction {
         // EIP-2 still allows signature malleability for ecrecover(). Remove this possibility and make the signature
         // unique. Appendix F in the Ethereum Yellow paper (https://ethereum.github.io/yellowpaper/paper.pdf), defines
         // the valid range for s in (301): 0 < s < secp256k1n ÷ 2 + 1, and for v in (302): v ∈ {27, 28}
-        SharedValidationLibrary.validateSignatureParams(s, v);
+        SharedValidation.validateSignatureParams(s, v);
 
         address signer = ecrecover(messageHash.toEthSignedMessageHash(), v, r, s);
-        SharedValidationLibrary.validateRecoveredSigner(signer);
+        SharedValidation.validateRecoveredSigner(signer);
 
         return signer;
     }
@@ -1255,8 +1255,8 @@ library StateAbstraction {
         TxParams memory txParams,
         MetaTxParams memory metaTxParams
     ) public view returns (MetaTransaction memory) {
-        if (!isOperationTypeSupported(self, txParams.operationType)) revert SharedValidationLibrary.OperationNotSupported();
-        SharedValidationLibrary.validateTargetAddress(txParams.target);
+        if (!isOperationTypeSupported(self, txParams.operationType)) revert SharedValidation.OperationNotSupported();
+        SharedValidation.validateTargetAddress(txParams.target);
         
         TxRecord memory txRecord = createNewTxRecord(
             self,
@@ -1282,7 +1282,7 @@ library StateAbstraction {
         MetaTxParams memory metaTxParams
     ) public view returns (MetaTransaction memory) {
         TxRecord memory txRecord = getTxRecord(self, txId);
-        if (txRecord.txId != txId) revert SharedValidationLibrary.TransactionNotFound(txId);
+        if (txRecord.txId != txId) revert SharedValidation.TransactionNotFound(txId);
         
         return generateMetaTransaction(self, txRecord, metaTxParams);
     }
@@ -1306,12 +1306,12 @@ library StateAbstraction {
         TxRecord memory txRecord,
         MetaTxParams memory metaTxParams
     ) private view returns (MetaTransaction memory) {
-        SharedValidationLibrary.validateChainId(metaTxParams.chainId);
-        SharedValidationLibrary.validateNonce(metaTxParams.nonce, getSignerNonce(self, metaTxParams.signer));
-        SharedValidationLibrary.validateHandlerContract(metaTxParams.handlerContract);
-        SharedValidationLibrary.validateHandlerSelector(metaTxParams.handlerSelector);
-        SharedValidationLibrary.validateDeadline(metaTxParams.deadline);
-        SharedValidationLibrary.validateSignerAddress(metaTxParams.signer);
+        SharedValidation.validateChainId(metaTxParams.chainId);
+        SharedValidation.validateNonce(metaTxParams.nonce, getSignerNonce(self, metaTxParams.signer));
+        SharedValidation.validateHandlerContract(metaTxParams.handlerContract);
+        SharedValidation.validateHandlerSelector(metaTxParams.handlerSelector);
+        SharedValidation.validateDeadline(metaTxParams.deadline);
+        SharedValidation.validateSignerAddress(metaTxParams.signer);
 
         MetaTransaction memory metaTx = MetaTransaction({
             txRecord: txRecord,
@@ -1348,10 +1348,10 @@ library StateAbstraction {
         uint256 maxGasPrice,
         address signer
     ) public view returns (MetaTxParams memory) {
-        SharedValidationLibrary.validateHandlerContract(handlerContract);
-        SharedValidationLibrary.validateHandlerSelector(handlerSelector);
-        SharedValidationLibrary.validateDeadline(deadline);
-        SharedValidationLibrary.validateSignerAddress(signer);
+        SharedValidation.validateHandlerContract(handlerContract);
+        SharedValidation.validateHandlerSelector(handlerSelector);
+        SharedValidation.validateDeadline(deadline);
+        SharedValidation.validateSignerAddress(signer);
         return MetaTxParams({
             chainId: block.chainid,
             nonce: getSignerNonce(self, signer),
@@ -1382,7 +1382,7 @@ library StateAbstraction {
         
         // Validate that function exists
         if (bytes(functionName).length == 0) {
-            revert SharedValidationLibrary.FunctionDoesNotExist(functionSelector);
+            revert SharedValidation.FunctionDoesNotExist(functionSelector);
         }
 
         bytes memory decodedParams = extractDecodedParams(txRecord);
@@ -1447,7 +1447,7 @@ library StateAbstraction {
         }
         
         // Load role permissions using parallel arrays
-        SharedValidationLibrary.validateArrayLengthMatch(roleHashes.length, functionPermissions.length);
+        SharedValidation.validateArrayLengthMatch(roleHashes.length, functionPermissions.length);
         for (uint256 i = 0; i < roleHashes.length; i++) {
             addFunctionToRole(
                 secureState,

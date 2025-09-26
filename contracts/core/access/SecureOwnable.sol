@@ -10,7 +10,7 @@ import "../../lib/StateAbstraction.sol";
 import "../../lib/definitions/StateAbstractionDefinitions.sol";
 import "../../lib/definitions/SecureOwnableDefinitions.sol";
 import "../../interfaces/IDefinitionContract.sol";
-import "../../utils/SharedValidationLibrary.sol";
+import "../../utils/SharedValidation.sol";
 import "./interface/ISecureOwnable.sol";
 
 /**
@@ -37,7 +37,7 @@ import "./interface/ISecureOwnable.sol";
  */
 abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwnable {
     using StateAbstraction for StateAbstraction.SecureOperationState;
-    using SharedValidationLibrary for *;
+    using SharedValidation for *;
 
     StateAbstraction.SecureOperationState private _secureState;
 
@@ -56,22 +56,22 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
     event TimeLockPeriodUpdated(uint256 oldPeriod, uint256 newPeriod);
 
     modifier onlyOwner() {
-        SharedValidationLibrary.validateOwner(owner());
+        SharedValidation.validateOwner(owner());
         _;
     }
 
     modifier onlyOwnerOrRecovery() {
-        SharedValidationLibrary.validateOwnerOrRecovery(owner(), getRecovery());
+        SharedValidation.validateOwnerOrRecovery(owner(), getRecovery());
         _;
     }
     
     modifier onlyRecovery() {
-        SharedValidationLibrary.validateRecovery(getRecovery());
+        SharedValidation.validateRecovery(getRecovery());
         _;
     }
 
     modifier onlyBroadcaster() {
-        SharedValidationLibrary.validateBroadcaster(getBroadcaster());
+        SharedValidation.validateBroadcaster(getBroadcaster());
         _;
     }
 
@@ -122,7 +122,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @return The transaction record
      */
     function transferOwnershipRequest() public onlyRecovery returns (StateAbstraction.TxRecord memory) {
-        if (_hasOpenOwnershipRequest) revert SharedValidationLibrary.RequestAlreadyPending(0);
+        if (_hasOpenOwnershipRequest) revert SharedValidation.RequestAlreadyPending(0);
         bytes memory executionOptions = StateAbstraction.createStandardExecutionOptions(
             SecureOwnableDefinitions.TRANSFER_OWNERSHIP_SELECTOR,
             abi.encode(getRecovery())
@@ -150,7 +150,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      */
     function transferOwnershipDelayedApproval(uint256 txId) public onlyOwnerOrRecovery returns (StateAbstraction.TxRecord memory) {
         StateAbstraction.TxRecord memory updatedRecord = _secureState.txDelayedApproval(txId);
-        SharedValidationLibrary.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.OWNERSHIP_TRANSFER);
+        SharedValidation.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.OWNERSHIP_TRANSFER);
         _hasOpenOwnershipRequest = false;
         return updatedRecord;
     }
@@ -162,9 +162,9 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      */
     function transferOwnershipApprovalWithMetaTx(StateAbstraction.MetaTransaction memory metaTx) public onlyBroadcaster returns (StateAbstraction.TxRecord memory) {
         _secureState.checkPermission(SecureOwnableDefinitions.TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR);
-        SharedValidationLibrary.validateHandlerSelectorMatch(metaTx.params.handlerSelector, SecureOwnableDefinitions.TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR);
+        SharedValidation.validateHandlerSelectorMatch(metaTx.params.handlerSelector, SecureOwnableDefinitions.TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR);
         StateAbstraction.TxRecord memory updatedRecord = _secureState.txApprovalWithMetaTx(metaTx);
-        SharedValidationLibrary.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.OWNERSHIP_TRANSFER);
+        SharedValidation.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.OWNERSHIP_TRANSFER);
         _hasOpenOwnershipRequest = false;
         return updatedRecord;
     }
@@ -176,7 +176,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      */
     function transferOwnershipCancellation(uint256 txId) public onlyRecovery returns (StateAbstraction.TxRecord memory) {
         StateAbstraction.TxRecord memory updatedRecord = _secureState.txCancellation(txId);
-        SharedValidationLibrary.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.OWNERSHIP_TRANSFER);
+        SharedValidation.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.OWNERSHIP_TRANSFER);
         _hasOpenOwnershipRequest = false;
         emit OwnershipTransferCancelled(txId);
         return updatedRecord;
@@ -189,9 +189,9 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      */
     function transferOwnershipCancellationWithMetaTx(StateAbstraction.MetaTransaction memory metaTx) public onlyBroadcaster returns (StateAbstraction.TxRecord memory) {
         _secureState.checkPermission(SecureOwnableDefinitions.TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR);
-        SharedValidationLibrary.validateHandlerSelectorMatch(metaTx.params.handlerSelector, SecureOwnableDefinitions.TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR);
+        SharedValidation.validateHandlerSelectorMatch(metaTx.params.handlerSelector, SecureOwnableDefinitions.TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR);
         StateAbstraction.TxRecord memory updatedRecord = _secureState.txCancellationWithMetaTx(metaTx);
-        SharedValidationLibrary.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.OWNERSHIP_TRANSFER);
+        SharedValidation.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.OWNERSHIP_TRANSFER);
         _hasOpenOwnershipRequest = false;
         emit OwnershipTransferCancelled(updatedRecord.txId);
         return updatedRecord;
@@ -204,8 +204,8 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @return The execution options
      */
     function updateBroadcasterRequest(address newBroadcaster) public onlyOwner returns (StateAbstraction.TxRecord memory) {
-        if (_hasOpenBroadcasterRequest) revert SharedValidationLibrary.RequestAlreadyPending(0);
-        SharedValidationLibrary.validateAddressUpdate(newBroadcaster, getBroadcaster());
+        if (_hasOpenBroadcasterRequest) revert SharedValidation.RequestAlreadyPending(0);
+        SharedValidation.validateAddressUpdate(newBroadcaster, getBroadcaster());
         
         bytes memory executionOptions = StateAbstraction.createStandardExecutionOptions(
             SecureOwnableDefinitions.UPDATE_BROADCASTER_SELECTOR,
@@ -234,7 +234,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      */
     function updateBroadcasterDelayedApproval(uint256 txId) public onlyOwner returns (StateAbstraction.TxRecord memory) {
         StateAbstraction.TxRecord memory updatedRecord = _secureState.txDelayedApproval(txId);
-        SharedValidationLibrary.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.BROADCASTER_UPDATE);
+        SharedValidation.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.BROADCASTER_UPDATE);
         _hasOpenBroadcasterRequest = false;
         return updatedRecord;
     }
@@ -246,9 +246,9 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      */
     function updateBroadcasterApprovalWithMetaTx(StateAbstraction.MetaTransaction memory metaTx) public onlyBroadcaster returns (StateAbstraction.TxRecord memory) {
         _secureState.checkPermission(SecureOwnableDefinitions.UPDATE_BROADCASTER_APPROVE_META_SELECTOR);
-        SharedValidationLibrary.validateHandlerSelectorMatch(metaTx.params.handlerSelector, SecureOwnableDefinitions.UPDATE_BROADCASTER_APPROVE_META_SELECTOR);
+        SharedValidation.validateHandlerSelectorMatch(metaTx.params.handlerSelector, SecureOwnableDefinitions.UPDATE_BROADCASTER_APPROVE_META_SELECTOR);
         StateAbstraction.TxRecord memory updatedRecord = _secureState.txApprovalWithMetaTx(metaTx);
-        SharedValidationLibrary.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.BROADCASTER_UPDATE);
+        SharedValidation.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.BROADCASTER_UPDATE);
         _hasOpenBroadcasterRequest = false;
         return updatedRecord;
     }
@@ -260,7 +260,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      */
     function updateBroadcasterCancellation(uint256 txId) public onlyOwner returns (StateAbstraction.TxRecord memory) {
         StateAbstraction.TxRecord memory updatedRecord = _secureState.txCancellation(txId);
-        SharedValidationLibrary.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.BROADCASTER_UPDATE);
+        SharedValidation.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.BROADCASTER_UPDATE);
         _hasOpenBroadcasterRequest = false;
         emit BroadcasterUpdateCancelled(txId);
         return updatedRecord;
@@ -273,9 +273,9 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      */
     function updateBroadcasterCancellationWithMetaTx(StateAbstraction.MetaTransaction memory metaTx) public onlyBroadcaster returns (StateAbstraction.TxRecord memory) {
         _secureState.checkPermission(SecureOwnableDefinitions.UPDATE_BROADCASTER_CANCEL_META_SELECTOR);
-        SharedValidationLibrary.validateHandlerSelectorMatch(metaTx.params.handlerSelector, SecureOwnableDefinitions.UPDATE_BROADCASTER_CANCEL_META_SELECTOR);
+        SharedValidation.validateHandlerSelectorMatch(metaTx.params.handlerSelector, SecureOwnableDefinitions.UPDATE_BROADCASTER_CANCEL_META_SELECTOR);
         StateAbstraction.TxRecord memory updatedRecord = _secureState.txCancellationWithMetaTx(metaTx);
-        SharedValidationLibrary.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.BROADCASTER_UPDATE);
+        SharedValidation.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.BROADCASTER_UPDATE);
         _hasOpenBroadcasterRequest = false;
         emit BroadcasterUpdateCancelled(updatedRecord.txId);
         return updatedRecord;
@@ -290,7 +290,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
     function updateRecoveryExecutionOptions(
         address newRecoveryAddress
     ) public view returns (bytes memory) {
-        SharedValidationLibrary.validateAddressUpdate(newRecoveryAddress, getRecovery());
+        SharedValidation.validateAddressUpdate(newRecoveryAddress, getRecovery());
         return StateAbstraction.createStandardExecutionOptions(
             SecureOwnableDefinitions.UPDATE_RECOVERY_SELECTOR,
             abi.encode(newRecoveryAddress)
@@ -318,7 +318,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
     function updateTimeLockExecutionOptions(
         uint256 newTimeLockPeriodSec
     ) public view returns (bytes memory) {
-        SharedValidationLibrary.validateTimeLockUpdate(newTimeLockPeriodSec, getTimeLockPeriodSec());
+        SharedValidation.validateTimeLockUpdate(newTimeLockPeriodSec, getTimeLockPeriodSec());
         return StateAbstraction.createStandardExecutionOptions(
             SecureOwnableDefinitions.UPDATE_TIMELOCK_SELECTOR,
             abi.encode(newTimeLockPeriodSec)
@@ -350,7 +350,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
         toTxId = toTxId > _secureState.txCounter ? _secureState.txCounter : toTxId;
         
         // Validate that fromTxId is less than toTxId
-        SharedValidationLibrary.validateLessThan(fromTxId, toTxId);
+        SharedValidation.validateLessThan(fromTxId, toTxId);
 
         uint256 rangeSize = toTxId - fromTxId + 1;
         StateAbstraction.TxRecord[] memory history = new StateAbstraction.TxRecord[](rangeSize);
@@ -469,7 +469,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @param newOwner The new owner address
      */
     function executeTransferOwnership(address newOwner) external {
-        SharedValidationLibrary.validateInternalCall(address(this));
+        SharedValidation.validateInternalCall(address(this));
         _transferOwnership(newOwner);
     }
 
@@ -478,7 +478,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @param newBroadcaster The new broadcaster address
      */
     function executeBroadcasterUpdate(address newBroadcaster) external {
-        SharedValidationLibrary.validateInternalCall(address(this));
+        SharedValidation.validateInternalCall(address(this));
         _updateBroadcaster(newBroadcaster);
     }
 
@@ -487,7 +487,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @param newRecoveryAddress The new recovery address
      */
     function executeRecoveryUpdate(address newRecoveryAddress) external {
-        SharedValidationLibrary.validateInternalCall(address(this));
+        SharedValidation.validateInternalCall(address(this));
         _updateRecoveryAddress(newRecoveryAddress);
     }
 
@@ -496,7 +496,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @param newTimeLockPeriodSec The new timelock period in seconds
      */
     function executeTimeLockUpdate(uint256 newTimeLockPeriodSec) external {
-        SharedValidationLibrary.validateInternalCall(address(this));
+        SharedValidation.validateInternalCall(address(this));
         _updateTimeLockPeriod(newTimeLockPeriodSec);
     }
 
