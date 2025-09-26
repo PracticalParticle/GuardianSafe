@@ -972,6 +972,7 @@ library StateAbstraction {
         bytes32 operationType,
         TxAction[] memory supportedActions
     ) public {
+        SharedValidation.validateOperationTypeNotZero(operationType);
         if (self.functions[functionSelector].functionSelector == functionSelector) {
             revert SharedValidation.FunctionAlreadyExists(functionSelector);
         }

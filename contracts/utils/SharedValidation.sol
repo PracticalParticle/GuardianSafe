@@ -61,6 +61,7 @@ library SharedValidation {
     error OperationNotSupported();
     error OperationTypeExists();
     error InvalidOperationType(bytes32 actualType, bytes32 expectedType);
+    error ZeroOperationTypeNotAllowed();
     error TransactionNotFound(uint256 txId);
     error CanOnlyApprovePending(uint8 currentStatus);
     error CanOnlyCancelPending(uint8 currentStatus);
@@ -337,6 +338,14 @@ library SharedValidation {
      */
     function validateOperationTypeNew() internal pure {
         revert OperationTypeExists();
+    }
+    
+    /**
+     * @dev Validates that an operation type is not zero
+     * @param operationType The operation type to validate
+     */
+    function validateOperationTypeNotZero(bytes32 operationType) internal pure {
+        if (operationType == bytes32(0)) revert ZeroOperationTypeNotAllowed();
     }
     
     /**
