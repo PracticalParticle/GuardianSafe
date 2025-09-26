@@ -866,10 +866,35 @@ library StateAbstraction {
         }
         
         // Validate that all grantedActions are supported by the function
+        bool isMetaSign = false;
+        bool isMetaExecute = false;
+        
         for (uint i = 0; i < functionPermission.grantedActions.length; i++) {
-            if (!isActionSupportedByFunction(self, functionPermission.functionSelector, functionPermission.grantedActions[i])) {
+            TxAction action = functionPermission.grantedActions[i];
+            
+            // Check if action is supported by the function
+            if (!isActionSupportedByFunction(self, functionPermission.functionSelector, action)) {
                 revert SharedValidation.ActionNotSupported();
             }
+            
+            // Check for meta-sign actions
+            if (action == TxAction.SIGN_META_REQUEST_AND_APPROVE ||
+                action == TxAction.SIGN_META_APPROVE ||
+                action == TxAction.SIGN_META_CANCEL) {
+                isMetaSign = true;
+            }
+            
+            // Check for meta-execute actions
+            if (action == TxAction.EXECUTE_META_REQUEST_AND_APPROVE ||
+                action == TxAction.EXECUTE_META_APPROVE ||
+                action == TxAction.EXECUTE_META_CANCEL) {
+                isMetaExecute = true;
+            }
+        }
+        
+        // If both flags are raised, this is a security misconfiguration
+        if (isMetaSign && isMetaExecute) {
+            revert SharedValidation.ConflictingMetaTxPermissions(functionPermission.functionSelector);
         }
         
         Role storage role = self.roles[roleHash];

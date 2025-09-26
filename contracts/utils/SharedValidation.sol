@@ -98,6 +98,7 @@ library SharedValidation {
     error RoleEditingDisabled();
     error FunctionPermissionExists(bytes4 functionSelector);
     error ActionNotSupported();
+    error ConflictingMetaTxPermissions(bytes4 functionSelector);
     error InvalidRange(uint256 from, uint256 to);
     
     // Payment and balance errors with context
