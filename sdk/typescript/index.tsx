@@ -5,12 +5,14 @@
 export { default as SecureOwnable } from './SecureOwnable';
 export { default as DynamicRBAC } from './DynamicRBAC';
 export { Definitions } from './Definitions';
+export { Workflow } from './Workflow';
 
 // Interfaces
 export * from './interfaces/base.index';
 export * from './interfaces/core.access.index';
 export * from './interfaces/lib.index';
 export * from './interfaces/definition.index';
+export * from './interfaces/workflow.index';
 
 // Types and Constants
 export { 
@@ -20,6 +22,7 @@ export {
 } from './types/core.access.index';
 export * from './types/lib.index';
 export * from './types/definition.index';
+export * from './types/workflow.index';
 
 // Utilities
 export * from './utils/validations';

@@ -3,14 +3,14 @@ import { TransactionOptions } from './base.index';
 import { 
   ReadableOperationType, 
   FunctionSchema, 
-  RolePermission, 
-  OperationWorkflow, 
-  WorkflowPath 
+  RolePermission
 } from '../types/definition.index';
 
 /**
  * TypeScript interface for IDefinition
  * This interface allows interaction with any definition library that implements IDefinition.sol
+ * 
+ * Note: Workflow-related functions have been moved to the separate IWorkflow interface
  */
 export interface IDefinition {
   /**
@@ -30,25 +30,6 @@ export interface IDefinition {
    * @returns RolePermission struct containing roleHashes and functionPermissions arrays
    */
   getRolePermissions(): Promise<RolePermission>;
-  
-  /**
-   * Returns all operation workflows
-   * @returns Array of operation workflow definitions
-   */
-  getOperationWorkflows(): Promise<OperationWorkflow[]>;
-  
-  /**
-   * Returns workflow information for a specific operation type
-   * @param operationType The operation type hash to get workflow for
-   * @returns OperationWorkflow struct containing workflow information for the operation
-   */
-  getWorkflowForOperation(operationType: Hex): Promise<OperationWorkflow>;
-  
-  /**
-   * Returns all available workflow paths
-   * @returns Array of workflow path definitions
-   */
-  getWorkflowPaths(): Promise<WorkflowPath[]>;
 }
 
 /**

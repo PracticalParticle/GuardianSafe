@@ -10,15 +10,18 @@ const path = require('path');
 const contractsToProcess = [
   'StateAbstraction',
   'SecureOwnable',
+  'SecureOwnableDefinitions',
+  'SecureOwnableWorkflows',
   'DynamicRBAC',
   'IDefinition',
+  'IWorkflow',
   'Guardian',
   'GuardianWithRoles',
   'SimpleVault',
   'SimpleRWA20',
   'SimpleRWA20Definitions',
-  'SimpleVaultDefinitions',
-  'SecureOwnableDefinitions'
+  'SimpleVaultDefinitions'
+  
 ];
 
 // Define the source and destination folders

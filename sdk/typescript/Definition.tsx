@@ -6,9 +6,7 @@ import {
 import { 
   ReadableOperationType, 
   FunctionSchema, 
-  RolePermission, 
-  OperationWorkflow, 
-  WorkflowPath 
+  RolePermission
 } from './types/definition.index';
 
 // Import the ABI
@@ -22,7 +20,8 @@ import IDefinitionABI from '../../abi/IDefinition.abi.json';
  * - Operation types and their configurations
  * - Function schemas and permissions
  * - Role-based access control definitions
- * - Workflow definitions and execution paths
+ * 
+ * Note: Workflow-related functionality has been moved to the separate Workflow class
  * 
  * @example
  * ```typescript
@@ -36,8 +35,8 @@ import IDefinitionABI from '../../abi/IDefinition.abi.json';
  * // Get all operation types
  * const operationTypes = await definitions.getOperationTypes();
  * 
- * // Get workflow for specific operation
- * const workflow = await definitions.getWorkflowForOperation('0xabcd...');
+ * // Get function schemas
+ * const schemas = await definitions.getFunctionSchemas();
  * ```
  */
 export class Definitions implements IDefinition {
@@ -133,120 +132,6 @@ export class Definitions implements IDefinition {
       };
     } catch (error) {
       throw new Error(`Failed to get role permissions: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  /**
-   * Returns all operation workflows
-   * @returns Array of operation workflow definitions
-   */
-  async getOperationWorkflows(): Promise<OperationWorkflow[]> {
-    try {
-      const result = await this.client.readContract({
-        address: this.contractAddress,
-        abi: IDefinitionABI,
-        functionName: 'getOperationWorkflows'
-      }) as any[];
-
-      return result.map((workflow: any) => ({
-        operationType: workflow.operationType as Hex,
-        operationName: workflow.operationName as string,
-        paths: workflow.paths.map((path: any) => ({
-          name: path.name as string,
-          description: path.description as string,
-          steps: path.steps.map((step: any) => ({
-            functionName: step.functionName as string,
-            functionSelector: step.functionSelector as Hex,
-            action: step.action as number,
-            roles: step.roles as string[],
-            description: step.description as string,
-            isOffChain: step.isOffChain as boolean,
-            phaseType: step.phaseType as string
-          })),
-          workflowType: path.workflowType as number,
-          estimatedTimeSec: BigInt(path.estimatedTimeSec),
-          requiresSignature: path.requiresSignature as boolean,
-          hasOffChainPhase: path.hasOffChainPhase as boolean
-        })),
-        supportedRoles: workflow.supportedRoles as string[]
-      }));
-    } catch (error) {
-      throw new Error(`Failed to get operation workflows: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  /**
-   * Returns workflow information for a specific operation type
-   * @param operationType The operation type hash to get workflow for
-   * @returns OperationWorkflow struct containing workflow information for the operation
-   */
-  async getWorkflowForOperation(operationType: Hex): Promise<OperationWorkflow> {
-    try {
-      const result = await this.client.readContract({
-        address: this.contractAddress,
-        abi: IDefinitionABI,
-        functionName: 'getWorkflowForOperation',
-        args: [operationType]
-      }) as any;
-
-      return {
-        operationType: result.operationType as Hex,
-        operationName: result.operationName as string,
-        paths: result.paths.map((path: any) => ({
-          name: path.name as string,
-          description: path.description as string,
-          steps: path.steps.map((step: any) => ({
-            functionName: step.functionName as string,
-            functionSelector: step.functionSelector as Hex,
-            action: step.action as number,
-            roles: step.roles as string[],
-            description: step.description as string,
-            isOffChain: step.isOffChain as boolean,
-            phaseType: step.phaseType as string
-          })),
-          workflowType: path.workflowType as number,
-          estimatedTimeSec: BigInt(path.estimatedTimeSec),
-          requiresSignature: path.requiresSignature as boolean,
-          hasOffChainPhase: path.hasOffChainPhase as boolean
-        })),
-        supportedRoles: result.supportedRoles as string[]
-      };
-    } catch (error) {
-      throw new Error(`Failed to get workflow for operation ${operationType}: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  /**
-   * Returns all available workflow paths
-   * @returns Array of workflow path definitions
-   */
-  async getWorkflowPaths(): Promise<WorkflowPath[]> {
-    try {
-      const result = await this.client.readContract({
-        address: this.contractAddress,
-        abi: IDefinitionABI,
-        functionName: 'getWorkflowPaths'
-      }) as any[];
-
-      return result.map((path: any) => ({
-        name: path.name as string,
-        description: path.description as string,
-        steps: path.steps.map((step: any) => ({
-          functionName: step.functionName as string,
-          functionSelector: step.functionSelector as Hex,
-          action: step.action as number,
-          roles: step.roles as string[],
-          description: step.description as string,
-          isOffChain: step.isOffChain as boolean,
-          phaseType: step.phaseType as string
-        })),
-        workflowType: path.workflowType as number,
-        estimatedTimeSec: BigInt(path.estimatedTimeSec),
-        requiresSignature: path.requiresSignature as boolean,
-        hasOffChainPhase: path.hasOffChainPhase as boolean
-      }));
-    } catch (error) {
-      throw new Error(`Failed to get workflow paths: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 

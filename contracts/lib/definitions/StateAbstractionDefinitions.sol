@@ -257,43 +257,4 @@ library StateAbstractionDefinitions {
             functionPermissions: functionPermissions
         });
     }
-    
-    /**
-     * @dev Returns all operation workflows
-     * @return Array of operation workflow definitions
-     */
-    function getOperationWorkflows() public pure returns (IDefinition.OperationWorkflow[] memory) {
-        IDefinition.OperationWorkflow[] memory workflows = new IDefinition.OperationWorkflow[](0);
-        
-        return workflows;
-    }
-    
-    /**
-     * @dev Returns workflow information for a specific operation type
-     * @param operationType The operation type hash to get workflow for
-     * @return OperationWorkflow struct containing workflow information for the operation
-     */
-    function getWorkflowForOperation(bytes32 operationType) public pure returns (IDefinition.OperationWorkflow memory) {
-        // Return empty workflow for now
-        IDefinition.WorkflowPath[] memory emptyPaths = new IDefinition.WorkflowPath[](0);
-        string[] memory emptyRoles = new string[](0);
-        
-        return IDefinition.OperationWorkflow({
-            operationType: operationType,
-            operationName: "",
-            paths: emptyPaths,
-            supportedRoles: emptyRoles
-        });
-    }
-    
-    /**
-     * @dev Returns all available workflow paths
-     * @return Array of workflow path definitions
-     */
-    function getWorkflowPaths() public pure returns (IDefinition.WorkflowPath[] memory) {
-        IDefinition.WorkflowPath[] memory paths = new IDefinition.WorkflowPath[](0);
-        
-        return paths;
-    }
-    
 }
