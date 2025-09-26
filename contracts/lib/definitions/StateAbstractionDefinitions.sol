@@ -25,7 +25,12 @@ library StateAbstractionDefinitions {
      * @return Array of operation type definitions
      */
     function getOperationTypes() public pure returns (StateAbstraction.ReadableOperationType[] memory) {
-        StateAbstraction.ReadableOperationType[] memory types = new StateAbstraction.ReadableOperationType[](0);
+        StateAbstraction.ReadableOperationType[] memory types = new StateAbstraction.ReadableOperationType[](1);
+        
+        types[0] = StateAbstraction.ReadableOperationType({
+            operationType: SYSTEM_OPERATION,
+            name: "SYSTEM_OPERATION"
+        });
         
         return types;
     }
@@ -64,42 +69,42 @@ library StateAbstractionDefinitions {
         schemas[0] = StateAbstraction.FunctionSchema({
             functionName: "txRequest",
             functionSelector: StateAbstraction.TX_REQUEST_SELECTOR,
-            operationType: bytes32(0),
+            operationType: SYSTEM_OPERATION,
             supportedActions: timeDelayRequestActions
         });
         
         schemas[1] = StateAbstraction.FunctionSchema({
             functionName: "txDelayedApproval",
             functionSelector: StateAbstraction.TX_DELAYED_APPROVAL_SELECTOR,
-            operationType: bytes32(0),
+            operationType: SYSTEM_OPERATION,
             supportedActions: timeDelayApproveActions
         });
         
         schemas[2] = StateAbstraction.FunctionSchema({
             functionName: "txCancellation",
             functionSelector: StateAbstraction.TX_CANCELLATION_SELECTOR,
-            operationType: bytes32(0),
+            operationType: SYSTEM_OPERATION,
             supportedActions: timeDelayCancelActions
         });
         
         schemas[3] = StateAbstraction.FunctionSchema({
             functionName: "txApprovalWithMetaTx",
             functionSelector: StateAbstraction.META_TX_APPROVAL_SELECTOR,
-            operationType: bytes32(0),
+            operationType: SYSTEM_OPERATION,
             supportedActions: metaTxApproveActions
         });
         
         schemas[4] = StateAbstraction.FunctionSchema({
             functionName: "txCancellationWithMetaTx",
             functionSelector: StateAbstraction.META_TX_CANCELLATION_SELECTOR,
-            operationType: bytes32(0),
+            operationType: SYSTEM_OPERATION,
             supportedActions: metaTxCancelActions
         });
         
         schemas[5] = StateAbstraction.FunctionSchema({
             functionName: "requestAndApprove",
             functionSelector: StateAbstraction.META_TX_REQUEST_AND_APPROVE_SELECTOR,
-            operationType: bytes32(0),
+            operationType: SYSTEM_OPERATION,
             supportedActions: metaTxRequestApproveActions
         });
         
@@ -107,7 +112,7 @@ library StateAbstractionDefinitions {
         schemas[6] = StateAbstraction.FunctionSchema({
             functionName: "updatePaymentForTransaction",
             functionSelector: StateAbstraction.UPDATE_PAYMENT_SELECTOR,
-            operationType: bytes32(0),
+            operationType: SYSTEM_OPERATION,
             supportedActions: timeDelayRequestActions
         });
         
