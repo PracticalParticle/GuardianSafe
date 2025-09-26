@@ -905,16 +905,38 @@ library StateAbstraction {
             Role storage role = self.roles[roleHash];
             
             if (role.authorizedWallets.contains(wallet)) {
-                // Check if role has permission for this function
-                for (uint j = 0; j < role.functionPermissions.length; j++) {
-                    FunctionPermission storage permission = role.functionPermissions[j];
-                    if (permission.functionSelector == functionSelector) {
-                        // Check if any of the granted actions matches the requested action
-                        for (uint k = 0; k < permission.grantedActions.length; k++) {
-                            if (permission.grantedActions[k] == requestedAction) {
-                                return true; // Role has permission for this function and action
-                            }
-                        }
+                // Use the dedicated role permission check function
+                if (roleHasActionPermission(self, roleHash, functionSelector, requestedAction)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @dev Checks if a specific role has permission for a function and action.
+     * @param self The SecureOperationState to check.
+     * @param roleHash The role hash to check.
+     * @param functionSelector The function selector to check permissions for.
+     * @param requestedAction The specific action being requested.
+     * @return True if the role has permission for the function and action, false otherwise.
+     */
+    function roleHasActionPermission(
+        SecureOperationState storage self,
+        bytes32 roleHash,
+        bytes4 functionSelector,
+        TxAction requestedAction
+    ) public view returns (bool) {
+        Role storage role = self.roles[roleHash];
+        
+        for (uint j = 0; j < role.functionPermissions.length; j++) {
+            FunctionPermission storage permission = role.functionPermissions[j];
+            if (permission.functionSelector == functionSelector) {
+                // Check if any of the granted actions matches the requested action
+                for (uint k = 0; k < permission.grantedActions.length; k++) {
+                    if (permission.grantedActions[k] == requestedAction) {
+                        return true;
                     }
                 }
             }
