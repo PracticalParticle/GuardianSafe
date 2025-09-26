@@ -4,7 +4,7 @@
 // Core Classes
 export { default as SecureOwnable } from './SecureOwnable';
 export { default as DynamicRBAC } from './DynamicRBAC';
-export { Definitions } from './Definitions';
+export { Definitions } from './Definition';
 export { Workflow } from './Workflow';
 
 // Interfaces
