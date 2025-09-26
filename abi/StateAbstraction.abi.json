@@ -512,6 +512,11 @@
     "type": "error"
   },
   {
+    "inputs": [],
+    "name": "ZeroOperationTypeNotAllowed",
+    "type": "error"
+  },
+  {
     "anonymous": false,
     "inputs": [
       {

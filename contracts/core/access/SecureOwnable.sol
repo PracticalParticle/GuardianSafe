@@ -161,7 +161,9 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @return The updated transaction record
      */
     function transferOwnershipApprovalWithMetaTx(StateAbstraction.MetaTransaction memory metaTx) public onlyBroadcaster returns (StateAbstraction.TxRecord memory) {
-        _secureState.checkPermission(SecureOwnableDefinitions.TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR);
+        if (!_secureState.hasActionPermission(msg.sender, SecureOwnableDefinitions.TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR, StateAbstraction.TxAction.EXECUTE_META_APPROVE)) {
+            revert SharedValidation.NoPermission(msg.sender);
+        }
         SharedValidation.validateHandlerSelectorMatch(metaTx.params.handlerSelector, SecureOwnableDefinitions.TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR);
         StateAbstraction.TxRecord memory updatedRecord = _secureState.txApprovalWithMetaTx(metaTx);
         SharedValidation.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.OWNERSHIP_TRANSFER);
@@ -188,7 +190,9 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @return The updated transaction record
      */
     function transferOwnershipCancellationWithMetaTx(StateAbstraction.MetaTransaction memory metaTx) public onlyBroadcaster returns (StateAbstraction.TxRecord memory) {
-        _secureState.checkPermission(SecureOwnableDefinitions.TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR);
+        if (!_secureState.hasActionPermission(msg.sender, SecureOwnableDefinitions.TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR, StateAbstraction.TxAction.EXECUTE_META_CANCEL)) {
+            revert SharedValidation.NoPermission(msg.sender);
+        }
         SharedValidation.validateHandlerSelectorMatch(metaTx.params.handlerSelector, SecureOwnableDefinitions.TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR);
         StateAbstraction.TxRecord memory updatedRecord = _secureState.txCancellationWithMetaTx(metaTx);
         SharedValidation.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.OWNERSHIP_TRANSFER);
@@ -245,7 +249,9 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @return The updated transaction record
      */
     function updateBroadcasterApprovalWithMetaTx(StateAbstraction.MetaTransaction memory metaTx) public onlyBroadcaster returns (StateAbstraction.TxRecord memory) {
-        _secureState.checkPermission(SecureOwnableDefinitions.UPDATE_BROADCASTER_APPROVE_META_SELECTOR);
+        if (!_secureState.hasActionPermission(msg.sender, SecureOwnableDefinitions.UPDATE_BROADCASTER_APPROVE_META_SELECTOR, StateAbstraction.TxAction.EXECUTE_META_APPROVE)) {
+            revert SharedValidation.NoPermission(msg.sender);
+        }
         SharedValidation.validateHandlerSelectorMatch(metaTx.params.handlerSelector, SecureOwnableDefinitions.UPDATE_BROADCASTER_APPROVE_META_SELECTOR);
         StateAbstraction.TxRecord memory updatedRecord = _secureState.txApprovalWithMetaTx(metaTx);
         SharedValidation.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.BROADCASTER_UPDATE);
@@ -272,7 +278,9 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @return The updated transaction record
      */
     function updateBroadcasterCancellationWithMetaTx(StateAbstraction.MetaTransaction memory metaTx) public onlyBroadcaster returns (StateAbstraction.TxRecord memory) {
-        _secureState.checkPermission(SecureOwnableDefinitions.UPDATE_BROADCASTER_CANCEL_META_SELECTOR);
+        if (!_secureState.hasActionPermission(msg.sender, SecureOwnableDefinitions.UPDATE_BROADCASTER_CANCEL_META_SELECTOR, StateAbstraction.TxAction.EXECUTE_META_CANCEL)) {
+            revert SharedValidation.NoPermission(msg.sender);
+        }
         SharedValidation.validateHandlerSelectorMatch(metaTx.params.handlerSelector, SecureOwnableDefinitions.UPDATE_BROADCASTER_CANCEL_META_SELECTOR);
         StateAbstraction.TxRecord memory updatedRecord = _secureState.txCancellationWithMetaTx(metaTx);
         SharedValidation.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.BROADCASTER_UPDATE);
@@ -305,7 +313,9 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
     function updateRecoveryRequestAndApprove(
         StateAbstraction.MetaTransaction memory metaTx
     ) public onlyBroadcaster returns (StateAbstraction.TxRecord memory) {
-        _secureState.checkPermission(SecureOwnableDefinitions.UPDATE_RECOVERY_META_SELECTOR);
+        if (!_secureState.hasActionPermission(msg.sender, SecureOwnableDefinitions.UPDATE_RECOVERY_META_SELECTOR, StateAbstraction.TxAction.EXECUTE_META_REQUEST_AND_APPROVE)) {
+            revert SharedValidation.NoPermission(msg.sender);
+        }
         return _requestAndApprove(metaTx);
     }
 
@@ -333,7 +343,9 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
     function updateTimeLockRequestAndApprove(
         StateAbstraction.MetaTransaction memory metaTx
     ) public onlyBroadcaster returns (StateAbstraction.TxRecord memory) {
-        _secureState.checkPermission(SecureOwnableDefinitions.UPDATE_TIMELOCK_META_SELECTOR);
+        if (!_secureState.hasActionPermission(msg.sender, SecureOwnableDefinitions.UPDATE_TIMELOCK_META_SELECTOR, StateAbstraction.TxAction.EXECUTE_META_REQUEST_AND_APPROVE)) {
+            revert SharedValidation.NoPermission(msg.sender);
+        }
         return _requestAndApprove(metaTx);
     }
 

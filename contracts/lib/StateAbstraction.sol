@@ -298,7 +298,7 @@ library StateAbstraction {
         ExecutionType executionType,
         bytes memory executionOptions
     ) public returns (TxRecord memory) {
-        if (!checkPermissionPermissive(self, TX_REQUEST_SELECTOR) && !checkPermissionPermissive(self, META_TX_REQUEST_AND_APPROVE_SELECTOR)) {
+        if (!hasActionPermission(self, msg.sender, TX_REQUEST_SELECTOR, TxAction.EXECUTE_TIME_DELAY_REQUEST) && !hasActionPermission(self, msg.sender, META_TX_REQUEST_AND_APPROVE_SELECTOR, TxAction.EXECUTE_META_REQUEST_AND_APPROVE)) {
             revert SharedValidation.NoPermissionExecute(msg.sender);
         }
         SharedValidation.validateTargetAddress(target);
@@ -333,7 +333,9 @@ library StateAbstraction {
      * @return The updated TxRecord.
      */
     function txDelayedApproval(SecureOperationState storage self, uint256 txId) public returns (TxRecord memory) {
-        checkPermission(self, TX_DELAYED_APPROVAL_SELECTOR);
+        if (!hasActionPermission(self, msg.sender, TX_DELAYED_APPROVAL_SELECTOR, TxAction.EXECUTE_TIME_DELAY_APPROVE)) {
+            revert SharedValidation.NoPermission(msg.sender);
+        }
         SharedValidation.validatePendingTransaction(uint8(self.txRecords[txId].status));
         SharedValidation.validateReleaseTime(self.txRecords[txId].releaseTime);
         
@@ -361,7 +363,9 @@ library StateAbstraction {
      * @return The updated TxRecord.
      */
     function txCancellation(SecureOperationState storage self, uint256 txId) public returns (TxRecord memory) {
-        checkPermission(self, TX_CANCELLATION_SELECTOR);
+        if (!hasActionPermission(self, msg.sender, TX_CANCELLATION_SELECTOR, TxAction.EXECUTE_TIME_DELAY_CANCEL)) {
+            revert SharedValidation.NoPermission(msg.sender);
+        }
         SharedValidation.validatePendingTransaction(uint8(self.txRecords[txId].status));
         
         self.txRecords[txId].status = TxStatus.CANCELLED;
@@ -382,7 +386,9 @@ library StateAbstraction {
      */
     function txCancellationWithMetaTx(SecureOperationState storage self, MetaTransaction memory metaTx) public returns (TxRecord memory) {
         uint256 txId = metaTx.txRecord.txId;
-        checkPermission(self, META_TX_CANCELLATION_SELECTOR);
+        if (!hasActionPermission(self, msg.sender, META_TX_CANCELLATION_SELECTOR, TxAction.EXECUTE_META_CANCEL)) {
+            revert SharedValidation.NoPermission(msg.sender);
+        }
         SharedValidation.validatePendingTransaction(uint8(self.txRecords[txId].status));
         if (!verifySignature(self, metaTx)) revert SharedValidation.InvalidSignature(metaTx.signature);
         
@@ -405,7 +411,9 @@ library StateAbstraction {
      */
     function txApprovalWithMetaTx(SecureOperationState storage self, MetaTransaction memory metaTx) public returns (TxRecord memory) {
         uint256 txId = metaTx.txRecord.txId;
-        checkPermission(self, META_TX_APPROVAL_SELECTOR);
+        if (!hasActionPermission(self, msg.sender, META_TX_APPROVAL_SELECTOR, TxAction.EXECUTE_META_APPROVE)) {
+            revert SharedValidation.NoPermission(msg.sender);
+        }
         SharedValidation.validatePendingTransaction(uint8(self.txRecords[txId].status));
         if (!verifySignature(self, metaTx)) revert SharedValidation.InvalidSignature(metaTx.signature);
         
@@ -438,7 +446,9 @@ library StateAbstraction {
         SecureOperationState storage self,
         MetaTransaction memory metaTx
     ) public returns (TxRecord memory) {
-        checkPermission(self, META_TX_REQUEST_AND_APPROVE_SELECTOR);
+        if (!hasActionPermission(self, msg.sender, META_TX_REQUEST_AND_APPROVE_SELECTOR, TxAction.EXECUTE_META_REQUEST_AND_APPROVE)) {
+            revert SharedValidation.NoPermission(msg.sender);
+        }
         
         TxRecord memory txRecord = txRequest(
             self,
@@ -682,7 +692,9 @@ library StateAbstraction {
         uint256 txId,
         PaymentDetails memory paymentDetails
     ) public {
-        checkPermission(self, UPDATE_PAYMENT_SELECTOR);
+        if (!hasActionPermission(self, msg.sender, UPDATE_PAYMENT_SELECTOR, TxAction.EXECUTE_TIME_DELAY_REQUEST)) {
+            revert SharedValidation.NoPermission(msg.sender);
+        }
         SharedValidation.validatePendingTransaction(uint8(self.txRecords[txId].status));
            
         self.txRecords[txId].payment = paymentDetails;
@@ -873,79 +885,34 @@ library StateAbstraction {
     }
 
     /**
-     * @dev Checks if the caller has permission to execute a function.
+     * @dev Checks if a wallet has permission for a specific function and action.
      * @param self The SecureOperationState to check.
-     * @param functionSelector The selector of the function to check permissions for.
-     */
-    function checkPermission(SecureOperationState storage self, bytes4 functionSelector) public view {
-        bool hasPermission = checkPermissionPermissive(self,functionSelector);       
-        if (!hasPermission) revert SharedValidation.NoPermission(msg.sender);
-    }
-
-    /**
-     * @dev Checks if the caller has permission to execute a function.
-     * @param self The SecureOperationState to check.
-     * @param functionSelector The selector of the function to check permissions for.
-     * @return True if the caller has permission, false otherwise.
-     */
-    function checkPermissionPermissive(SecureOperationState storage self, bytes4 functionSelector) private view returns (bool) {
-        // Check if caller has any role that grants permission for this function
-        uint256 rolesLength = self.supportedRolesSet.length();
-        for (uint i = 0; i < rolesLength; i++) {
-            bytes32 roleHash = self.supportedRolesSet.at(i);
-            Role storage role = self.roles[roleHash];
-            
-            if (role.authorizedWallets.contains(msg.sender)) {
-                // Check if role has permission for this function
-                for (uint j = 0; j < role.functionPermissions.length; j++) {
-                    FunctionPermission storage permission = role.functionPermissions[j];
-                    if (permission.functionSelector == functionSelector) {
-                        return true; // Role has permission for this function
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    /**
-     * @dev Checks if a signer has meta-transaction signing permissions for a specific function selector and action.
-     * @param self The SecureOperationState to check.
-     * @param signer The address of the signer to check.
+     * @param wallet The wallet address to check.
      * @param functionSelector The function selector to check permissions for.
-     * @param requestedAction The specific action being requested in the meta-transaction.
-     * @return True if the signer has meta-transaction signing permissions for the function and action, false otherwise.
+     * @param requestedAction The specific action being requested.
+     * @return True if the wallet has permission for the function and action, false otherwise.
      */
-    function hasMetaTxSigningPermission(
+    function hasActionPermission(
         SecureOperationState storage self,
-        address signer,
+        address wallet,
         bytes4 functionSelector,
         TxAction requestedAction
-    ) private view returns (bool) {
-        // Enforce that only signing actions are allowed during signature verification
-        if (
-            requestedAction != TxAction.SIGN_META_REQUEST_AND_APPROVE &&
-            requestedAction != TxAction.SIGN_META_APPROVE &&
-            requestedAction != TxAction.SIGN_META_CANCEL
-        ) {
-            SharedValidation.validateActionSupported();
-        }
-
-        // Check if signer has any role that grants meta-transaction signing permissions for this function
+    ) public view returns (bool) {
+        // Check if wallet has any role that grants permission for this function and action
         uint256 rolesLength = self.supportedRolesSet.length();
         for (uint i = 0; i < rolesLength; i++) {
             bytes32 roleHash = self.supportedRolesSet.at(i);
             Role storage role = self.roles[roleHash];
             
-            if (role.authorizedWallets.contains(signer)) {
-                // Check if role has meta-transaction signing permissions for this function
+            if (role.authorizedWallets.contains(wallet)) {
+                // Check if role has permission for this function
                 for (uint j = 0; j < role.functionPermissions.length; j++) {
                     FunctionPermission storage permission = role.functionPermissions[j];
                     if (permission.functionSelector == functionSelector) {
                         // Check if any of the granted actions matches the requested action
                         for (uint k = 0; k < permission.grantedActions.length; k++) {
                             if (permission.grantedActions[k] == requestedAction) {
-                                return true;
+                                return true; // Role has permission for this function and action
                             }
                         }
                     }
@@ -1169,7 +1136,7 @@ library StateAbstraction {
         if (recoveredSigner != metaTx.params.signer) revert SharedValidation.InvalidSignature(metaTx.signature);
 
         // Authorization check - verify signer has meta-transaction signing permissions for the function and action
-        bool isAuthorized = hasMetaTxSigningPermission(self, metaTx.params.signer, metaTx.params.handlerSelector, metaTx.params.action);
+        bool isAuthorized = hasActionPermission(self, metaTx.params.signer, metaTx.params.handlerSelector, metaTx.params.action);
         if (!isAuthorized) revert SharedValidation.SignerNotAuthorized(metaTx.params.signer);
         
         return true;

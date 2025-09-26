@@ -98,7 +98,9 @@ abstract contract DynamicRBAC is Initializable, SecureOwnable {
     function updateRoleEditingToggleRequestAndApprove(
         StateAbstraction.MetaTransaction memory metaTx
     ) public onlyBroadcaster returns (StateAbstraction.TxRecord memory) {
-        _getSecureState().checkPermission(DynamicRBACDefinitions.ROLE_EDITING_TOGGLE_META_SELECTOR);
+        if (!_getSecureState().hasActionPermission(msg.sender, DynamicRBACDefinitions.ROLE_EDITING_TOGGLE_META_SELECTOR, StateAbstraction.TxAction.EXECUTE_META_REQUEST_AND_APPROVE)) {
+            revert SharedValidation.NoPermission(msg.sender);
+        }
 
         return _requestAndApprove(metaTx);
     }
