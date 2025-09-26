@@ -35,6 +35,9 @@ library StateAbstraction {
     // ============ VERSION INFORMATION ============
     string public constant LIBRARY_NAME = "StateAbstraction";
     string public constant VERSION = "1.0.0";
+    int256 public constant VERSION_MAJOR = 1;
+    int256 public constant VERSION_MINOR = 0;
+    int256 public constant VERSION_PATCH = 0;
     
     using MessageHashUtils for bytes32;
     using SharedValidation for *;
