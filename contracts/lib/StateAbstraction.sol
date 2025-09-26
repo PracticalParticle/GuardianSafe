@@ -202,7 +202,14 @@ library StateAbstraction {
     bytes32 private constant DOMAIN_SEPARATOR_TYPE_HASH = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
 
 
-    event TransactionEvent(TxRecord txRecord, string triggerFunc, bytes decodedParams);
+    event TransactionEvent(
+        uint256 txId,
+        string triggerFunc,
+        TxStatus status,
+        address requester,
+        address target,
+        bytes32 operationType
+    );
 
     // ============ SYSTEM STATE FUNCTIONS ============
 
@@ -1385,14 +1392,26 @@ library StateAbstraction {
             revert SharedValidation.FunctionDoesNotExist(functionSelector);
         }
 
-        bytes memory decodedParams = extractDecodedParams(txRecord);
+        // Emit only non-sensitive public data
+        emit TransactionEvent(
+            txId,
+            functionName,
+            txRecord.status,
+            txRecord.params.requester,
+            txRecord.params.target,
+            txRecord.params.operationType
+        );
         
-        // Emit TransactionEvent
-        emit TransactionEvent(txRecord, functionName, decodedParams);
-        
-        // Forward event to event forwarder
+        // Forward event data to event forwarder
         if (self.eventForwarder != address(0)) {
-            try IEventForwarder(self.eventForwarder).forwardTxEvent(txRecord, functionName, decodedParams) {
+            try IEventForwarder(self.eventForwarder).forwardTxEvent(
+                txId,
+                functionName,
+                txRecord.status,
+                txRecord.params.requester,
+                txRecord.params.target,
+                txRecord.params.operationType
+            ) {
                 // Event forwarded successfully
             } catch {
                 // Forwarding failed, continue execution

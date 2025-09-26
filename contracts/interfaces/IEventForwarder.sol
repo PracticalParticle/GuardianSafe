@@ -15,9 +15,19 @@ import "../lib/StateAbstraction.sol";
 interface IEventForwarder {
     /**
      * @dev Forward a transaction event from a deployed instance
+     * @param txId The transaction ID
      * @param triggerFunc The trigger function for the event (function name)
-     * @param txRecord The transaction record
-     * @param decodedParams The decoded parameters
+     * @param status The transaction status
+     * @param requester The address of the requester
+     * @param target The target contract address
+     * @param operationType The type of operation
      */
-    function forwardTxEvent(StateAbstraction.TxRecord calldata txRecord, string calldata triggerFunc, bytes calldata decodedParams) external;
+    function forwardTxEvent(
+        uint256 txId,
+        string calldata triggerFunc,
+        StateAbstraction.TxStatus status,
+        address requester,
+        address target,
+        bytes32 operationType
+    ) external;
 }

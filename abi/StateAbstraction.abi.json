@@ -515,106 +515,10 @@
     "anonymous": false,
     "inputs": [
       {
-        "components": [
-          {
-            "internalType": "uint256",
-            "name": "txId",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "releaseTime",
-            "type": "uint256"
-          },
-          {
-            "internalType": "enum StateAbstraction.TxStatus",
-            "name": "status",
-            "type": "uint8"
-          },
-          {
-            "components": [
-              {
-                "internalType": "address",
-                "name": "requester",
-                "type": "address"
-              },
-              {
-                "internalType": "address",
-                "name": "target",
-                "type": "address"
-              },
-              {
-                "internalType": "uint256",
-                "name": "value",
-                "type": "uint256"
-              },
-              {
-                "internalType": "uint256",
-                "name": "gasLimit",
-                "type": "uint256"
-              },
-              {
-                "internalType": "bytes32",
-                "name": "operationType",
-                "type": "bytes32"
-              },
-              {
-                "internalType": "enum StateAbstraction.ExecutionType",
-                "name": "executionType",
-                "type": "uint8"
-              },
-              {
-                "internalType": "bytes",
-                "name": "executionOptions",
-                "type": "bytes"
-              }
-            ],
-            "internalType": "struct StateAbstraction.TxParams",
-            "name": "params",
-            "type": "tuple"
-          },
-          {
-            "internalType": "bytes32",
-            "name": "message",
-            "type": "bytes32"
-          },
-          {
-            "internalType": "bytes",
-            "name": "result",
-            "type": "bytes"
-          },
-          {
-            "components": [
-              {
-                "internalType": "address",
-                "name": "recipient",
-                "type": "address"
-              },
-              {
-                "internalType": "uint256",
-                "name": "nativeTokenAmount",
-                "type": "uint256"
-              },
-              {
-                "internalType": "address",
-                "name": "erc20TokenAddress",
-                "type": "address"
-              },
-              {
-                "internalType": "uint256",
-                "name": "erc20TokenAmount",
-                "type": "uint256"
-              }
-            ],
-            "internalType": "struct StateAbstraction.PaymentDetails",
-            "name": "payment",
-            "type": "tuple"
-          }
-        ],
         "indexed": false,
-        "internalType": "struct StateAbstraction.TxRecord",
-        "name": "txRecord",
-        "type": "tuple"
+        "internalType": "uint256",
+        "name": "txId",
+        "type": "uint256"
       },
       {
         "indexed": false,
@@ -624,9 +528,27 @@
       },
       {
         "indexed": false,
-        "internalType": "bytes",
-        "name": "decodedParams",
-        "type": "bytes"
+        "internalType": "enum StateAbstraction.TxStatus",
+        "name": "status",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "requester",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "target",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes32",
+        "name": "operationType",
+        "type": "bytes32"
       }
     ],
     "name": "TransactionEvent",
