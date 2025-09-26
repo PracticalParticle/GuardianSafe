@@ -154,12 +154,12 @@ abstract contract DynamicRBAC is Initializable, SecureOwnable {
         // Validate that the role is not protected
         if (_getSecureState().getRole(roleHash).isProtected) revert SharedValidation.CannotModifyProtectedRoles();
         
-        // StateAbstraction.addAuthorizedWalletToRole already validates:
+        // StateAbstraction.assignWallet already validates:
         // - wallet is not zero address
         // - role exists
         // - role has capacity
         // - wallet is not already in role
-        StateAbstraction.addAuthorizedWalletToRole(_getSecureState(), roleHash, wallet);
+        StateAbstraction.assignWallet(_getSecureState(), roleHash, wallet);
         emit WalletAddedToRole(roleHash, wallet);
     }
 
@@ -169,17 +169,17 @@ abstract contract DynamicRBAC is Initializable, SecureOwnable {
      * @param wallet The wallet address to remove
      * @notice Security: Cannot remove the last wallet from a role to prevent empty roles
      */
-    function removeAuthorizedWalletFromRole(bytes32 roleHash, address wallet) external onlyOwner {
+    function revokeWallet(bytes32 roleHash, address wallet) external onlyOwner {
         // Validate that role editing is enabled
         if (!roleEditingEnabled) revert SharedValidation.RoleEditingDisabled();
         
         // Validate that the role is not protected
         if (_getSecureState().getRole(roleHash).isProtected) revert SharedValidation.CannotModifyProtectedRoles();
         
-        // StateAbstraction.removeAuthorizedWalletFromRole already validates:
+        // StateAbstraction.revokeWallet already validates:
         // - role exists
         // - wallet exists in role
-        StateAbstraction.removeAuthorizedWalletFromRole(_getSecureState(), roleHash, wallet);
+        StateAbstraction.revokeWallet(_getSecureState(), roleHash, wallet);
         emit WalletRemovedFromRole(roleHash, wallet);
     }
 

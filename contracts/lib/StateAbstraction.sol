@@ -243,9 +243,9 @@ library StateAbstraction {
         createRole(self, "RECOVERY_ROLE", 1, true);
         
         // Add authorized wallets to roles
-        addAuthorizedWalletToRole(self, OWNER_ROLE, _owner);
-        addAuthorizedWalletToRole(self, BROADCASTER_ROLE, _broadcaster);
-        addAuthorizedWalletToRole(self, RECOVERY_ROLE, _recovery);
+        assignWallet(self, OWNER_ROLE, _owner);
+        assignWallet(self, BROADCASTER_ROLE, _broadcaster);
+        assignWallet(self, RECOVERY_ROLE, _recovery);
         
         // Mark as initialized after successful setup
         self.initialized = true;
@@ -767,7 +767,7 @@ library StateAbstraction {
      * @param role The role hash to add the wallet to.
      * @param wallet The wallet address to add.
      */
-    function addAuthorizedWalletToRole(SecureOperationState storage self, bytes32 role, address wallet) public {
+    function assignWallet(SecureOperationState storage self, bytes32 role, address wallet) public {
         SharedValidation.validateNotZeroAddress(wallet);
         if (self.roles[role].roleHash == bytes32(0)) revert SharedValidation.RoleNameEmpty();
         
@@ -787,7 +787,7 @@ library StateAbstraction {
      * @param newWallet The new wallet address to assign the role to.
      * @param oldWallet The old wallet address to remove from the role.
      */
-    function updateAuthorizedWalletInRole(SecureOperationState storage self, bytes32 role, address newWallet, address oldWallet) public {
+    function updateAssignedWallet(SecureOperationState storage self, bytes32 role, address newWallet, address oldWallet) public {
         if (self.roles[role].roleHash == bytes32(0)) revert SharedValidation.RoleNameEmpty();
         SharedValidation.validateNotZeroAddress(newWallet);
         
@@ -812,7 +812,7 @@ library StateAbstraction {
      * @param wallet The wallet address to remove.
      * @notice Security: Cannot remove the last wallet from a role to prevent empty roles.
      */
-    function removeAuthorizedWalletFromRole(SecureOperationState storage self, bytes32 role, address wallet) public {
+    function revokeWallet(SecureOperationState storage self, bytes32 role, address wallet) public {
         if (self.roles[role].roleHash == bytes32(0)) revert SharedValidation.RoleNameEmpty();
         
         // Check if wallet exists in the role

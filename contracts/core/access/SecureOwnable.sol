@@ -623,7 +623,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      */
     function _transferOwnership(address newOwner) internal virtual {
         address oldOwner = owner();
-        _secureState.updateAuthorizedWalletInRole(StateAbstraction.OWNER_ROLE, newOwner, oldOwner);
+        _secureState.updateAssignedWallet(StateAbstraction.OWNER_ROLE, newOwner, oldOwner);
         emit OwnershipTransferUpdated(oldOwner, newOwner);
     }
 
@@ -633,7 +633,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      */
     function _updateBroadcaster(address newBroadcaster) internal virtual {
         address oldBroadcaster = getBroadcaster();
-        _secureState.updateAuthorizedWalletInRole(StateAbstraction.BROADCASTER_ROLE, newBroadcaster, oldBroadcaster);
+        _secureState.updateAssignedWallet(StateAbstraction.BROADCASTER_ROLE, newBroadcaster, oldBroadcaster);
         emit BroadcasterUpdated(oldBroadcaster, newBroadcaster);
     }
 
@@ -643,7 +643,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      */
     function _updateRecoveryAddress(address newRecoveryAddress) internal virtual {
         address oldRecovery = getRecovery();
-        _secureState.updateAuthorizedWalletInRole(StateAbstraction.RECOVERY_ROLE, newRecoveryAddress, oldRecovery);
+        _secureState.updateAssignedWallet(StateAbstraction.RECOVERY_ROLE, newRecoveryAddress, oldRecovery);
         emit RecoveryAddressUpdated(oldRecovery, newRecoveryAddress);
     }
 

@@ -1666,7 +1666,7 @@
         "type": "address"
       }
     ],
-    "name": "removeAuthorizedWalletFromRole",
+    "name": "revokeWallet",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

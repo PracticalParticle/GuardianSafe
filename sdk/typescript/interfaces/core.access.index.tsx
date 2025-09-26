@@ -144,7 +144,7 @@ export interface IDynamicRBAC {
 
   // Wallet Management Functions
   addWalletToRole(roleHash: Hex, wallet: Address, options: TransactionOptions): Promise<TransactionResult>;
-  removeAuthorizedWalletFromRole(roleHash: Hex, wallet: Address, options: TransactionOptions): Promise<TransactionResult>;
+  revokeWallet(roleHash: Hex, wallet: Address, options: TransactionOptions): Promise<TransactionResult>;
   replaceWalletInRole(roleHash: Hex, newWallet: Address, oldWallet: Address, options: TransactionOptions): Promise<TransactionResult>;
 
   // Permission Management Functions
