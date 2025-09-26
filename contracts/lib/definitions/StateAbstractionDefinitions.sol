@@ -109,11 +109,14 @@ library StateAbstractionDefinitions {
         });
         
         // Payment function schemas
+        StateAbstraction.TxAction[] memory updatePaymentActions = new StateAbstraction.TxAction[](1);
+        updatePaymentActions[0] = StateAbstraction.TxAction.EXECUTE_UPDATE_PAYMENT;
+        
         schemas[6] = StateAbstraction.FunctionSchema({
             functionName: "updatePaymentForTransaction",
             functionSelector: StateAbstraction.UPDATE_PAYMENT_SELECTOR,
             operationType: SYSTEM_OPERATION,
-            supportedActions: timeDelayRequestActions
+            supportedActions: updatePaymentActions
         });
         
         return schemas;

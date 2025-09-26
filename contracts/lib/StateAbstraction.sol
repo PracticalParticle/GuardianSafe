@@ -64,7 +64,8 @@ library StateAbstraction {
         SIGN_META_CANCEL,
         EXECUTE_META_REQUEST_AND_APPROVE,
         EXECUTE_META_APPROVE,
-        EXECUTE_META_CANCEL
+        EXECUTE_META_CANCEL,
+        EXECUTE_UPDATE_PAYMENT
     }
 
     enum ExecutionType {
@@ -692,7 +693,7 @@ library StateAbstraction {
         uint256 txId,
         PaymentDetails memory paymentDetails
     ) public {
-        if (!hasActionPermission(self, msg.sender, UPDATE_PAYMENT_SELECTOR, TxAction.EXECUTE_TIME_DELAY_REQUEST)) {
+        if (!hasActionPermission(self, msg.sender, UPDATE_PAYMENT_SELECTOR, TxAction.EXECUTE_UPDATE_PAYMENT)) {
             revert SharedValidation.NoPermission(msg.sender);
         }
         SharedValidation.validatePendingTransaction(uint8(self.txRecords[txId].status));
