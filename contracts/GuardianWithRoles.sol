@@ -4,12 +4,12 @@ pragma solidity ^0.8.2;
 import "./core/access/DynamicRBAC.sol";
 
 /**
- * @title GuardianAccountAbstractionWithRoles
+ * @title GuardianWithRoles
  * @dev A basic implementation of account abstraction with dynamic role-based access control using DynamicRBAC
  */
-contract GuardianAccountAbstractionWithRoles is DynamicRBAC {
+contract GuardianWithRoles is DynamicRBAC {
     /**
-     * @notice Initializer to initialize GuardianAccountAbstractionWithRoles
+     * @notice Initializer to initialize GuardianWithRoles
      * @param initialOwner The initial owner address
      * @param broadcaster The broadcaster address
      * @param recovery The recovery address

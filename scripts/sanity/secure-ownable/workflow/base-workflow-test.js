@@ -18,8 +18,8 @@ class BaseWorkflowTest {
             'http://localhost:8545'
         );
         
-        this.contractAddress = process.env.GUARDIAN_ACCOUNT_ABSTRACTION_ADDRESS;
-        this.contractABI = this.loadABI('GuardianAccountAbstraction');
+        this.contractAddress = process.env.GUARDIAN_ADDRESS;
+        this.contractABI = this.loadABI('Guardian');
         
         // Initialize test wallets
         this.wallets = {

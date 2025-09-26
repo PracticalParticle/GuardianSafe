@@ -4,12 +4,12 @@ pragma solidity ^0.8.2;
 import "./core/access/SecureOwnable.sol";
 
 /**
- * @title GuardianAccountAbstraction
+ * @title Guardian
  * @dev A basic implementation of account abstraction using SecureOwnable for secure ownership management
  */
-contract GuardianAccountAbstraction is SecureOwnable {
+contract Guardian is SecureOwnable {
     /**
-     * @notice Initializer to initialize GuardianAccountAbstraction
+     * @notice Initializer to initialize Guardian
      * @param initialOwner The initial owner address
      * @param broadcaster The broadcaster address
      * @param recovery The recovery address

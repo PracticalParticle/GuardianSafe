@@ -56,8 +56,8 @@ After deployment, update the contract addresses in your `.env` file:
 
 ```bash
 # Contract Addresses (update after deployment)
-GUARDIAN_ACCOUNT_ABSTRACTION_ADDRESS=0x...
-GUARDIAN_ACCOUNT_ABSTRACTION_WITH_ROLES_ADDRESS=0x...
+GUARDIAN_ADDRESS=0x...
+GUARDIAN_WITH_ROLES_ADDRESS=0x...
 SIMPLE_VAULT_ADDRESS=0x...
 SIMPLE_RWA20_ADDRESS=0x...
 ```
@@ -134,8 +134,8 @@ CUSTOM_NETWORK_NAME=custom_network
 
 | Variable | Description | Required |
 |----------|-------------|----------|
-| `GUARDIAN_ACCOUNT_ABSTRACTION_ADDRESS` | GuardianAccountAbstraction address | No |
-| `GUARDIAN_ACCOUNT_ABSTRACTION_WITH_ROLES_ADDRESS` | GuardianAccountAbstractionWithRoles address | No |
+| `GUARDIAN_ADDRESS` | Guardian address | No |
+| `GUARDIAN_WITH_ROLES_ADDRESS` | GuardianWithRoles address | No |
 | `SIMPLE_VAULT_ADDRESS` | SimpleVault address | No |
 | `SIMPLE_RWA20_ADDRESS` | SimpleRWA20 address | No |
 

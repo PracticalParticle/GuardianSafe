@@ -25,7 +25,7 @@ class BaseSecureOwnableTest {
         
         // Initialize contract address and ABI
         this.contractAddress = null; // Will be set during initialization
-        this.contractABI = this.loadABI('GuardianAccountAbstraction');
+        this.contractABI = this.loadABI('Guardian');
         
         // Initialize test wallets - will be populated during initialization
         this.wallets = {};
@@ -64,10 +64,10 @@ class BaseSecureOwnableTest {
         
         try {
             // Get contract addresses from Truffle artifacts
-            this.contractAddress = await this.getContractAddressFromArtifacts('GuardianAccountAbstraction');
+            this.contractAddress = await this.getContractAddressFromArtifacts('Guardian');
             
             if (!this.contractAddress) {
-                throw new Error('Could not find GuardianAccountAbstraction address in Truffle artifacts');
+                throw new Error('Could not find Guardian address in Truffle artifacts');
             }
             
             console.log(`📋 Contract Address: ${this.contractAddress}`);
@@ -88,10 +88,10 @@ class BaseSecureOwnableTest {
         
         try {
             // Get contract address from environment
-            this.contractAddress = process.env.GUARDIAN_ACCOUNT_ABSTRACTION_ADDRESS;
+            this.contractAddress = process.env.GUARDIAN_ADDRESS;
             
             if (!this.contractAddress) {
-                throw new Error('GUARDIAN_ACCOUNT_ABSTRACTION_ADDRESS not set in environment variables');
+                throw new Error('GUARDIAN_ADDRESS not set in environment variables');
             }
             
             console.log(`📋 Contract Address: ${this.contractAddress}`);

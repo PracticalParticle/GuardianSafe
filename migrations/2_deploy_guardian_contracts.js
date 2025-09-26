@@ -1,6 +1,6 @@
 // Migration 2: Deploy Guardian Contracts (built on foundation libraries)
-const GuardianAccountAbstraction = artifacts.require("GuardianAccountAbstraction");
-const GuardianAccountAbstractionWithRoles = artifacts.require("GuardianAccountAbstractionWithRoles");
+const Guardian = artifacts.require("Guardian");
+const GuardianWithRoles = artifacts.require("GuardianWithRoles");
 
 module.exports = async function(deployer, network, accounts) {
     console.log(`🚀 Migration 2: Deploying Guardian Contracts on ${network}`);
@@ -24,33 +24,33 @@ module.exports = async function(deployer, network, accounts) {
     console.log("✅ Using SecureOwnableDefinitions at:", sod.address);
     console.log("✅ Using DynamicRBACDefinitions at:", drd.address);
     
-    // Step 2: Deploy GuardianAccountAbstraction
-    console.log("\n📦 Step 2: Deploying GuardianAccountAbstraction...");
+    // Step 2: Deploy Guardian
+    console.log("\n📦 Step 2: Deploying Guardian...");
     
-    // Link all required libraries to GuardianAccountAbstraction
-    await deployer.link(StateAbstraction, GuardianAccountAbstraction);
-    await deployer.link(StateAbstractionDefinitions, GuardianAccountAbstraction);
-    await deployer.link(SecureOwnableDefinitions, GuardianAccountAbstraction);
+    // Link all required libraries to Guardian
+    await deployer.link(StateAbstraction, Guardian);
+    await deployer.link(StateAbstractionDefinitions, Guardian);
+    await deployer.link(SecureOwnableDefinitions, Guardian);
     
-    // Deploy GuardianAccountAbstraction
-    await deployer.deploy(GuardianAccountAbstraction);
-    const guardianAccountAbstraction = await GuardianAccountAbstraction.deployed();
-    console.log("✅ GuardianAccountAbstraction deployed at:", guardianAccountAbstraction.address);
+    // Deploy Guardian
+    await deployer.deploy(Guardian);
+    const guardian = await Guardian.deployed();
+    console.log("✅ Guardian deployed at:", guardian.address);
     
-    // Initialize GuardianAccountAbstraction
-    console.log("🔧 Initializing GuardianAccountAbstraction...");
+    // Initialize Guardian
+    console.log("🔧 Initializing Guardian...");
     try {
-        const tx = await guardianAccountAbstraction.initialize(
+        const tx = await guardian.initialize(
             accounts[0],  // initialOwner
             accounts[1],  // broadcaster
             accounts[2],  // recovery
             1,          // timeLockPeriodSec
             "0x0000000000000000000000000000000000000000"  // eventForwarder (none)
         );
-        console.log("✅ GuardianAccountAbstraction initialized successfully");
+        console.log("✅ Guardian initialized successfully");
         console.log("   Transaction hash:", tx.tx);
     } catch (error) {
-        console.log("❌ GuardianAccountAbstraction initialization failed:");
+        console.log("❌ Guardian initialization failed:");
         console.log("   Error message:", error.message);
         console.log("   Error reason:", error.reason);
         console.log("   Error data:", error.data);
@@ -60,7 +60,7 @@ module.exports = async function(deployer, network, accounts) {
         if (error.data) {
             try {
                 const decodedError = await web3.eth.call({
-                    to: guardianAccountAbstraction.address,
+                    to: guardian.address,
                     data: error.data
                 });
                 console.log("   Decoded error data:", decodedError);
@@ -72,34 +72,34 @@ module.exports = async function(deployer, network, accounts) {
         console.log("⚠️  Contract deployed but not initialized. This may be expected for upgradeable contracts.");
     }
     
-    // Step 3: Deploy GuardianAccountAbstractionWithRoles
-    console.log("\n📦 Step 3: Deploying GuardianAccountAbstractionWithRoles...");
+    // Step 3: Deploy GuardianWithRoles
+    console.log("\n📦 Step 3: Deploying GuardianWithRoles...");
     
-    // Link all required libraries to GuardianAccountAbstractionWithRoles
-    await deployer.link(StateAbstraction, GuardianAccountAbstractionWithRoles);
-    await deployer.link(StateAbstractionDefinitions, GuardianAccountAbstractionWithRoles);
-    await deployer.link(SecureOwnableDefinitions, GuardianAccountAbstractionWithRoles);
-    await deployer.link(DynamicRBACDefinitions, GuardianAccountAbstractionWithRoles);
+    // Link all required libraries to GuardianWithRoles
+    await deployer.link(StateAbstraction, GuardianWithRoles);
+    await deployer.link(StateAbstractionDefinitions, GuardianWithRoles);
+    await deployer.link(SecureOwnableDefinitions, GuardianWithRoles);
+    await deployer.link(DynamicRBACDefinitions, GuardianWithRoles);
     
-    // Deploy GuardianAccountAbstractionWithRoles
-    await deployer.deploy(GuardianAccountAbstractionWithRoles);
-    const guardianAccountAbstractionWithRoles = await GuardianAccountAbstractionWithRoles.deployed();
-    console.log("✅ GuardianAccountAbstractionWithRoles deployed at:", guardianAccountAbstractionWithRoles.address);
+    // Deploy GuardianWithRoles
+    await deployer.deploy(GuardianWithRoles);
+    const guardianWithRoles = await GuardianWithRoles.deployed();
+    console.log("✅ GuardianWithRoles deployed at:", guardianWithRoles.address);
     
-    // Initialize GuardianAccountAbstractionWithRoles
-    console.log("🔧 Initializing GuardianAccountAbstractionWithRoles...");
+    // Initialize GuardianWithRoles
+    console.log("🔧 Initializing GuardianWithRoles...");
     try {
-        const tx = await guardianAccountAbstractionWithRoles.initialize(
+        const tx = await guardianWithRoles.initialize(
             accounts[0],  // initialOwner
             accounts[1],  // broadcaster 
             accounts[2],  // recovery 
             1,          // timeLockPeriodSec
             "0x0000000000000000000000000000000000000000"  // eventForwarder (none)
         );
-        console.log("✅ GuardianAccountAbstractionWithRoles initialized successfully");
+        console.log("✅ GuardianWithRoles initialized successfully");
         console.log("   Transaction hash:", tx.tx);
     } catch (error) {
-        console.log("❌ GuardianAccountAbstractionWithRoles initialization failed:");
+        console.log("❌ GuardianWithRoles initialization failed:");
         console.log("   Error message:", error.message);
         console.log("   Error reason:", error.reason);
         console.log("   Error data:", error.data);
@@ -109,7 +109,7 @@ module.exports = async function(deployer, network, accounts) {
         if (error.data) {
             try {
                 const decodedError = await web3.eth.call({
-                    to: guardianAccountAbstractionWithRoles.address,
+                    to: guardianWithRoles.address,
                     data: error.data
                 });
                 console.log("   Decoded error data:", decodedError);
@@ -123,8 +123,8 @@ module.exports = async function(deployer, network, accounts) {
     
     console.log("\n🎉 Migration 2 completed successfully!");
     console.log("📋 Guardian Contracts Deployed & Initialized:");
-    console.log(`   GuardianAccountAbstraction: ${guardianAccountAbstraction.address}`);
-    console.log(`   GuardianAccountAbstractionWithRoles: ${guardianAccountAbstractionWithRoles.address}`);
+    console.log(`   Guardian: ${guardian.address}`);
+    console.log(`   GuardianWithRoles: ${guardianWithRoles.address}`);
     
     console.log("\n🎯 Complete Deployment Summary:");
     console.log("📚 Foundation Libraries:");
@@ -133,8 +133,8 @@ module.exports = async function(deployer, network, accounts) {
     console.log(`   SecureOwnableDefinitions: ${sod.address}`);
     console.log(`   DynamicRBACDefinitions: ${drd.address}`);
     console.log("🛡️ Guardian Contracts (Deployed & Initialized):");
-    console.log(`   GuardianAccountAbstraction: ${guardianAccountAbstraction.address}`);
-    console.log(`   GuardianAccountAbstractionWithRoles: ${guardianAccountAbstractionWithRoles.address}`);
+    console.log(`   Guardian: ${guardian.address}`);
+    console.log(`   GuardianWithRoles: ${guardianWithRoles.address}`);
     
     console.log("\n✅ All contracts deployed and initialized successfully!");
     console.log("🎯 Ready for analyzer testing with fully functional contracts!");

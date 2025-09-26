@@ -14,7 +14,7 @@ The implementation centers around three core components:
 
 - **SecureOwnable**: A base contract providing secure ownership management with timelock and recovery features
 - **StateAbstraction**: A library implementing core security logic for multi-phase operations
-- **GuardianAccountAbstraction**: The main implementation contract that extends SecureOwnable
+- **Guardian**: The main implementation contract that extends SecureOwnable
 
 ## Key Features
 
@@ -98,7 +98,7 @@ truffle migrate --network development
 - Cryptographic signature verification for meta-transactions
 - Extensive type safety with well-defined data structures
 
-#### GuardianAccountAbstraction Contract
+#### Guardian Contract
 - Main implementation contract extending SecureOwnable
 - Ready-to-use account abstraction solution
 - Customizable for specific application needs
@@ -234,5 +234,5 @@ This project is licensed under the MPL-2.0 License - see the [LICENSE](LICENSE) 
 ---
 
 Created by Particle Crypto Security  
-Copyright © 2025 Particle Crypto Security. All rights reserved.
+Copyright ï¿½ 2025 Particle Crypto Security. All rights reserved.
 

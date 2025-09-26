@@ -17,7 +17,7 @@ Guardian Framework implements a **state machine architecture** with `SecureOpera
 - **SecureOwnable**: Multi-phase ownership management with time-locked operations
 - **DynamicRBAC**: Dynamic role-based access control system
 - **Definitions**: Dynamic interaction with any definition library implementing IDefinition
-- **GuardianAccountAbstraction**: Account abstraction with secure operations
+- **Guardian**: Account abstraction with secure operations
 - **Type Safety**: Full TypeScript support with comprehensive type definitions
 - **Viem Integration**: Built on top of Viem for modern Ethereum development
 
