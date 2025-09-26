@@ -19,22 +19,21 @@ class BaseSecureOwnableTest {
             'http://localhost:8545'
         );
         
-        this.contractAddress = process.env.GUARDIAN_ACCOUNT_ABSTRACTION_ADDRESS;
+        // Determine test mode
+        this.testMode = process.env.TEST_MODE || 'manual';
+        console.log(`🔧 Test Mode: ${this.testMode.toUpperCase()}`);
+        
+        // Initialize contract address and ABI
+        this.contractAddress = null; // Will be set during initialization
         this.contractABI = this.loadABI('GuardianAccountAbstraction');
         
-        // Initialize test wallets
-        this.wallets = {
-            wallet1: this.web3.eth.accounts.privateKeyToAccount(process.env.TEST_WALLET_1_PRIVATE_KEY),
-            wallet2: this.web3.eth.accounts.privateKeyToAccount(process.env.TEST_WALLET_2_PRIVATE_KEY),
-            wallet3: this.web3.eth.accounts.privateKeyToAccount(process.env.TEST_WALLET_3_PRIVATE_KEY),
-            wallet4: this.web3.eth.accounts.privateKeyToAccount(process.env.TEST_WALLET_4_PRIVATE_KEY),
-            wallet5: this.web3.eth.accounts.privateKeyToAccount(process.env.TEST_WALLET_5_PRIVATE_KEY)
-        };
+        // Initialize test wallets - will be populated during initialization
+        this.wallets = {};
         
-        this.contract = new this.web3.eth.Contract(this.contractABI, this.contractAddress);
+        this.contract = null; // Will be initialized after getting contract address
         
-        // Initialize utilities
-        this.eip712Signer = new EIP712Signer(this.web3, this.contractAddress);
+        // Initialize utilities - will be set after contract address is determined
+        this.eip712Signer = null;
         
         // Dynamic role assignments - will be populated during initialization
         this.roles = {
@@ -60,10 +59,145 @@ class BaseSecureOwnableTest {
         return JSON.parse(fs.readFileSync(abiPath, 'utf8'));
     }
 
+    async initializeAutoMode() {
+        console.log('🤖 AUTO MODE: Fetching contract addresses and Ganache accounts...');
+        
+        try {
+            // Get contract addresses from Truffle artifacts
+            this.contractAddress = await this.getContractAddressFromArtifacts('GuardianAccountAbstraction');
+            
+            if (!this.contractAddress) {
+                throw new Error('Could not find GuardianAccountAbstraction address in Truffle artifacts');
+            }
+            
+            console.log(`📋 Contract Address: ${this.contractAddress}`);
+            
+            // Get Ganache accounts
+            await this.initializeGanacheWallets();
+            
+            console.log('✅ Auto mode initialization completed');
+            
+        } catch (error) {
+            console.error('❌ Auto mode initialization failed:', error.message);
+            throw new Error(`Auto mode failed: ${error.message}`);
+        }
+    }
+
+    async initializeManualMode() {
+        console.log('👤 MANUAL MODE: Using provided contract addresses and private keys...');
+        
+        try {
+            // Get contract address from environment
+            this.contractAddress = process.env.GUARDIAN_ACCOUNT_ABSTRACTION_ADDRESS;
+            
+            if (!this.contractAddress) {
+                throw new Error('GUARDIAN_ACCOUNT_ABSTRACTION_ADDRESS not set in environment variables');
+            }
+            
+            console.log(`📋 Contract Address: ${this.contractAddress}`);
+            
+            // Initialize wallets from environment variables
+            this.wallets = {
+                wallet1: this.web3.eth.accounts.privateKeyToAccount(process.env.TEST_WALLET_1_PRIVATE_KEY),
+                wallet2: this.web3.eth.accounts.privateKeyToAccount(process.env.TEST_WALLET_2_PRIVATE_KEY),
+                wallet3: this.web3.eth.accounts.privateKeyToAccount(process.env.TEST_WALLET_3_PRIVATE_KEY),
+                wallet4: this.web3.eth.accounts.privateKeyToAccount(process.env.TEST_WALLET_4_PRIVATE_KEY),
+                wallet5: this.web3.eth.accounts.privateKeyToAccount(process.env.TEST_WALLET_5_PRIVATE_KEY)
+            };
+            
+            console.log('✅ Manual mode initialization completed');
+            
+        } catch (error) {
+            console.error('❌ Manual mode initialization failed:', error.message);
+            throw new Error(`Manual mode failed: ${error.message}`);
+        }
+    }
+
+    async getContractAddressFromArtifacts(contractName) {
+        try {
+            const buildDir = path.join(__dirname, '../../../build/contracts');
+            const artifactPath = path.join(buildDir, `${contractName}.json`);
+            
+            if (!fs.existsSync(artifactPath)) {
+                throw new Error(`Artifact not found: ${artifactPath}`);
+            }
+            
+            const artifact = JSON.parse(fs.readFileSync(artifactPath, 'utf8'));
+            
+            if (!artifact.networks || Object.keys(artifact.networks).length === 0) {
+                throw new Error(`No deployment networks found in ${contractName} artifact`);
+            }
+            
+            // Get the most recent deployment (highest network ID)
+            const networkIds = Object.keys(artifact.networks).map(id => parseInt(id)).sort((a, b) => b - a);
+            const latestNetworkId = networkIds[0];
+            const networkData = artifact.networks[latestNetworkId.toString()];
+            
+            if (!networkData.address) {
+                throw new Error(`No address found for ${contractName} on network ${latestNetworkId}`);
+            }
+            
+            console.log(`📋 Found ${contractName} at ${networkData.address} on network ${latestNetworkId}`);
+            return networkData.address;
+            
+        } catch (error) {
+            console.error(`❌ Error reading ${contractName} artifact:`, error.message);
+            return null;
+        }
+    }
+
+    async initializeGanacheWallets() {
+        try {
+            console.log('🔑 Fetching Ganache accounts...');
+            
+            // Get accounts from Ganache
+            const accounts = await this.web3.eth.getAccounts();
+            
+            if (accounts.length < 5) {
+                throw new Error(`Insufficient Ganache accounts. Found ${accounts.length}, need at least 5`);
+            }
+            
+            // For Ganache, we need to get the private keys
+            // Ganache uses deterministic private keys based on account index
+            const ganachePrivateKeys = [
+                '0x4f3edf983ac636a65a842ce7c78d9aa706d3b113bce9c46f30d7d21715b23b1d', // Account 0
+                '0x6cbed15c793ce57650b9877cf6fa156fbef513c4e6134f022a85b1ffdd59b2a1', // Account 1
+                '0x6370fd033278c143179d81c5526140625662b8daa446c22ee2d73db3707e620c', // Account 2
+                '0x646f1ce2fdad0e6deeeb5c7e8e5543bdde65e86029e2fd9fc169899c440a7913', // Account 3
+                '0xadd53f9a7e588d003326d1cbf9e4a43c061aadd9bc938c843a79e7b4fd2ad743'  // Account 4
+            ];
+            
+            // Initialize wallets with Ganache accounts (create proper Web3 account objects)
+            this.wallets = {};
+            for (let i = 0; i < 5; i++) {
+                const walletName = `wallet${i + 1}`;
+                this.wallets[walletName] = this.web3.eth.accounts.privateKeyToAccount(ganachePrivateKeys[i]);
+                console.log(`  🔑 ${walletName}: ${accounts[i]}`);
+            }
+            
+            console.log('✅ Ganache wallets initialized');
+            
+        } catch (error) {
+            console.error('❌ Error initializing Ganache wallets:', error.message);
+            throw error;
+        }
+    }
+
     async initialize() {
         console.log(`🔧 Initializing ${this.testName}...`);
         
+        // Initialize based on test mode
+        if (this.testMode === 'auto') {
+            await this.initializeAutoMode();
+        } else {
+            await this.initializeManualMode();
+        }
+        
+        // Initialize contract instance
+        this.contract = new this.web3.eth.Contract(this.contractABI, this.contractAddress);
+        
         // Initialize EIP-712 signer
+        this.eip712Signer = new EIP712Signer(this.web3, this.contractAddress);
         await this.eip712Signer.initialize();
         
         // Discover dynamic role assignments

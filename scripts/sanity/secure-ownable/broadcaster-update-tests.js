@@ -298,6 +298,9 @@ class BroadcasterUpdateTests extends BaseSecureOwnableTest {
         await this.checkPendingTransactions();
 
         try {
+            // Get current broadcaster before the test
+            const currentBroadcaster = await this.contract.methods.getBroadcaster().call();
+            
             // Create a new broadcaster update request (use wallet5 since broadcaster is now wallet2)
             const txRecord = await this.createBroadcasterRequestForTimeDelayApproval();
             this.assertTest(txRecord.txId > 0, 'Broadcaster update request created');
@@ -346,15 +349,13 @@ class BroadcasterUpdateTests extends BaseSecureOwnableTest {
 
             // Verify broadcaster address changed to target
             const finalBroadcaster = await this.contract.methods.getBroadcaster().call();
-            // The target broadcaster is encoded in the execution options, not directly in params
-            // Verify that we're using an unused wallet (not the same as current recovery)
             console.log(`  📡 Final broadcaster address: ${finalBroadcaster}`);
             console.log(`  🛡️ Current recovery address: ${await this.contract.methods.getRecovery().call()}`);
             
-            const currentRecovery = await this.contract.methods.getRecovery().call();
+            // Verify that the broadcaster was successfully updated to a different address
             this.assertTest(
-                finalBroadcaster.toLowerCase() !== currentRecovery.toLowerCase(),
-                'Broadcaster is using an unused wallet (different from recovery)'
+                finalBroadcaster.toLowerCase() !== currentBroadcaster.toLowerCase(),
+                'Broadcaster was successfully updated to a different address'
             );
 
             console.log('  🎉 Time delay approval test completed');
