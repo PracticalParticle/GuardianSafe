@@ -11,15 +11,15 @@ const web3 = new Web3(process.env.REMOTE_HOST ?
  * EIP-712 Signing Implementation for Meta-Transactions
  * 
  * This module provides comprehensive EIP-712 signing functionality for the
- * MultiPhaseSecureOperation library's meta-transaction system.
+ * StateAbstraction library's meta-transaction system.
  * 
  * Based on the contract analysis:
- * - Domain: "MultiPhaseSecureOperation", version "1"
+ * - Domain: "StateAbstraction", version "1"
  * - Chain ID: Current blockchain chain ID
  * - Verifying Contract: The contract address
  * 
  * The signing process follows the EIP-712 standard with the specific
- * type definitions from MultiPhaseSecureOperation.sol
+ * type definitions from StateAbstraction.sol
  */
 
 class EIP712Signer {
@@ -40,7 +40,7 @@ class EIP712Signer {
 
     /**
      * Get the EIP-712 domain separator
-     * Based on MultiPhaseSecureOperation.sol lines 197-198
+     * Based on StateAbstraction.sol lines 197-198
      */
     getDomainSeparator() {
         console.log(`  🔍 Debug: Getting domain separator...`);
@@ -59,7 +59,7 @@ class EIP712Signer {
                 ['bytes32', 'bytes32', 'bytes32', 'uint256', 'address'],
                 [
                     domainTypeHash,
-                    this.web3.utils.keccak256('MultiPhaseSecureOperation'),
+                    this.web3.utils.keccak256('StateAbstraction'),
                     this.web3.utils.keccak256('1'),
                     this.chainId,
                     this.contractAddress
@@ -73,7 +73,7 @@ class EIP712Signer {
 
     /**
      * Get the EIP-712 type hash for MetaTransaction
-     * Based on MultiPhaseSecureOperation.sol line 197
+     * Based on StateAbstraction.sol line 197
      */
     getTypeHash() {
         return this.web3.utils.keccak256(
@@ -273,7 +273,7 @@ class EIP712Signer {
 
     /**
      * Prepare transaction data based on execution type
-     * Based on MultiPhaseSecureOperation.sol lines 513-523
+     * Based on StateAbstraction.sol lines 513-523
      */
     prepareTransactionData(txRecord) {
         if (txRecord.params.executionType === 1) { // STANDARD

@@ -8,7 +8,7 @@ const keccak256 = (str: string): string => {
 };
 
 /**
- * Enums and constants for MultiPhaseSecureOperation
+ * Enums and constants for StateAbstraction
  */
 export const TxStatus = {
   UNDEFINED: 0,

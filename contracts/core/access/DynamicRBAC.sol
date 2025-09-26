@@ -5,7 +5,7 @@ pragma solidity ^0.8.2;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 // Contract imports
-import "../../lib/MultiPhaseSecureOperation.sol";
+import "../../lib/StateAbstraction.sol";
 import "../../utils/SharedValidationLibrary.sol";
 import "../../lib/definitions/SecureOwnableDefinitions.sol";
 import "../../lib/definitions/DynamicRBACDefinitions.sol";
@@ -14,13 +14,13 @@ import "./SecureOwnable.sol";
 
 /**
  * @title DynamicRBAC
- * @dev Minimal Dynamic Role-Based Access Control system based on MultiPhaseSecureOperation
+ * @dev Minimal Dynamic Role-Based Access Control system based on StateAbstraction
  * 
  * This contract provides essential dynamic RBAC functionality:
  * - Creation of non-protected roles
  * - Basic wallet assignment to roles
  * - Function permission management per role
- * - Integration with MultiPhaseSecureOperation for secure operations
+ * - Integration with StateAbstraction for secure operations
  * 
  * Key Features:
  * - Only non-protected roles can be created dynamically
@@ -29,7 +29,7 @@ import "./SecureOwnable.sol";
  * - Essential role management functions only
  */
 abstract contract DynamicRBAC is Initializable, SecureOwnable {
-    using MultiPhaseSecureOperation for MultiPhaseSecureOperation.SecureOperationState;
+    using StateAbstraction for StateAbstraction.SecureOperationState;
     using SharedValidationLibrary for *;
     
     // State variables
@@ -63,7 +63,7 @@ abstract contract DynamicRBAC is Initializable, SecureOwnable {
         
         // Load DynamicRBAC-specific definitions
         IDefinitionContract.RolePermission memory permissions = DynamicRBACDefinitions.getRolePermissions();
-        MultiPhaseSecureOperation.loadDefinitionContract(
+        StateAbstraction.loadDefinitionContract(
             _getSecureState(),
             DynamicRBACDefinitions.getOperationTypes(),
             DynamicRBACDefinitions.getFunctionSchemas(),
@@ -84,7 +84,7 @@ abstract contract DynamicRBAC is Initializable, SecureOwnable {
     function updateRoleEditingToggleExecutionOptions(
         bool enabled
     ) public pure returns (bytes memory) {
-        return MultiPhaseSecureOperation.createStandardExecutionOptions(
+        return StateAbstraction.createStandardExecutionOptions(
             DynamicRBACDefinitions.ROLE_EDITING_TOGGLE_SELECTOR,
             abi.encode(enabled)
         );
@@ -96,8 +96,8 @@ abstract contract DynamicRBAC is Initializable, SecureOwnable {
      * @return The transaction record
      */
     function updateRoleEditingToggleRequestAndApprove(
-        MultiPhaseSecureOperation.MetaTransaction memory metaTx
-    ) public onlyBroadcaster returns (MultiPhaseSecureOperation.TxRecord memory) {
+        StateAbstraction.MetaTransaction memory metaTx
+    ) public onlyBroadcaster returns (StateAbstraction.TxRecord memory) {
         _getSecureState().checkPermission(DynamicRBACDefinitions.ROLE_EDITING_TOGGLE_META_SELECTOR);
 
         return _requestAndApprove(metaTx);
@@ -115,7 +115,7 @@ abstract contract DynamicRBAC is Initializable, SecureOwnable {
     function createNewRole(
         string memory roleName,
         uint256 maxWallets,
-        MultiPhaseSecureOperation.FunctionPermission[] memory functionPermissions
+        StateAbstraction.FunctionPermission[] memory functionPermissions
     ) external onlyOwner returns (bytes32) {
         // Validate that role editing is enabled
         if (!roleEditingEnabled) revert SharedValidationLibrary.RoleEditingDisabled();
@@ -126,12 +126,12 @@ abstract contract DynamicRBAC is Initializable, SecureOwnable {
         bytes32 roleHash = keccak256(bytes(roleName));
         
         // Create the role in the secure state with isProtected = false
-        // MultiPhaseSecureOperation.createRole already validates role doesn't exist
-        MultiPhaseSecureOperation.createRole(_getSecureState(), roleName, maxWallets, false);
+        // StateAbstraction.createRole already validates role doesn't exist
+        StateAbstraction.createRole(_getSecureState(), roleName, maxWallets, false);
         
         // Add all function permissions to the role
         for (uint i = 0; i < functionPermissions.length; i++) {
-            MultiPhaseSecureOperation.addFunctionToRole(
+            StateAbstraction.addFunctionToRole(
                 _getSecureState(), 
                 roleHash, 
                 functionPermissions[i]
@@ -154,12 +154,12 @@ abstract contract DynamicRBAC is Initializable, SecureOwnable {
         // Validate that the role is not protected
         if (_getSecureState().getRole(roleHash).isProtected) revert SharedValidationLibrary.CannotModifyProtectedRoles();
         
-        // MultiPhaseSecureOperation.addAuthorizedWalletToRole already validates:
+        // StateAbstraction.addAuthorizedWalletToRole already validates:
         // - wallet is not zero address
         // - role exists
         // - role has capacity
         // - wallet is not already in role
-        MultiPhaseSecureOperation.addAuthorizedWalletToRole(_getSecureState(), roleHash, wallet);
+        StateAbstraction.addAuthorizedWalletToRole(_getSecureState(), roleHash, wallet);
         emit WalletAddedToRole(roleHash, wallet);
     }
 
@@ -176,10 +176,10 @@ abstract contract DynamicRBAC is Initializable, SecureOwnable {
         // Validate that the role is not protected
         if (_getSecureState().getRole(roleHash).isProtected) revert SharedValidationLibrary.CannotModifyProtectedRoles();
         
-        // MultiPhaseSecureOperation.removeAuthorizedWalletFromRole already validates:
+        // StateAbstraction.removeAuthorizedWalletFromRole already validates:
         // - role exists
         // - wallet exists in role
-        MultiPhaseSecureOperation.removeAuthorizedWalletFromRole(_getSecureState(), roleHash, wallet);
+        StateAbstraction.removeAuthorizedWalletFromRole(_getSecureState(), roleHash, wallet);
         emit WalletRemovedFromRole(roleHash, wallet);
     }
 

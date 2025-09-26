@@ -9,18 +9,18 @@ module.exports = async function(deployer, network, accounts) {
     // Get deployed foundation libraries from Migration 1
     console.log("\n📦 Step 1: Linking Foundation Libraries...");
     
-    const MultiPhaseSecureOperation = artifacts.require("MultiPhaseSecureOperation");
-    const MultiPhaseSecureOperationDefinitions = artifacts.require("MultiPhaseSecureOperationDefinitions");
+    const StateAbstraction = artifacts.require("StateAbstraction");
+    const StateAbstractionDefinitions = artifacts.require("StateAbstractionDefinitions");
     const SecureOwnableDefinitions = artifacts.require("SecureOwnableDefinitions");
     const DynamicRBACDefinitions = artifacts.require("DynamicRBACDefinitions");
     
-    const mps = await MultiPhaseSecureOperation.deployed();
-    const mpsd = await MultiPhaseSecureOperationDefinitions.deployed();
+    const sa = await StateAbstraction.deployed();
+    const sad = await StateAbstractionDefinitions.deployed();
     const sod = await SecureOwnableDefinitions.deployed();
     const drd = await DynamicRBACDefinitions.deployed();
     
-    console.log("✅ Using MultiPhaseSecureOperation at:", mps.address);
-    console.log("✅ Using MultiPhaseSecureOperationDefinitions at:", mpsd.address);
+    console.log("✅ Using StateAbstraction at:", sa.address);
+    console.log("✅ Using StateAbstractionDefinitions at:", sad.address);
     console.log("✅ Using SecureOwnableDefinitions at:", sod.address);
     console.log("✅ Using DynamicRBACDefinitions at:", drd.address);
     
@@ -28,8 +28,8 @@ module.exports = async function(deployer, network, accounts) {
     console.log("\n📦 Step 2: Deploying GuardianAccountAbstraction...");
     
     // Link all required libraries to GuardianAccountAbstraction
-    await deployer.link(MultiPhaseSecureOperation, GuardianAccountAbstraction);
-    await deployer.link(MultiPhaseSecureOperationDefinitions, GuardianAccountAbstraction);
+    await deployer.link(StateAbstraction, GuardianAccountAbstraction);
+    await deployer.link(StateAbstractionDefinitions, GuardianAccountAbstraction);
     await deployer.link(SecureOwnableDefinitions, GuardianAccountAbstraction);
     
     // Deploy GuardianAccountAbstraction
@@ -76,8 +76,8 @@ module.exports = async function(deployer, network, accounts) {
     console.log("\n📦 Step 3: Deploying GuardianAccountAbstractionWithRoles...");
     
     // Link all required libraries to GuardianAccountAbstractionWithRoles
-    await deployer.link(MultiPhaseSecureOperation, GuardianAccountAbstractionWithRoles);
-    await deployer.link(MultiPhaseSecureOperationDefinitions, GuardianAccountAbstractionWithRoles);
+    await deployer.link(StateAbstraction, GuardianAccountAbstractionWithRoles);
+    await deployer.link(StateAbstractionDefinitions, GuardianAccountAbstractionWithRoles);
     await deployer.link(SecureOwnableDefinitions, GuardianAccountAbstractionWithRoles);
     await deployer.link(DynamicRBACDefinitions, GuardianAccountAbstractionWithRoles);
     
@@ -128,8 +128,8 @@ module.exports = async function(deployer, network, accounts) {
     
     console.log("\n🎯 Complete Deployment Summary:");
     console.log("📚 Foundation Libraries:");
-    console.log(`   MultiPhaseSecureOperation: ${mps.address}`);
-    console.log(`   MultiPhaseSecureOperationDefinitions: ${mpsd.address}`);
+    console.log(`   StateAbstraction: ${sa.address}`);
+    console.log(`   StateAbstractionDefinitions: ${sad.address}`);
     console.log(`   SecureOwnableDefinitions: ${sod.address}`);
     console.log(`   DynamicRBACDefinitions: ${drd.address}`);
     console.log("🛡️ Guardian Contracts (Deployed & Initialized):");

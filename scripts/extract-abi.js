@@ -8,7 +8,7 @@ const path = require('path');
 
 // List of contract names to process
 const contractsToProcess = [
-  'MultiPhaseSecureOperation',
+  'StateAbstraction',
   'SecureOwnable',
   'DynamicRBAC',
   'IDefinitionContract',

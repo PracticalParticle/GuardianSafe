@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
 pragma solidity ^0.8.2;
 
-// Import TxRecord struct from MultiPhaseSecureOperation
-import "../lib/MultiPhaseSecureOperation.sol";
+// Import TxRecord struct from StateAbstraction
+import "../lib/StateAbstraction.sol";
 
 /**
  * @title IEventForwarder
@@ -19,5 +19,5 @@ interface IEventForwarder {
      * @param txRecord The transaction record
      * @param decodedParams The decoded parameters
      */
-    function forwardTxEvent(MultiPhaseSecureOperation.TxRecord calldata txRecord, string calldata triggerFunc, bytes calldata decodedParams) external;
+    function forwardTxEvent(StateAbstraction.TxRecord calldata txRecord, string calldata triggerFunc, bytes calldata decodedParams) external;
 }

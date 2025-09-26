@@ -92,7 +92,7 @@ struct SecureOperationState {
 ### Layer 1: Core Libraries
 **Purpose**: Provide foundational security and state management
 
-- **`MultiPhaseSecureOperation.sol`**: Core state machine implementation
+- **`StateAbstraction.sol`**: Core state machine implementation
 - **`SharedValidationLibrary.sol`**: Common validation functions
 - **`BaseDefinitionLoader.sol`**: Base functionality for definition loading
 
@@ -101,7 +101,7 @@ struct SecureOperationState {
 
 - **`SecureOwnableDefinitions.sol`**: Standard definitions for ownership operations
 - **`DynamicRBACDefinitions.sol`**: Standard definitions for RBAC operations
-- **`MultiPhaseSecureOperationDefinitions.sol`**: Standard definitions for multi-phase operations
+- **`StateAbstractionDefinitions.sol`**: Standard definitions for multi-phase operations
 
 ### Layer 3: Contract Implementations
 **Purpose**: Provide ready-to-use contract implementations

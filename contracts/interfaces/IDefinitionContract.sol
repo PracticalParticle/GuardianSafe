@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 pragma solidity ^0.8.2;
 
-import "../lib/MultiPhaseSecureOperation.sol";
+import "../lib/StateAbstraction.sol";
 
 /**
  * @dev Interface for definition contracts that provide operation types, function schemas, and role permissions
@@ -23,7 +23,7 @@ interface IDefinitionContract {
      */
     struct RolePermission {
         bytes32[] roleHashes;
-        MultiPhaseSecureOperation.FunctionPermission[] functionPermissions;
+        StateAbstraction.FunctionPermission[] functionPermissions;
     }
 
     /**
@@ -39,7 +39,7 @@ interface IDefinitionContract {
     struct WorkflowStep {
         string functionName;
         bytes4 functionSelector;
-        MultiPhaseSecureOperation.TxAction action;
+        StateAbstraction.TxAction action;
         string[] roles;
         string description;
         bool isOffChain;
@@ -83,13 +83,13 @@ interface IDefinitionContract {
      * @dev Returns all operation type definitions
      * @return Array of operation type definitions
      */
-    function getOperationTypes() external pure returns (MultiPhaseSecureOperation.ReadableOperationType[] memory);
+    function getOperationTypes() external pure returns (StateAbstraction.ReadableOperationType[] memory);
     
     /**
      * @dev Returns all function schema definitions
      * @return Array of function schema definitions
      */
-    function getFunctionSchemas() external pure returns (MultiPhaseSecureOperation.FunctionSchema[] memory);
+    function getFunctionSchemas() external pure returns (StateAbstraction.FunctionSchema[] memory);
     
     /**
      * @dev Returns all role hashes and their corresponding function permissions

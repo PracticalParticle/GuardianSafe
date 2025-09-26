@@ -13,7 +13,7 @@ The Guardian framework is built around a centralized state machine that manages 
 #### Implementation
 ```solidity
 contract GuardianContract {
-    MultiPhaseSecureOperation.SecureOperationState private _secureState;
+    StateAbstraction.SecureOperationState private _secureState;
     
     function _executeOperation(bytes32 operationType, bytes calldata data) internal {
         // All operations flow through the state machine
@@ -74,12 +74,12 @@ Guardian contracts use a clear inheritance hierarchy that provides layered secur
 #### Implementation
 ```solidity
 // Base security functionality
-contract MultiPhaseSecureOperation {
+contract StateAbstraction {
     // Core state machine implementation
 }
 
 // Enhanced security with ownership
-contract SecureOwnable is MultiPhaseSecureOperation {
+contract SecureOwnable is StateAbstraction {
     // Ownership-specific functionality
 }
 

@@ -26,7 +26,7 @@ type UserAddress = Address & { __brand: 'UserAddress' }
 // Contract definition types
 type DefinitionType = 
   | 'SecureOwnable'
-  | 'MultiPhaseSecureOperation'
+  | 'StateAbstraction'
   | 'DynamicRBAC'
   | 'Generic'
 
@@ -126,7 +126,7 @@ interface OperationWorkflow {
   supportedRoles: string[];
 }
 
-// Readable operation type (from MultiPhaseSecureOperation)
+// Readable operation type (from StateAbstraction)
 interface ReadableOperationType {
   operationType: Hex;
   name: string;

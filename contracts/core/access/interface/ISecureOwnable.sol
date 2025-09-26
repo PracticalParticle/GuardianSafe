@@ -2,7 +2,7 @@
 pragma solidity ^0.8.2;
 
 // Contracts imports
-import "../../../lib/MultiPhaseSecureOperation.sol";
+import "../../../lib/StateAbstraction.sol";
 
 /**
  * @title ISecureOwnable
@@ -13,8 +13,8 @@ interface ISecureOwnable {
     function getBroadcaster() external view returns (address);
     function getRecovery() external view returns (address);
     function getTimeLockPeriodSec() external view returns (uint256);
-    function getTransactionHistory(uint256 fromTxId, uint256 toTxId) external view returns (MultiPhaseSecureOperation.TxRecord[] memory);
-    function getTransaction(uint256 txId) external view returns (MultiPhaseSecureOperation.TxRecord memory);
+    function getTransactionHistory(uint256 fromTxId, uint256 toTxId) external view returns (StateAbstraction.TxRecord[] memory);
+    function getTransaction(uint256 txId) external view returns (StateAbstraction.TxRecord memory);
     function getSupportedOperationTypes() external view returns (bytes32[] memory);
     function isOperationTypeSupported(bytes32 operationType) external view returns (bool);
 }

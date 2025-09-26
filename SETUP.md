@@ -126,7 +126,7 @@ CUSTOM_NETWORK_NAME=custom_network
 
 | Variable | Description | Required |
 |----------|-------------|----------|
-| `MULTIPHASE_DEFINITIONS_ADDRESS` | MultiPhaseSecureOperationDefinitions address | Yes |
+| `MULTIPHASE_DEFINITIONS_ADDRESS` | StateAbstractionDefinitions address | Yes |
 | `SECURE_OWNABLE_DEFINITIONS_ADDRESS` | SecureOwnableDefinitions address | Yes |
 | `DYNAMIC_RBAC_DEFINITIONS_ADDRESS` | DynamicRBACDefinitions address | Yes |
 

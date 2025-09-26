@@ -16,7 +16,7 @@
             "type": "string"
           }
         ],
-        "internalType": "struct MultiPhaseSecureOperation.ReadableOperationType[]",
+        "internalType": "struct StateAbstraction.ReadableOperationType[]",
         "name": "",
         "type": "tuple[]"
       }
@@ -46,12 +46,12 @@
             "type": "bytes32"
           },
           {
-            "internalType": "enum MultiPhaseSecureOperation.TxAction[]",
+            "internalType": "enum StateAbstraction.TxAction[]",
             "name": "supportedActions",
             "type": "uint8[]"
           }
         ],
-        "internalType": "struct MultiPhaseSecureOperation.FunctionSchema[]",
+        "internalType": "struct StateAbstraction.FunctionSchema[]",
         "name": "",
         "type": "tuple[]"
       }
@@ -78,12 +78,12 @@
                 "type": "bytes4"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.TxAction[]",
+                "internalType": "enum StateAbstraction.TxAction[]",
                 "name": "grantedActions",
                 "type": "uint8[]"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.FunctionPermission[]",
+            "internalType": "struct StateAbstraction.FunctionPermission[]",
             "name": "functionPermissions",
             "type": "tuple[]"
           }
@@ -137,7 +137,7 @@
                     "type": "bytes4"
                   },
                   {
-                    "internalType": "enum MultiPhaseSecureOperation.TxAction",
+                    "internalType": "enum StateAbstraction.TxAction",
                     "name": "action",
                     "type": "uint8"
                   },
@@ -252,7 +252,7 @@
                     "type": "bytes4"
                   },
                   {
-                    "internalType": "enum MultiPhaseSecureOperation.TxAction",
+                    "internalType": "enum StateAbstraction.TxAction",
                     "name": "action",
                     "type": "uint8"
                   },
@@ -349,7 +349,7 @@
                 "type": "bytes4"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.TxAction",
+                "internalType": "enum StateAbstraction.TxAction",
                 "name": "action",
                 "type": "uint8"
               },

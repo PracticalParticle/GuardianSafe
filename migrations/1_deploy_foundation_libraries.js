@@ -1,6 +1,6 @@
 // Migration 1: Deploy Core Libraries and Definition Libraries (Foundation)
-const MPS = artifacts.require("MultiPhaseSecureOperation");
-const MPSD = artifacts.require("MultiPhaseSecureOperationDefinitions");
+const SA = artifacts.require("StateAbstraction");
+const SAD = artifacts.require("StateAbstractionDefinitions");
 const SOD = artifacts.require("SecureOwnableDefinitions");
 const DRD = artifacts.require("DynamicRBACDefinitions");
 
@@ -11,18 +11,18 @@ module.exports = async function(deployer, network, accounts) {
     // Step 1: Deploy core libraries (no dependencies)
     console.log("\n📦 Step 1: Deploying Core Libraries...");
     
-    // Deploy MultiPhaseSecureOperation (core library)
-    await deployer.deploy(MPS);
-    const mps = await MPS.deployed();
-    console.log("✅ MultiPhaseSecureOperation deployed at:", mps.address);
+    // Deploy StateAbstraction (core library)
+    await deployer.deploy(SA);
+    const sa = await SA.deployed();
+    console.log("✅ StateAbstraction deployed at:", sa.address);
     
     // Step 2: Deploy definition libraries (depend on core libraries)
     console.log("\n📦 Step 2: Deploying Definition Libraries...");
     
-    // Deploy MultiPhaseSecureOperationDefinitions (no linking needed - it's a library)
-    await deployer.deploy(MPSD);
-    const mpsd = await MPSD.deployed();
-    console.log("✅ MultiPhaseSecureOperationDefinitions deployed at:", mpsd.address);
+    // Deploy StateAbstractionDefinitions (no linking needed - it's a library)
+    await deployer.deploy(SAD);
+    const sad = await SAD.deployed();
+    console.log("✅ StateAbstractionDefinitions deployed at:", sad.address);
     
     // Deploy SecureOwnableDefinitions (no linking needed - it's a library)
     await deployer.deploy(SOD);
@@ -36,8 +36,8 @@ module.exports = async function(deployer, network, accounts) {
     
     console.log("\n🎉 Migration 1 completed successfully!");
     console.log("📋 Foundation Libraries Deployed:");
-    console.log(`   MultiPhaseSecureOperation: ${mps.address}`);
-    console.log(`   MultiPhaseSecureOperationDefinitions: ${mpsd.address}`);
+    console.log(`   StateAbstraction: ${sa.address}`);
+    console.log(`   StateAbstractionDefinitions: ${sad.address}`);
     console.log(`   SecureOwnableDefinitions: ${sod.address}`);
     console.log(`   DynamicRBACDefinitions: ${drd.address}`);
     console.log("\n🎯 Ready for Migration 2: Guardian Contracts");

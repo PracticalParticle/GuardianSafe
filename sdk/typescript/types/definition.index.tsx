@@ -72,7 +72,7 @@ export interface OperationWorkflow {
 }
 
 /**
- * Readable operation type (from MultiPhaseSecureOperation)
+ * Readable operation type (from StateAbstraction)
  */
 export interface ReadableOperationType {
   operationType: Hex;

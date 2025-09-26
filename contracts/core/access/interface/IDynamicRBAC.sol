@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 pragma solidity ^0.8.2;
 
-import "../../../lib/MultiPhaseSecureOperation.sol";
+import "../../../lib/StateAbstraction.sol";
 
 /**
  * @title IDynamicRBAC
@@ -14,7 +14,7 @@ import "../../../lib/MultiPhaseSecureOperation.sol";
  * - Role-based permission assignment
  * - Wallet assignment to roles
  * - Role hierarchy and inheritance
- * - Integration with MultiPhaseSecureOperation for secure operations
+ * - Integration with StateAbstraction for secure operations
  * 
  * The interface supports both protected and non-protected roles,
  * allowing for flexible access control management.
@@ -26,7 +26,7 @@ interface IDynamicRBAC {
     event WalletAddedToRole(bytes32 indexed roleHash, address indexed wallet);
     event WalletRemovedFromRole(bytes32 indexed roleHash, address indexed wallet);
     event RoleDeleted(bytes32 indexed roleHash);
-    event FunctionPermissionAdded(bytes32 indexed roleHash, bytes4 indexed functionSelector, MultiPhaseSecureOperation.TxAction action);
+    event FunctionPermissionAdded(bytes32 indexed roleHash, bytes4 indexed functionSelector, StateAbstraction.TxAction action);
     event FunctionPermissionRemoved(bytes32 indexed roleHash, bytes4 indexed functionSelector);
 
     // Role Management Functions
@@ -96,7 +96,7 @@ interface IDynamicRBAC {
     function addFunctionPermissionToRole(
         bytes32 roleHash,
         bytes4 functionSelector,
-        MultiPhaseSecureOperation.TxAction action
+        StateAbstraction.TxAction action
     ) external;
 
     /**
@@ -160,7 +160,7 @@ interface IDynamicRBAC {
      */
     function getRolePermissions(bytes32 roleHash) external view returns (
         bytes4[] memory functionSelectors,
-        MultiPhaseSecureOperation.TxAction[] memory actions
+        StateAbstraction.TxAction[] memory actions
     );
 
     /**

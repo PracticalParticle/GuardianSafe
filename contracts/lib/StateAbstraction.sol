@@ -11,28 +11,29 @@ import "../utils/SharedValidationLibrary.sol";
 import "../interfaces/IEventForwarder.sol";
 
 /**
- * @title MultiPhaseSecureOperation
- * @dev A library for implementing secure multi-phase operations with time-locks and meta-transactions
+ * @title StateAbstraction
+ * @dev A library for implementing secure state abstraction with time-locks and meta-transactions
  * 
  * This library provides a comprehensive framework for creating secure operations that require
- * multiple phases of approval before execution. It supports:
+ * state management and multiple phases of approval before execution. It supports:
  * 
  * - Time-locked operations that can only be executed after a waiting period
  * - Meta-transactions for delegated approvals
  * - Role-based access control for different operation types
  * - Multiple execution types (standard function calls or raw transaction data)
  * - Payment handling for both native tokens and ERC20 tokens
+ * - State machine-driven operation workflows
  * 
- * The library uses MultiPhaseSecureOperationDefinitions for modular configuration,
+ * The library uses StateAbstractionDefinitions for modular configuration,
  * allowing easy customization of operation types, function schemas, and role permissions
  * without modifying the core library code.
  * 
  * The library is designed to be used as a building block for secure smart contract systems
- * that require high levels of security and flexibility.
+ * that require high levels of security and flexibility through state abstraction.
  */
-library MultiPhaseSecureOperation {
+library StateAbstraction {
     // ============ VERSION INFORMATION ============
-    string public constant LIBRARY_NAME = "MultiPhaseSecureOperation";
+    string public constant LIBRARY_NAME = "StateAbstraction";
     string public constant VERSION = "1.0.0";
     
     using MessageHashUtils for bytes32;

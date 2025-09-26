@@ -1,4 +1,4 @@
-﻿> ⚠️ **WARNING: EXPERIMENTAL SOFTWARE** ⚠️
+> ?? **WARNING: EXPERIMENTAL SOFTWARE** ??
 > 
 > This repository contains experimental, untested smart contract code. It is not ready for production use and may contain security vulnerabilities. Use at your own risk. Do not use with real assets or in production environments.
 
@@ -13,7 +13,7 @@ Particle's Guardian Account Abstraction provides a sophisticated security framew
 The implementation centers around three core components:
 
 - **SecureOwnable**: A base contract providing secure ownership management with timelock and recovery features
-- **MultiPhaseSecureOperation**: A library implementing core security logic for multi-phase operations
+- **StateAbstraction**: A library implementing core security logic for multi-phase operations
 - **GuardianAccountAbstraction**: The main implementation contract that extends SecureOwnable
 
 ## Key Features
@@ -91,7 +91,7 @@ truffle migrate --network development
 - Meta-transaction support for delegated operations
 - Comprehensive event emission for monitoring and auditing
 
-#### MultiPhaseSecureOperation Library
+#### StateAbstraction Library
 - Core security logic for multi-phase operations
 - Transaction state management with strict lifecycle enforcement
 - Sophisticated time delay enforcement with release time calculations
@@ -234,5 +234,5 @@ This project is licensed under the MPL-2.0 License - see the [LICENSE](LICENSE) 
 ---
 
 Created by Particle Crypto Security  
-Copyright © 2025 Particle Crypto Security. All rights reserved.
+Copyright � 2025 Particle Crypto Security. All rights reserved.
 
