@@ -2,7 +2,7 @@
 pragma solidity ^0.8.2;
 
 import "../StateAbstraction.sol";
-import "../../interfaces/IDefinitionContract.sol";
+import "../../interfaces/IDefinition.sol";
 
 /**
  * @title StateAbstractionDefinitions
@@ -10,7 +10,7 @@ import "../../interfaces/IDefinitionContract.sol";
  * This library holds static data that can be used to initialize StateAbstraction contracts
  * without increasing the main contract size
  * 
- * This library implements the IDefinitionContract interface from StateAbstraction
+ * This library implements the IDefinition interface from StateAbstraction
  * and provides a direct initialization function for StateAbstraction contracts
  */
 library StateAbstractionDefinitions {
@@ -118,7 +118,7 @@ library StateAbstractionDefinitions {
      * @dev Returns predefined role hashes and their corresponding function permissions
      * @return RolePermission struct containing roleHashes and functionPermissions arrays
      */
-    function getRolePermissions() public pure returns (IDefinitionContract.RolePermission memory) {
+    function getRolePermissions() public pure returns (IDefinition.RolePermission memory) {
         bytes32[] memory roleHashes;
         StateAbstraction.FunctionPermission[] memory functionPermissions;
         roleHashes = new bytes32[](12);
@@ -247,7 +247,7 @@ library StateAbstractionDefinitions {
             grantedActions: recoveryTxCancelActions
         });
         
-        return IDefinitionContract.RolePermission({
+        return IDefinition.RolePermission({
             roleHashes: roleHashes,
             functionPermissions: functionPermissions
         });
@@ -257,8 +257,8 @@ library StateAbstractionDefinitions {
      * @dev Returns all operation workflows
      * @return Array of operation workflow definitions
      */
-    function getOperationWorkflows() public pure returns (IDefinitionContract.OperationWorkflow[] memory) {
-        IDefinitionContract.OperationWorkflow[] memory workflows = new IDefinitionContract.OperationWorkflow[](0);
+    function getOperationWorkflows() public pure returns (IDefinition.OperationWorkflow[] memory) {
+        IDefinition.OperationWorkflow[] memory workflows = new IDefinition.OperationWorkflow[](0);
         
         return workflows;
     }
@@ -268,12 +268,12 @@ library StateAbstractionDefinitions {
      * @param operationType The operation type hash to get workflow for
      * @return OperationWorkflow struct containing workflow information for the operation
      */
-    function getWorkflowForOperation(bytes32 operationType) public pure returns (IDefinitionContract.OperationWorkflow memory) {
+    function getWorkflowForOperation(bytes32 operationType) public pure returns (IDefinition.OperationWorkflow memory) {
         // Return empty workflow for now
-        IDefinitionContract.WorkflowPath[] memory emptyPaths = new IDefinitionContract.WorkflowPath[](0);
+        IDefinition.WorkflowPath[] memory emptyPaths = new IDefinition.WorkflowPath[](0);
         string[] memory emptyRoles = new string[](0);
         
-        return IDefinitionContract.OperationWorkflow({
+        return IDefinition.OperationWorkflow({
             operationType: operationType,
             operationName: "",
             paths: emptyPaths,
@@ -285,8 +285,8 @@ library StateAbstractionDefinitions {
      * @dev Returns all available workflow paths
      * @return Array of workflow path definitions
      */
-    function getWorkflowPaths() public pure returns (IDefinitionContract.WorkflowPath[] memory) {
-        IDefinitionContract.WorkflowPath[] memory paths = new IDefinitionContract.WorkflowPath[](0);
+    function getWorkflowPaths() public pure returns (IDefinition.WorkflowPath[] memory) {
+        IDefinition.WorkflowPath[] memory paths = new IDefinition.WorkflowPath[](0);
         
         return paths;
     }

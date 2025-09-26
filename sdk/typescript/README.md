@@ -16,7 +16,7 @@ Guardian Framework implements a **state machine architecture** with `SecureOpera
 
 - **SecureOwnable**: Multi-phase ownership management with time-locked operations
 - **DynamicRBAC**: Dynamic role-based access control system
-- **DefinitionContract**: Dynamic interaction with any definition library implementing IDefinitionContract
+- **Definitions**: Dynamic interaction with any definition library implementing IDefinition
 - **GuardianAccountAbstraction**: Account abstraction with secure operations
 - **Type Safety**: Full TypeScript support with comprehensive type definitions
 - **Viem Integration**: Built on top of Viem for modern Ethereum development
@@ -55,7 +55,7 @@ npm install viem
 import { 
   SecureOwnable, 
   DynamicRBAC,
-  DefinitionContract,
+  Definitions,
   type Address,
   type PublicClient,
   type WalletClient,
@@ -82,10 +82,10 @@ const dynamicRBAC = new DynamicRBAC(
   chain
 );
 
-const definitionContract = new DefinitionContract(
+const definitions = new Definitions(
   publicClient,
   walletClient,
-  definitionContractAddress,
+  definitionsAddress,
   chain
 );
 ```
@@ -230,31 +230,31 @@ const wallets = await dynamicRBAC.getWalletsInRole(roleHash);
 const permissions = await dynamicRBAC.getRolePermissions(roleHash);
 ```
 
-## DefinitionContract Usage
+## Definitions Usage
 
-The `DefinitionContract` class provides dynamic interaction with any definition library that implements the `IDefinitionContract` interface. This allows you to query operation types, function schemas, role permissions, and workflow definitions from any compatible contract.
+The `Definitions` class provides dynamic interaction with any definition library that implements the `IDefinition` interface. This allows you to query operation types, function schemas, role permissions, and workflow definitions from any compatible contract.
 
 ### Basic Usage
 
 ```typescript
-// Initialize DefinitionContract
-const definitionContract = new DefinitionContract(
+// Initialize Definitions
+const definitions = new Definitions(
   publicClient,
   walletClient,
-  definitionContractAddress,
+  definitionsAddress,
   chain
 );
 
 // Get all operation types
-const operationTypes = await definitionContract.getOperationTypes();
+const operationTypes = await definitions.getOperationTypes();
 console.log('Available operations:', operationTypes);
 
 // Get all function schemas
-const functionSchemas = await definitionContract.getFunctionSchemas();
+const functionSchemas = await definitions.getFunctionSchemas();
 console.log('Function schemas:', functionSchemas);
 
 // Get role permissions
-const rolePermissions = await definitionContract.getRolePermissions();
+const rolePermissions = await definitions.getRolePermissions();
 console.log('Role permissions:', rolePermissions);
 ```
 
@@ -262,16 +262,16 @@ console.log('Role permissions:', rolePermissions);
 
 ```typescript
 // Get all operation workflows
-const workflows = await definitionContract.getOperationWorkflows();
+const workflows = await definitions.getOperationWorkflows();
 console.log('Available workflows:', workflows);
 
 // Get workflow for specific operation
 const operationType = '0x1234...'; // operation type hash
-const workflow = await definitionContract.getWorkflowForOperation(operationType);
+const workflow = await definitions.getWorkflowForOperation(operationType);
 console.log('Workflow for operation:', workflow);
 
 // Get all workflow paths
-const paths = await definitionContract.getWorkflowPaths();
+const paths = await definitions.getWorkflowPaths();
 console.log('Available paths:', paths);
 ```
 
@@ -279,21 +279,21 @@ console.log('Available paths:', paths);
 
 ```typescript
 // Find operation type by name
-const operationType = await definitionContract.getOperationTypeByName('TRANSFER_OWNERSHIP');
+const operationType = await definitions.getOperationTypeByName('TRANSFER_OWNERSHIP');
 console.log('Operation type hash:', operationType);
 
 // Get function schema by selector
 const functionSelector = '0xabcd...';
-const schema = await definitionContract.getFunctionSchemaBySelector(functionSelector);
+const schema = await definitions.getFunctionSchemaBySelector(functionSelector);
 console.log('Function schema:', schema);
 
 // Check role permission for function
 const roleHash = '0xefgh...';
-const hasPermission = await definitionContract.hasRolePermission(roleHash, functionSelector);
+const hasPermission = await definitions.hasRolePermission(roleHash, functionSelector);
 console.log('Has permission:', hasPermission);
 
 // Get all roles that can execute a function
-const allowedRoles = await definitionContract.getRolesForFunction(functionSelector);
+const allowedRoles = await definitions.getRolesForFunction(functionSelector);
 console.log('Allowed roles:', allowedRoles);
 ```
 
@@ -301,11 +301,11 @@ console.log('Allowed roles:', allowedRoles);
 
 ```typescript
 // Get current configuration
-const config = definitionContract.getConfig();
+const config = definitions.getConfig();
 console.log('Current config:', config);
 
 // Update configuration
-definitionContract.updateConfig({
+definitions.updateConfig({
   chainId: 137, // Polygon
   rpcUrl: 'https://polygon-rpc.com'
 });

@@ -2,8 +2,8 @@ import { Hex } from 'viem';
 import { TxAction } from './lib.index';
 
 /**
- * TypeScript types for IDefinitionContract interface
- * These types correspond to the Solidity structs in IDefinitionContract.sol
+ * TypeScript types for IDefinition interface
+ * These types correspond to the Solidity structs in IDefinition.sol
  */
 
 /**

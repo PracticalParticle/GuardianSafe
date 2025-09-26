@@ -68,7 +68,7 @@ type RoleType =
   | 'CUSTOM'
 ```
 
-## 🔍 **DefinitionContract Types**
+## 🔍 **Definitions Types**
 
 ### **Definition Contract Types**
 
@@ -133,11 +133,11 @@ interface ReadableOperationType {
 }
 ```
 
-### **DefinitionContract Interface**
+### **Definitions Interface**
 
 ```typescript
-// Main interface for DefinitionContract
-interface IDefinitionContract {
+// Main interface for Definitions
+interface IDefinition {
   getOperationTypes(): Promise<ReadableOperationType[]>;
   getFunctionSchemas(): Promise<FunctionSchema[]>;
   getRolePermissions(): Promise<RolePermission>;
@@ -146,8 +146,8 @@ interface IDefinitionContract {
   getWorkflowPaths(): Promise<WorkflowPath[]>;
 }
 
-// Configuration options for DefinitionContract client
-interface DefinitionContractConfig {
+// Configuration options for Definitions client
+interface DefinitionsConfig {
   contractAddress: Address;
   chainId: number;
   rpcUrl?: string;
@@ -190,23 +190,23 @@ const PhaseType = {
 export type PhaseType = typeof PhaseType[keyof typeof PhaseType];
 ```
 
-### **DefinitionContract Class**
+### **Definitions Class**
 
 ```typescript
-// DefinitionContract class implementation
-class DefinitionContract implements IDefinitionContract {
+// Definitions class implementation
+class Definitions implements IDefinition {
   protected client: PublicClient;
   protected walletClient: WalletClient | undefined;
   protected contractAddress: Address;
   protected chain: Chain;
-  protected config: DefinitionContractConfig;
+  protected config: DefinitionsConfig;
 
   constructor(
     client: PublicClient,
     walletClient: WalletClient | undefined,
     contractAddress: Address,
     chain: Chain,
-    config?: Partial<DefinitionContractConfig>
+    config?: Partial<DefinitionsConfig>
   );
 
   // Core methods
@@ -224,8 +224,8 @@ class DefinitionContract implements IDefinitionContract {
   async getRolesForFunction(functionSelector: Hex): Promise<Hex[]>;
 
   // Configuration methods
-  getConfig(): DefinitionContractConfig;
-  updateConfig(config: Partial<DefinitionContractConfig>): void;
+  getConfig(): DefinitionsConfig;
+  updateConfig(config: Partial<DefinitionsConfig>): void;
 }
 ```
 

@@ -370,7 +370,7 @@
             "type": "tuple[]"
           }
         ],
-        "internalType": "struct IDefinitionContract.RolePermission",
+        "internalType": "struct IDefinition.RolePermission",
         "name": "",
         "type": "tuple"
       }

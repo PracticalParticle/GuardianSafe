@@ -1,6 +1,6 @@
-# DefinitionContract Documentation
+# Definitions Documentation
 
-The `DefinitionContract` class provides dynamic interaction with any definition library that implements the `IDefinitionContract` interface. This enables flexible, runtime discovery of contract configurations, operation types, function schemas, role permissions, and workflow definitions.
+The `Definitions` class provides dynamic interaction with any definition library that implements the `IDefinition` interface. This enables flexible, runtime discovery of contract configurations, operation types, function schemas, role permissions, and workflow definitions.
 
 ## 📋 **Table of Contents**
 
@@ -17,7 +17,7 @@ The `DefinitionContract` class provides dynamic interaction with any definition 
 
 ## 🎯 **Overview**
 
-The `DefinitionContract` class is designed to interact with definition libraries that implement the `IDefinitionContract` Solidity interface. These libraries provide:
+The `Definitions` class is designed to interact with definition libraries that implement the `IDefinition` Solidity interface. These libraries provide:
 
 - **Operation Type Definitions**: What operations are supported
 - **Function Schema Definitions**: How functions are structured
@@ -37,7 +37,7 @@ The `DefinitionContract` class is designed to interact with definition libraries
 ### **Core Components**
 
 ```typescript
-DefinitionContract
+Definitions
 ├── Configuration Management
 │   ├── Contract Address
 │   ├── Chain Configuration
@@ -55,10 +55,10 @@ DefinitionContract
 
 ### **Interface Compliance**
 
-The class implements the `IDefinitionContract` TypeScript interface, which mirrors the Solidity `IDefinitionContract` interface:
+The class implements the `IDefinition` TypeScript interface, which mirrors the Solidity `IDefinition` interface:
 
 ```typescript
-interface IDefinitionContract {
+interface IDefinition {
   getOperationTypes(): Promise<ReadableOperationType[]>;
   getFunctionSchemas(): Promise<FunctionSchema[]>;
   getRolePermissions(): Promise<RolePermission>;
@@ -79,7 +79,7 @@ npm install viem
 ### **Basic Setup**
 
 ```typescript
-import { DefinitionContract } from '@guardian/sdk/typescript';
+import { Definitions } from '@guardian/sdk/typescript';
 import { createPublicClient, createWalletClient, http } from 'viem';
 import { mainnet } from 'viem/chains';
 
@@ -95,8 +95,8 @@ const walletClient = createWalletClient({
   account: '0x...' // Your account
 });
 
-// Initialize DefinitionContract
-const definitionContract = new DefinitionContract(
+// Initialize Definitions
+const definitions = new Definitions(
   publicClient,
   walletClient,
   '0x1234...', // Definition contract address
@@ -107,7 +107,7 @@ const definitionContract = new DefinitionContract(
 ### **Configuration Options**
 
 ```typescript
-const definitionContract = new DefinitionContract(
+const definitions = new Definitions(
   publicClient,
   walletClient,
   contractAddress,
@@ -125,7 +125,7 @@ const definitionContract = new DefinitionContract(
 
 ```typescript
 // Get all available operation types
-const operationTypes = await definitionContract.getOperationTypes();
+const operationTypes = await definitions.getOperationTypes();
 
 console.log('Available operations:');
 operationTypes.forEach(op => {
@@ -137,7 +137,7 @@ operationTypes.forEach(op => {
 
 ```typescript
 // Get all function schemas
-const functionSchemas = await definitionContract.getFunctionSchemas();
+const functionSchemas = await definitions.getFunctionSchemas();
 
 console.log('Function schemas:');
 functionSchemas.forEach(schema => {
@@ -151,7 +151,7 @@ functionSchemas.forEach(schema => {
 
 ```typescript
 // Get role permissions
-const rolePermissions = await definitionContract.getRolePermissions();
+const rolePermissions = await definitions.getRolePermissions();
 
 console.log('Role permissions:');
 rolePermissions.functionPermissions.forEach(permission => {
@@ -166,7 +166,7 @@ rolePermissions.functionPermissions.forEach(permission => {
 
 ```typescript
 // Get all operation workflows
-const workflows = await definitionContract.getOperationWorkflows();
+const workflows = await definitions.getOperationWorkflows();
 
 console.log('Operation workflows:');
 workflows.forEach(workflow => {
@@ -187,7 +187,7 @@ constructor(
   walletClient: WalletClient | undefined,
   contractAddress: Address,
   chain: Chain,
-  config?: Partial<DefinitionContractConfig>
+  config?: Partial<DefinitionsConfig>
 )
 ```
 
@@ -212,7 +212,7 @@ Returns all operation type definitions from the contract.
 
 **Example:**
 ```typescript
-const operationTypes = await definitionContract.getOperationTypes();
+const operationTypes = await definitions.getOperationTypes();
 // Returns: [{ operationType: '0x1234...', name: 'TRANSFER_OWNERSHIP' }, ...]
 ```
 
@@ -228,7 +228,7 @@ Returns all function schema definitions from the contract.
 
 **Example:**
 ```typescript
-const schemas = await definitionContract.getFunctionSchemas();
+const schemas = await definitions.getFunctionSchemas();
 // Returns: [{ functionName: 'transferOwnership', functionSelector: '0xabcd...', ... }, ...]
 ```
 
@@ -244,7 +244,7 @@ Returns all role hashes and their corresponding function permissions.
 
 **Example:**
 ```typescript
-const permissions = await definitionContract.getRolePermissions();
+const permissions = await definitions.getRolePermissions();
 // Returns: { roleHashes: ['0x1234...'], functionPermissions: [...] }
 ```
 
@@ -260,7 +260,7 @@ Returns all operation workflow definitions.
 
 **Example:**
 ```typescript
-const workflows = await definitionContract.getOperationWorkflows();
+const workflows = await definitions.getOperationWorkflows();
 // Returns: [{ operationType: '0x1234...', operationName: 'TRANSFER_OWNERSHIP', paths: [...] }, ...]
 ```
 
@@ -279,7 +279,7 @@ Returns workflow information for a specific operation type.
 
 **Example:**
 ```typescript
-const workflow = await definitionContract.getWorkflowForOperation('0x1234...');
+const workflow = await definitions.getWorkflowForOperation('0x1234...');
 // Returns: { operationType: '0x1234...', operationName: 'TRANSFER_OWNERSHIP', paths: [...] }
 ```
 
@@ -295,7 +295,7 @@ Returns all available workflow paths.
 
 **Example:**
 ```typescript
-const paths = await definitionContract.getWorkflowPaths();
+const paths = await definitions.getWorkflowPaths();
 // Returns: [{ name: 'Time Delay Path', description: '...', steps: [...] }, ...]
 ```
 
@@ -316,7 +316,7 @@ Finds an operation type by its name.
 
 **Example:**
 ```typescript
-const operationType = await definitionContract.getOperationTypeByName('TRANSFER_OWNERSHIP');
+const operationType = await definitions.getOperationTypeByName('TRANSFER_OWNERSHIP');
 // Returns: '0x1234...' or undefined
 ```
 
@@ -335,7 +335,7 @@ Gets function schema by its selector.
 
 **Example:**
 ```typescript
-const schema = await definitionContract.getFunctionSchemaBySelector('0xabcd...');
+const schema = await definitions.getFunctionSchemaBySelector('0xabcd...');
 // Returns: { functionName: 'transferOwnership', ... } or undefined
 ```
 
@@ -355,7 +355,7 @@ Checks if a role has permission for a function.
 
 **Example:**
 ```typescript
-const hasPermission = await definitionContract.hasRolePermission('0xefgh...', '0xabcd...');
+const hasPermission = await definitions.hasRolePermission('0xefgh...', '0xabcd...');
 // Returns: true or false
 ```
 
@@ -374,7 +374,7 @@ Gets all roles that can execute a specific function.
 
 **Example:**
 ```typescript
-const allowedRoles = await definitionContract.getRolesForFunction('0xabcd...');
+const allowedRoles = await definitions.getRolesForFunction('0xabcd...');
 // Returns: ['0x1234...', '0x5678...']
 ```
 
@@ -383,7 +383,7 @@ const allowedRoles = await definitionContract.getRolesForFunction('0xabcd...');
 #### **getConfig()**
 
 ```typescript
-getConfig(): DefinitionContractConfig
+getConfig(): DefinitionsConfig
 ```
 
 Gets the current contract configuration.
@@ -392,14 +392,14 @@ Gets the current contract configuration.
 
 **Example:**
 ```typescript
-const config = definitionContract.getConfig();
+const config = definitions.getConfig();
 // Returns: { contractAddress: '0x1234...', chainId: 1, rpcUrl: '...' }
 ```
 
 #### **updateConfig()**
 
 ```typescript
-updateConfig(config: Partial<DefinitionContractConfig>): void
+updateConfig(config: Partial<DefinitionsConfig>): void
 ```
 
 Updates the contract configuration.
@@ -409,7 +409,7 @@ Updates the contract configuration.
 
 **Example:**
 ```typescript
-definitionContract.updateConfig({
+definitions.updateConfig({
   chainId: 137, // Polygon
   rpcUrl: 'https://polygon-rpc.com'
 });
@@ -422,7 +422,7 @@ definitionContract.updateConfig({
 ```typescript
 // Analyze workflow complexity
 async analyzeWorkflowComplexity(operationType: Hex) {
-  const workflow = await definitionContract.getWorkflowForOperation(operationType);
+  const workflow = await definitions.getWorkflowForOperation(operationType);
   
   const analysis = {
     operationName: workflow.operationName,
@@ -448,8 +448,8 @@ console.log('Workflow Analysis:', analysis);
 ```typescript
 // Build permission matrix
 async buildPermissionMatrix() {
-  const rolePermissions = await definitionContract.getRolePermissions();
-  const functionSchemas = await definitionContract.getFunctionSchemas();
+  const rolePermissions = await definitions.getRolePermissions();
+  const functionSchemas = await definitions.getFunctionSchemas();
   
   const matrix = new Map<string, Map<string, boolean>>();
   
@@ -481,13 +481,13 @@ console.log('Permission Matrix:', permissionMatrix);
 ```typescript
 // Discover functions by role
 async discoverFunctionsByRole(roleHash: Hex) {
-  const allowedRoles = await definitionContract.getRolesForFunction('0x00000000'); // Placeholder
-  const functionSchemas = await definitionContract.getFunctionSchemas();
+  const allowedRoles = await definitions.getRolesForFunction('0x00000000'); // Placeholder
+  const functionSchemas = await definitions.getFunctionSchemas();
   
   const roleFunctions = [];
   
   for (const schema of functionSchemas) {
-    const hasPermission = await definitionContract.hasRolePermission(roleHash, schema.functionSelector);
+    const hasPermission = await definitions.hasRolePermission(roleHash, schema.functionSelector);
     if (hasPermission) {
       roleFunctions.push(schema);
     }
@@ -507,7 +507,7 @@ console.log('Functions for role:', roleFunctions);
 
 ```typescript
 try {
-  const operationTypes = await definitionContract.getOperationTypes();
+  const operationTypes = await definitions.getOperationTypes();
 } catch (error) {
   if (error instanceof Error) {
     // Handle specific error types
@@ -542,7 +542,7 @@ async function retryOperation<T>(
 
 // Usage
 const operationTypes = await retryOperation(
-  () => definitionContract.getOperationTypes()
+  () => definitions.getOperationTypes()
 );
 ```
 
@@ -560,7 +560,7 @@ function validateOperationTypes(operationTypes: ReadableOperationType[]): boolea
 }
 
 // Usage
-const operationTypes = await definitionContract.getOperationTypes();
+const operationTypes = await definitions.getOperationTypes();
 if (!validateOperationTypes(operationTypes)) {
   throw new Error('Invalid operation types received');
 }
@@ -573,7 +573,7 @@ if (!validateOperationTypes(operationTypes)) {
 ```typescript
 // Always wrap contract calls in try-catch
 try {
-  const data = await definitionContract.getOperationTypes();
+  const data = await definitions.getOperationTypes();
   // Process data
 } catch (error) {
   console.error('Contract interaction failed:', error);
@@ -585,7 +585,7 @@ try {
 
 ```typescript
 // Cache frequently accessed data
-class CachedDefinitionContract extends DefinitionContract {
+class CachedDefinitions extends Definitions {
   private cache = new Map<string, any>();
   
   async getOperationTypes(): Promise<ReadableOperationType[]> {
@@ -606,7 +606,7 @@ class CachedDefinitionContract extends DefinitionContract {
 
 ```typescript
 // Use proper type assertions
-const operationTypes = await definitionContract.getOperationTypes();
+const operationTypes = await definitions.getOperationTypes();
 const validTypes = operationTypes.filter(op => 
   op.operationType && op.name
 ) as ReadableOperationType[];
@@ -622,7 +622,7 @@ const config = {
   rpcUrl: process.env.RPC_URL
 };
 
-const definitionContract = new DefinitionContract(
+const definitions = new Definitions(
   publicClient,
   walletClient,
   config.contractAddress,
@@ -637,9 +637,9 @@ const definitionContract = new DefinitionContract(
 // Batch operations when possible
 async function batchOperations() {
   const [operationTypes, functionSchemas, rolePermissions] = await Promise.all([
-    definitionContract.getOperationTypes(),
-    definitionContract.getFunctionSchemas(),
-    definitionContract.getRolePermissions()
+    definitions.getOperationTypes(),
+    definitions.getFunctionSchemas(),
+    definitions.getRolePermissions()
   ]);
   
   return { operationTypes, functionSchemas, rolePermissions };
@@ -652,7 +652,7 @@ async function batchOperations() {
 
 ```typescript
 async function analyzeCompleteWorkflow(operationType: Hex) {
-  const workflow = await definitionContract.getWorkflowForOperation(operationType);
+  const workflow = await definitions.getWorkflowForOperation(operationType);
   
   console.log(`\n=== Workflow Analysis: ${workflow.operationName} ===`);
   console.log(`Operation Type: ${workflow.operationType}`);
@@ -686,8 +686,8 @@ await analyzeCompleteWorkflow('0x1234...');
 
 ```typescript
 async function auditPermissions() {
-  const rolePermissions = await definitionContract.getRolePermissions();
-  const functionSchemas = await definitionContract.getFunctionSchemas();
+  const rolePermissions = await definitions.getRolePermissions();
+  const functionSchemas = await definitions.getFunctionSchemas();
   
   console.log('\n=== Permission Audit ===');
   
@@ -734,8 +734,8 @@ await auditPermissions();
 
 ```typescript
 async function generateDynamicUI() {
-  const operationTypes = await definitionContract.getOperationTypes();
-  const workflows = await definitionContract.getOperationWorkflows();
+  const operationTypes = await definitions.getOperationTypes();
+  const workflows = await definitions.getOperationWorkflows();
   
   const uiConfig = {
     operations: operationTypes.map(op => ({
@@ -820,7 +820,7 @@ async function retryWithBackoff<T>(
 
 ```typescript
 // Enable debug logging
-class DebugDefinitionContract extends DefinitionContract {
+class DebugDefinitions extends Definitions {
   private debug = true;
   
   async getOperationTypes(): Promise<ReadableOperationType[]> {
@@ -871,7 +871,7 @@ async function monitorPerformance<T>(
 
 // Usage
 const operationTypes = await monitorPerformance(
-  () => definitionContract.getOperationTypes(),
+  () => definitions.getOperationTypes(),
   'getOperationTypes'
 );
 ```

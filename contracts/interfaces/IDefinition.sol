@@ -15,7 +15,7 @@ import "../lib/StateAbstraction.sol";
  * - Role permission definitions (who can do what)
  * - Workflow definitions (how operations are executed)
  */
-interface IDefinitionContract {
+interface IDefinition {
     /**
      * @dev Struct to hold role permission data
      * @param roleHashes Array of role hashes

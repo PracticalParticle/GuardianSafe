@@ -318,15 +318,15 @@ await getRoleCount()
 
 ```
 
-## 🔍 **DefinitionContract Examples**
+## 🔍 **Definitions Examples**
 
 ### **Basic Setup**
 
 ```typescript
-import { DefinitionContract } from '@guardian/sdk/typescript'
+import { Definitions } from '@guardian/sdk/typescript'
 
-// Initialize DefinitionContract
-const definitionContract = new DefinitionContract(
+// Initialize Definitions
+const definitions = new Definitions(
   publicClient,
   walletClient,
   '0x1234...', // Definition contract address
@@ -340,7 +340,7 @@ const definitionContract = new DefinitionContract(
 // Get all available operation types
 async function getOperationTypes() {
   try {
-    const operationTypes = await definitionContract.getOperationTypes()
+    const operationTypes = await definitions.getOperationTypes()
     
     console.log('Available operations:')
     operationTypes.forEach(op => {
@@ -364,7 +364,7 @@ const operations = await getOperationTypes()
 // Get all function schemas
 async function getFunctionSchemas() {
   try {
-    const functionSchemas = await definitionContract.getFunctionSchemas()
+    const functionSchemas = await definitions.getFunctionSchemas()
     
     console.log('Function schemas:')
     functionSchemas.forEach(schema => {
@@ -391,7 +391,7 @@ const schemas = await getFunctionSchemas()
 // Get role permissions
 async function getRolePermissions() {
   try {
-    const rolePermissions = await definitionContract.getRolePermissions()
+    const rolePermissions = await definitions.getRolePermissions()
     
     console.log('Role permissions:')
     console.log(`Total roles: ${rolePermissions.roleHashes.length}`)
@@ -421,7 +421,7 @@ const permissions = await getRolePermissions()
 // Get all operation workflows
 async function getOperationWorkflows() {
   try {
-    const workflows = await definitionContract.getOperationWorkflows()
+    const workflows = await definitions.getOperationWorkflows()
     
     console.log('Operation workflows:')
     workflows.forEach(workflow => {
@@ -451,7 +451,7 @@ const workflows = await getOperationWorkflows()
 // Get workflow for specific operation
 async function getWorkflowForOperation(operationType: Hex) {
   try {
-    const workflow = await definitionContract.getWorkflowForOperation(operationType)
+    const workflow = await definitions.getWorkflowForOperation(operationType)
     
     console.log(`Workflow for operation: ${workflow.operationName}`)
     console.log(`Operation type: ${workflow.operationType}`)
@@ -490,7 +490,7 @@ const workflow = await getWorkflowForOperation('0x1234...')
 // Find operation type by name
 async function findOperationByName(operationName: string) {
   try {
-    const operationType = await definitionContract.getOperationTypeByName(operationName)
+    const operationType = await definitions.getOperationTypeByName(operationName)
     
     if (operationType) {
       console.log(`Found operation: ${operationName} -> ${operationType}`)
@@ -508,7 +508,7 @@ async function findOperationByName(operationName: string) {
 // Get function schema by selector
 async function getFunctionBySelector(functionSelector: Hex) {
   try {
-    const schema = await definitionContract.getFunctionSchemaBySelector(functionSelector)
+    const schema = await definitions.getFunctionSchemaBySelector(functionSelector)
     
     if (schema) {
       console.log(`Found function: ${schema.functionName}`)
@@ -528,7 +528,7 @@ async function getFunctionBySelector(functionSelector: Hex) {
 // Check role permission
 async function checkRolePermission(roleHash: Hex, functionSelector: Hex) {
   try {
-    const hasPermission = await definitionContract.hasRolePermission(roleHash, functionSelector)
+    const hasPermission = await definitions.hasRolePermission(roleHash, functionSelector)
     
     console.log(`Role ${roleHash} has permission for function ${functionSelector}: ${hasPermission}`)
     return hasPermission
@@ -541,7 +541,7 @@ async function checkRolePermission(roleHash: Hex, functionSelector: Hex) {
 // Get roles for function
 async function getRolesForFunction(functionSelector: Hex) {
   try {
-    const allowedRoles = await definitionContract.getRolesForFunction(functionSelector)
+    const allowedRoles = await definitions.getRolesForFunction(functionSelector)
     
     console.log(`Function ${functionSelector} can be executed by ${allowedRoles.length} roles:`)
     allowedRoles.forEach(roleHash => {
@@ -567,14 +567,14 @@ const allowedRoles = await getRolesForFunction('0xabcd...')
 ```typescript
 // Get current configuration
 function getCurrentConfig() {
-  const config = definitionContract.getConfig()
+  const config = definitions.getConfig()
   console.log('Current configuration:', config)
   return config
 }
 
 // Update configuration
 function updateConfig() {
-  definitionContract.updateConfig({
+  definitions.updateConfig({
     chainId: 137, // Polygon
     rpcUrl: 'https://polygon-rpc.com'
   })
@@ -593,7 +593,7 @@ updateConfig()
 // Analyze complete workflow
 async function analyzeWorkflow(operationType: Hex) {
   try {
-    const workflow = await definitionContract.getWorkflowForOperation(operationType)
+    const workflow = await definitions.getWorkflowForOperation(operationType)
     
     const analysis = {
       operationName: workflow.operationName,
@@ -626,8 +626,8 @@ const analysis = await analyzeWorkflow('0x1234...')
 // Build permission matrix
 async function buildPermissionMatrix() {
   try {
-    const rolePermissions = await definitionContract.getRolePermissions()
-    const functionSchemas = await definitionContract.getFunctionSchemas()
+    const rolePermissions = await definitions.getRolePermissions()
+    const functionSchemas = await definitions.getFunctionSchemas()
     
     const matrix = new Map<string, Map<string, boolean>>()
     

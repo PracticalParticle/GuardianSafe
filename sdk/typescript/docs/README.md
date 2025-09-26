@@ -9,7 +9,7 @@ Welcome to the Guardian TypeScript SDK documentation. This comprehensive guide c
 - [**API Reference**](./api-reference.md) - Complete API documentation
 - [**SecureOwnable**](./secure-ownable.md) - SecureOwnable contract integration
 - [**DynamicRBAC**](./dynamic-rbac.md) - DynamicRBAC contract integration
-- [**DefinitionContract**](./definition-contract.md) - Dynamic definition library interaction
+- [**Definitions**](./definition-contract.md) - Dynamic definition library interaction
 - [**Meta-Transactions**](./meta-transactions.md) - Meta-transaction workflows and signing
 - [**Types & Interfaces**](./types-interfaces.md) - TypeScript type definitions
 
@@ -62,7 +62,7 @@ console.log('Contract owner:', owner)
 2. [API Reference](./api-reference.md)
 3. [SecureOwnable](./secure-ownable.md)
 4. [DynamicRBAC](./dynamic-rbac.md)
-5. [DefinitionContract](./definition-contract.md)
+5. [Definitions](./definition-contract.md)
 6. [Meta-Transactions](./meta-transactions.md)
 7. [Types & Interfaces](./types-interfaces.md)
 8. [Best Practices](./best-practices.md)

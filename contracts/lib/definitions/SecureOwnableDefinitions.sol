@@ -2,7 +2,7 @@
 pragma solidity ^0.8.2;
 
 import "../StateAbstraction.sol";
-import "../../interfaces/IDefinitionContract.sol";
+import "../../interfaces/IDefinition.sol";
 
 /**
  * @title SecureOwnableDefinitions
@@ -10,7 +10,7 @@ import "../../interfaces/IDefinitionContract.sol";
  * This library holds static data that can be used to initialize SecureOwnable contracts
  * without increasing the main contract size
  * 
- * This library implements the IDefinitionContract interface from StateAbstraction
+ * This library implements the IDefinition interface from StateAbstraction
  * and provides a direct initialization function for SecureOwnable contracts
  */
 library SecureOwnableDefinitions {
@@ -199,7 +199,7 @@ library SecureOwnableDefinitions {
      * @dev Returns predefined role hashes and their corresponding function permissions
      * @return RolePermission struct containing roleHashes and functionPermissions arrays
      */
-    function getRolePermissions() public pure returns (IDefinitionContract.RolePermission memory) {
+    function getRolePermissions() public pure returns (IDefinition.RolePermission memory) {
         bytes32[] memory roleHashes;
         StateAbstraction.FunctionPermission[] memory functionPermissions;
         roleHashes = new bytes32[](19);
@@ -377,7 +377,7 @@ library SecureOwnableDefinitions {
             grantedActions: recoveryTimeDelayCancelActions
         });
         
-        return IDefinitionContract.RolePermission({
+        return IDefinition.RolePermission({
             roleHashes: roleHashes,
             functionPermissions: functionPermissions
         });

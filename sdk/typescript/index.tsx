@@ -4,7 +4,7 @@
 // Core Classes
 export { default as SecureOwnable } from './SecureOwnable';
 export { default as DynamicRBAC } from './DynamicRBAC';
-export { DefinitionContract } from './DefinitionContract';
+export { Definitions } from './Definitions';
 
 // Interfaces
 export * from './interfaces/base.index';

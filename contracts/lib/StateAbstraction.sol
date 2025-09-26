@@ -1423,7 +1423,7 @@ library StateAbstraction {
      * @param roleHashes Array of role hashes
      * @param functionPermissions Array of function permissions (parallel to roleHashes)
      */
-    function loadDefinitionContract(
+    function loadDefinitions(
         SecureOperationState storage secureState,
         ReadableOperationType[] memory operationTypes,
         FunctionSchema[] memory functionSchemas,

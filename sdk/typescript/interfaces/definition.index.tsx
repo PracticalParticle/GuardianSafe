@@ -9,10 +9,10 @@ import {
 } from '../types/definition.index';
 
 /**
- * TypeScript interface for IDefinitionContract
- * This interface allows interaction with any definition library that implements IDefinitionContract.sol
+ * TypeScript interface for IDefinition
+ * This interface allows interaction with any definition library that implements IDefinition.sol
  */
-export interface IDefinitionContract {
+export interface IDefinition {
   /**
    * Returns all operation type definitions
    * @returns Array of operation type definitions
@@ -52,9 +52,9 @@ export interface IDefinitionContract {
 }
 
 /**
- * Configuration options for DefinitionContract client
+ * Configuration options for Definitions client
  */
-export interface DefinitionContractConfig {
+export interface DefinitionsConfig {
   contractAddress: Address;
   chainId: number;
   rpcUrl?: string;

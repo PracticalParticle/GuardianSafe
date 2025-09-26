@@ -2,7 +2,7 @@
 pragma solidity ^0.8.2;
 
 import "../StateAbstraction.sol";
-import "../../interfaces/IDefinitionContract.sol";
+import "../../interfaces/IDefinition.sol";
 
 /**
  * @title DynamicRBACDefinitions
@@ -10,7 +10,7 @@ import "../../interfaces/IDefinitionContract.sol";
  * This library holds static data that can be used to initialize DynamicRBAC contracts
  * without increasing the main contract size
  * 
- * This library implements the IDefinitionContract interface from StateAbstraction
+ * This library implements the IDefinition interface from StateAbstraction
  * and provides a direct initialization function for DynamicRBAC contracts
  */
 library DynamicRBACDefinitions {
@@ -65,7 +65,7 @@ library DynamicRBACDefinitions {
      * @dev Returns predefined role hashes and their corresponding function permissions
      * @return RolePermission struct containing roleHashes and functionPermissions arrays
      */
-    function getRolePermissions() public pure returns (IDefinitionContract.RolePermission memory) {
+    function getRolePermissions() public pure returns (IDefinition.RolePermission memory) {
         bytes32[] memory roleHashes;
         StateAbstraction.FunctionPermission[] memory functionPermissions;
         roleHashes = new bytes32[](1);
@@ -82,7 +82,7 @@ library DynamicRBACDefinitions {
             grantedActions: broadcasterActions
         });
         
-        return IDefinitionContract.RolePermission({
+        return IDefinition.RolePermission({
             roleHashes: roleHashes,
             functionPermissions: functionPermissions
         });
@@ -92,20 +92,20 @@ library DynamicRBACDefinitions {
      * @dev Returns all operation workflows
      * @return Array of operation workflow definitions
      */
-    function getOperationWorkflows() public pure returns (IDefinitionContract.OperationWorkflow[] memory) {
-        IDefinitionContract.OperationWorkflow[] memory workflows = new IDefinitionContract.OperationWorkflow[](1);
+    function getOperationWorkflows() public pure returns (IDefinition.OperationWorkflow[] memory) {
+        IDefinition.OperationWorkflow[] memory workflows = new IDefinition.OperationWorkflow[](1);
         
         // Role Editing Toggle Workflow
-        IDefinitionContract.WorkflowPath[] memory roleTogglePaths = new IDefinitionContract.WorkflowPath[](1);
+        IDefinition.WorkflowPath[] memory roleTogglePaths = new IDefinition.WorkflowPath[](1);
         
         // Meta-transaction path for role editing toggle
-        IDefinitionContract.WorkflowStep[] memory metaTxSteps = new IDefinitionContract.WorkflowStep[](2);
+        IDefinition.WorkflowStep[] memory metaTxSteps = new IDefinition.WorkflowStep[](2);
         
         // Step 1: Sign meta-transaction (off-chain)
         string[] memory ownerRoles = new string[](1);
         ownerRoles[0] = "OWNER";
         
-        metaTxSteps[0] = IDefinitionContract.WorkflowStep({
+        metaTxSteps[0] = IDefinition.WorkflowStep({
             functionName: "updateRoleEditingToggleRequestAndApprove",
             functionSelector: ROLE_EDITING_TOGGLE_META_SELECTOR,
             action: StateAbstraction.TxAction.SIGN_META_REQUEST_AND_APPROVE,
@@ -119,7 +119,7 @@ library DynamicRBACDefinitions {
         string[] memory broadcasterRoles = new string[](1);
         broadcasterRoles[0] = "BROADCASTER";
         
-        metaTxSteps[1] = IDefinitionContract.WorkflowStep({
+        metaTxSteps[1] = IDefinition.WorkflowStep({
             functionName: "updateRoleEditingToggleRequestAndApprove",
             functionSelector: ROLE_EDITING_TOGGLE_META_SELECTOR,
             action: StateAbstraction.TxAction.EXECUTE_META_REQUEST_AND_APPROVE,
@@ -129,7 +129,7 @@ library DynamicRBACDefinitions {
             phaseType: "EXECUTION"
         });
         
-        roleTogglePaths[0] = IDefinitionContract.WorkflowPath({
+        roleTogglePaths[0] = IDefinition.WorkflowPath({
             name: "Meta-Transaction Role Toggle",
             description: "Toggle role editing using meta-transaction (owner signs, broadcaster executes)",
             steps: metaTxSteps,
@@ -143,7 +143,7 @@ library DynamicRBACDefinitions {
         supportedRoles[0] = "OWNER";
         supportedRoles[1] = "BROADCASTER";
         
-        workflows[0] = IDefinitionContract.OperationWorkflow({
+        workflows[0] = IDefinition.OperationWorkflow({
             operationType: ROLE_EDITING_TOGGLE,
             operationName: "Role Editing Toggle",
             paths: roleTogglePaths,
@@ -158,17 +158,17 @@ library DynamicRBACDefinitions {
      * @param operationType The operation type hash to get workflow for
      * @return OperationWorkflow struct containing workflow information for the operation
      */
-    function getWorkflowForOperation(bytes32 operationType) public pure returns (IDefinitionContract.OperationWorkflow memory) {
+    function getWorkflowForOperation(bytes32 operationType) public pure returns (IDefinition.OperationWorkflow memory) {
         if (operationType == ROLE_EDITING_TOGGLE) {
-            IDefinitionContract.OperationWorkflow[] memory workflows = getOperationWorkflows();
+            IDefinition.OperationWorkflow[] memory workflows = getOperationWorkflows();
             return workflows[0];
         }
         
         // Return empty workflow for unknown operation types
-        IDefinitionContract.WorkflowPath[] memory emptyPaths = new IDefinitionContract.WorkflowPath[](0);
+        IDefinition.WorkflowPath[] memory emptyPaths = new IDefinition.WorkflowPath[](0);
         string[] memory emptyRoles = new string[](0);
         
-        return IDefinitionContract.OperationWorkflow({
+        return IDefinition.OperationWorkflow({
             operationType: operationType,
             operationName: "",
             paths: emptyPaths,
@@ -180,9 +180,9 @@ library DynamicRBACDefinitions {
      * @dev Returns all available workflow paths
      * @return Array of workflow path definitions
      */
-    function getWorkflowPaths() public pure returns (IDefinitionContract.WorkflowPath[] memory) {
-        IDefinitionContract.OperationWorkflow[] memory workflows = getOperationWorkflows();
-        IDefinitionContract.WorkflowPath[] memory allPaths = new IDefinitionContract.WorkflowPath[](1);
+    function getWorkflowPaths() public pure returns (IDefinition.WorkflowPath[] memory) {
+        IDefinition.OperationWorkflow[] memory workflows = getOperationWorkflows();
+        IDefinition.WorkflowPath[] memory allPaths = new IDefinition.WorkflowPath[](1);
         
         // Extract paths from workflows
         allPaths[0] = workflows[0].paths[0];

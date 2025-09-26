@@ -11,7 +11,7 @@ const contractsToProcess = [
   'StateAbstraction',
   'SecureOwnable',
   'DynamicRBAC',
-  'IDefinitionContract',
+  'IDefinition',
   'GuardianAccountAbstraction',
   'GuardianAccountAbstractionWithRoles',
   'SimpleVault',

@@ -9,7 +9,7 @@ import "../../lib/StateAbstraction.sol";
 import "../../utils/SharedValidation.sol";
 import "../../lib/definitions/SecureOwnableDefinitions.sol";
 import "../../lib/definitions/DynamicRBACDefinitions.sol";
-import "../../interfaces/IDefinitionContract.sol";
+import "../../interfaces/IDefinition.sol";
 import "./SecureOwnable.sol";
 
 /**
@@ -62,8 +62,8 @@ abstract contract DynamicRBAC is Initializable, SecureOwnable {
         SecureOwnable.initialize(initialOwner, broadcaster, recovery, timeLockPeriodSec, eventForwarder);
         
         // Load DynamicRBAC-specific definitions
-        IDefinitionContract.RolePermission memory permissions = DynamicRBACDefinitions.getRolePermissions();
-        StateAbstraction.loadDefinitionContract(
+        IDefinition.RolePermission memory permissions = DynamicRBACDefinitions.getRolePermissions();
+        StateAbstraction.loadDefinitions(
             _getSecureState(),
             DynamicRBACDefinitions.getOperationTypes(),
             DynamicRBACDefinitions.getFunctionSchemas(),

@@ -1,7 +1,7 @@
 import { PublicClient, WalletClient, Address, Chain, Hex } from 'viem';
 import { 
-  IDefinitionContract, 
-  DefinitionContractConfig
+  IDefinition, 
+  DefinitionsConfig
 } from './interfaces/definition.index';
 import { 
   ReadableOperationType, 
@@ -12,11 +12,11 @@ import {
 } from './types/definition.index';
 
 // Import the ABI
-import IDefinitionContractABI from '../../abi/IDefinitionContract.abi.json';
+import IDefinitionABI from '../../abi/IDefinition.abi.json';
 
 /**
- * DefinitionContract class for interacting with any definition library
- * that implements the IDefinitionContract interface
+ * Definitions class for interacting with any definition library
+ * that implements the IDefinition interface
  * 
  * This class provides type-safe access to contract definitions including:
  * - Operation types and their configurations
@@ -26,7 +26,7 @@ import IDefinitionContractABI from '../../abi/IDefinitionContract.abi.json';
  * 
  * @example
  * ```typescript
- * const definitionContract = new DefinitionContract(
+ * const definitions = new Definitions(
  *   publicClient,
  *   walletClient,
  *   '0x1234...',
@@ -34,25 +34,25 @@ import IDefinitionContractABI from '../../abi/IDefinitionContract.abi.json';
  * );
  * 
  * // Get all operation types
- * const operationTypes = await definitionContract.getOperationTypes();
+ * const operationTypes = await definitions.getOperationTypes();
  * 
  * // Get workflow for specific operation
- * const workflow = await definitionContract.getWorkflowForOperation('0xabcd...');
+ * const workflow = await definitions.getWorkflowForOperation('0xabcd...');
  * ```
  */
-export class DefinitionContract implements IDefinitionContract {
+export class Definitions implements IDefinition {
   protected client: PublicClient;
   protected walletClient: WalletClient | undefined;
   protected contractAddress: Address;
   protected chain: Chain;
-  protected config: DefinitionContractConfig;
+  protected config: DefinitionsConfig;
 
   constructor(
     client: PublicClient,
     walletClient: WalletClient | undefined,
     contractAddress: Address,
     chain: Chain,
-    config?: Partial<DefinitionContractConfig>
+    config?: Partial<DefinitionsConfig>
   ) {
     this.client = client;
     this.walletClient = walletClient;
@@ -73,7 +73,7 @@ export class DefinitionContract implements IDefinitionContract {
     try {
       const result = await this.client.readContract({
         address: this.contractAddress,
-        abi: IDefinitionContractABI,
+        abi: IDefinitionABI,
         functionName: 'getOperationTypes'
       }) as any[];
 
@@ -94,7 +94,7 @@ export class DefinitionContract implements IDefinitionContract {
     try {
       const result = await this.client.readContract({
         address: this.contractAddress,
-        abi: IDefinitionContractABI,
+        abi: IDefinitionABI,
         functionName: 'getFunctionSchemas'
       }) as any[];
 
@@ -118,7 +118,7 @@ export class DefinitionContract implements IDefinitionContract {
     try {
       const result = await this.client.readContract({
         address: this.contractAddress,
-        abi: IDefinitionContractABI,
+        abi: IDefinitionABI,
         functionName: 'getRolePermissions'
       }) as any;
 
@@ -144,7 +144,7 @@ export class DefinitionContract implements IDefinitionContract {
     try {
       const result = await this.client.readContract({
         address: this.contractAddress,
-        abi: IDefinitionContractABI,
+        abi: IDefinitionABI,
         functionName: 'getOperationWorkflows'
       }) as any[];
 
@@ -184,7 +184,7 @@ export class DefinitionContract implements IDefinitionContract {
     try {
       const result = await this.client.readContract({
         address: this.contractAddress,
-        abi: IDefinitionContractABI,
+        abi: IDefinitionABI,
         functionName: 'getWorkflowForOperation',
         args: [operationType]
       }) as any;
@@ -224,7 +224,7 @@ export class DefinitionContract implements IDefinitionContract {
     try {
       const result = await this.client.readContract({
         address: this.contractAddress,
-        abi: IDefinitionContractABI,
+        abi: IDefinitionABI,
         functionName: 'getWorkflowPaths'
       }) as any[];
 
@@ -310,7 +310,7 @@ export class DefinitionContract implements IDefinitionContract {
    * Get contract configuration
    * @returns The current contract configuration
    */
-  getConfig(): DefinitionContractConfig {
+  getConfig(): DefinitionsConfig {
     return { ...this.config };
   }
 
@@ -318,7 +318,7 @@ export class DefinitionContract implements IDefinitionContract {
    * Update contract configuration
    * @param config Partial configuration to update
    */
-  updateConfig(config: Partial<DefinitionContractConfig>): void {
+  updateConfig(config: Partial<DefinitionsConfig>): void {
     this.config = { ...this.config, ...config };
   }
 }

@@ -9,7 +9,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "../../lib/StateAbstraction.sol";
 import "../../lib/definitions/StateAbstractionDefinitions.sol";
 import "../../lib/definitions/SecureOwnableDefinitions.sol";
-import "../../interfaces/IDefinitionContract.sol";
+import "../../interfaces/IDefinition.sol";
 import "../../utils/SharedValidation.sol";
 import "./interface/ISecureOwnable.sol";
 
@@ -95,8 +95,8 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
         _secureState.initialize(initialOwner, broadcaster, recovery, timeLockPeriodSec);
         
         // Load definitions directly from StateAbstraction library
-        IDefinitionContract.RolePermission memory multiPhasePermissions = StateAbstractionDefinitions.getRolePermissions();
-        StateAbstraction.loadDefinitionContract(
+        IDefinition.RolePermission memory multiPhasePermissions = StateAbstractionDefinitions.getRolePermissions();
+        StateAbstraction.loadDefinitions(
             _secureState,
             StateAbstractionDefinitions.getOperationTypes(),
             StateAbstractionDefinitions.getFunctionSchemas(),
@@ -104,8 +104,8 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
             multiPhasePermissions.functionPermissions
         );
         
-        IDefinitionContract.RolePermission memory secureOwnablePermissions = SecureOwnableDefinitions.getRolePermissions();
-        StateAbstraction.loadDefinitionContract(
+        IDefinition.RolePermission memory secureOwnablePermissions = SecureOwnableDefinitions.getRolePermissions();
+        StateAbstraction.loadDefinitions(
             _secureState,
             SecureOwnableDefinitions.getOperationTypes(),
             SecureOwnableDefinitions.getFunctionSchemas(),
