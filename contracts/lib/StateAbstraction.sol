@@ -302,7 +302,7 @@ library StateAbstraction {
         if (!hasActionPermission(self, msg.sender, TX_REQUEST_SELECTOR, TxAction.EXECUTE_TIME_DELAY_REQUEST) && !hasActionPermission(self, msg.sender, META_TX_REQUEST_AND_APPROVE_SELECTOR, TxAction.EXECUTE_META_REQUEST_AND_APPROVE)) {
             revert SharedValidation.NoPermissionExecute(msg.sender);
         }
-        SharedValidation.validateTargetAddress(target);
+        SharedValidation.validateNotZeroAddress(target);
         if (!isOperationTypeSupported(self, operationType)) revert SharedValidation.OperationNotSupported();
 
         TxRecord memory txRequestRecord = createNewTxRecord(
@@ -1118,7 +1118,7 @@ library StateAbstraction {
         SharedValidation.validatePendingTransaction(uint8(metaTx.txRecord.status));
         
         // Transaction parameters validation
-        SharedValidation.validateRequesterAddress(metaTx.txRecord.params.requester);
+        SharedValidation.validateNotZeroAddress(metaTx.txRecord.params.requester);
         if (!isOperationTypeSupported(self, metaTx.txRecord.params.operationType)) revert SharedValidation.OperationNotSupported();
         
         // Meta-transaction parameters validation
@@ -1241,7 +1241,7 @@ library StateAbstraction {
         MetaTxParams memory metaTxParams
     ) public view returns (MetaTransaction memory) {
         if (!isOperationTypeSupported(self, txParams.operationType)) revert SharedValidation.OperationNotSupported();
-        SharedValidation.validateTargetAddress(txParams.target);
+        SharedValidation.validateNotZeroAddress(txParams.target);
         
         TxRecord memory txRecord = createNewTxRecord(
             self,
@@ -1296,7 +1296,7 @@ library StateAbstraction {
         SharedValidation.validateHandlerContract(metaTxParams.handlerContract);
         SharedValidation.validateHandlerSelector(metaTxParams.handlerSelector);
         SharedValidation.validateDeadline(metaTxParams.deadline);
-        SharedValidation.validateSignerAddress(metaTxParams.signer);
+        SharedValidation.validateNotZeroAddress(metaTxParams.signer);
 
         MetaTransaction memory metaTx = MetaTransaction({
             txRecord: txRecord,
@@ -1336,7 +1336,7 @@ library StateAbstraction {
         SharedValidation.validateHandlerContract(handlerContract);
         SharedValidation.validateHandlerSelector(handlerSelector);
         SharedValidation.validateDeadline(deadline);
-        SharedValidation.validateSignerAddress(signer);
+        SharedValidation.validateNotZeroAddress(signer);
         return MetaTxParams({
             chainId: block.chainid,
             nonce: getSignerNonce(self, signer),
