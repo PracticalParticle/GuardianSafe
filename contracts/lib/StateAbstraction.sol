@@ -579,32 +579,6 @@ library StateAbstraction {
     }
 
     /**
-    * @dev Generic function to extract decoded parameters from any execution type
-    * @param txRecord The transaction record
-    * @return decodedParams The decoded parameters as bytes
-    */
-    function extractDecodedParams(TxRecord memory txRecord) public pure returns (bytes memory) {
-        if (txRecord.params.executionType == ExecutionType.STANDARD) {
-            // For STANDARD: Extract the params field from StandardExecutionOptions
-            StandardExecutionOptions memory options = abi.decode(
-                txRecord.params.executionOptions, 
-                (StandardExecutionOptions)
-            );
-            return options.params; // This is already the decoded parameters!
-        } else if (txRecord.params.executionType == ExecutionType.RAW) {
-            // For RAW: Return the raw transaction data
-            RawExecutionOptions memory options = abi.decode(
-                txRecord.params.executionOptions, 
-                (RawExecutionOptions)
-            );
-            return options.rawTxData;
-        } else {
-            // For NONE or other types: Return empty bytes
-            return new bytes(0);
-        }
-    }
-
-    /**
      * @notice Creates a new transaction record with basic fields populated
      * @dev Initializes a TxRecord struct with the provided parameters and default values
      * @param self The SecureOperationState to reference for txId and timelock
