@@ -1034,12 +1034,7 @@ library StateAbstraction {
      * @return Array of pending transaction IDs
      */
     function getPendingTransactionsList(SecureOperationState storage self) public view returns (uint256[] memory) {
-        uint256 length = self.pendingTransactionsSet.length();
-        uint256[] memory result = new uint256[](length);
-        for (uint256 i = 0; i < length; i++) {
-            result[i] = self.pendingTransactionsSet.at(i);
-        }
-        return result;
+        return _convertUintSetToArray(self.pendingTransactionsSet);
     }
 
     /**
@@ -1048,12 +1043,7 @@ library StateAbstraction {
      * @return Array of supported role hashes
      */
     function getSupportedRolesList(SecureOperationState storage self) public view returns (bytes32[] memory) {
-        uint256 length = self.supportedRolesSet.length();
-        bytes32[] memory result = new bytes32[](length);
-        for (uint256 i = 0; i < length; i++) {
-            result[i] = self.supportedRolesSet.at(i);
-        }
-        return result;
+        return _convertBytes32SetToArray(self.supportedRolesSet);
     }
 
     /**
@@ -1076,12 +1066,7 @@ library StateAbstraction {
      * @return Array of supported operation type hashes
      */
     function getSupportedOperationTypesList(SecureOperationState storage self) public view returns (bytes32[] memory) {
-        uint256 length = self.supportedOperationTypesSet.length();
-        bytes32[] memory result = new bytes32[](length);
-        for (uint256 i = 0; i < length; i++) {
-            result[i] = self.supportedOperationTypesSet.at(i);
-        }
-        return result;
+        return _convertBytes32SetToArray(self.supportedOperationTypesSet);
     }
 
     /**
@@ -1467,6 +1452,38 @@ library StateAbstraction {
                 functionPermissions[i]
             );
         }
+    }
+
+        // ============ OPTIMIZATION HELPER FUNCTIONS ============
+
+    /**
+     * @dev Generic helper to convert UintSet to array
+     * @param set The EnumerableSet.UintSet to convert
+     * @return Array of uint256 values
+     */
+    function _convertUintSetToArray(EnumerableSet.UintSet storage set) 
+        internal view returns (uint256[] memory) {
+        uint256 length = set.length();
+        uint256[] memory result = new uint256[](length);
+        for (uint256 i = 0; i < length; i++) {
+            result[i] = set.at(i);
+        }
+        return result;
+    }
+
+    /**
+     * @dev Generic helper to convert Bytes32Set to array
+     * @param set The EnumerableSet.Bytes32Set to convert
+     * @return Array of bytes32 values
+     */
+    function _convertBytes32SetToArray(EnumerableSet.Bytes32Set storage set) 
+        internal view returns (bytes32[] memory) {
+        uint256 length = set.length();
+        bytes32[] memory result = new bytes32[](length);
+        for (uint256 i = 0; i < length; i++) {
+            result[i] = set.at(i);
+        }
+        return result;
     }
 
 }
