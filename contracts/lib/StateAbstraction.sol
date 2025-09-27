@@ -274,6 +274,7 @@ library StateAbstraction {
      * @return The TxRecord associated with the transaction ID.
      */
     function getTxRecord(SecureOperationState storage self, uint256 txId) public view returns (TxRecord memory) {
+        if (!hasAnyRole(self, msg.sender)) revert SharedValidation.NoPermission(msg.sender);
         return self.txRecords[txId];
     }
 
@@ -687,6 +688,7 @@ library StateAbstraction {
      * @return The role associated with the hash, or Role(0) if the role doesn't exist.
      */
     function getRole(SecureOperationState storage self, bytes32 role) public view returns (Role storage) {
+        if (!hasAnyRole(self, msg.sender)) revert SharedValidation.NoPermission(msg.sender);
         return self.roles[role];
     }
 
@@ -748,7 +750,8 @@ library StateAbstraction {
      * @return True if the wallet is authorized for the role, false otherwise.
      */
     function hasRole(SecureOperationState storage self, bytes32 roleHash, address wallet) public view returns (bool) {
-        return self.roles[roleHash].authorizedWallets.contains(wallet);
+        Role storage role = getRole(self, roleHash);
+        return role.authorizedWallets.contains(wallet);
     }
 
     /**
@@ -915,6 +918,29 @@ library StateAbstraction {
     }
 
     /**
+     * @dev Checks if a wallet has view permission for any role (privacy function access)
+     * @param self The SecureOperationState to check.
+     * @param wallet The wallet address to check.
+     * @return True if the wallet has view permission, false otherwise.
+     */
+    function hasAnyRole(
+        SecureOperationState storage self,
+        address wallet
+    ) public view returns (bool) {
+        // Check if wallet has any role that grants view permission
+        uint256 rolesLength = self.supportedRolesSet.length();
+        for (uint i = 0; i < rolesLength; i++) {
+            bytes32 roleHash = self.supportedRolesSet.at(i);
+            Role storage role = self.roles[roleHash];
+            
+            if (role.authorizedWallets.contains(wallet)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * @dev Checks if a specific role has permission for a function and action.
      * @param self The SecureOperationState to check.
      * @param roleHash The role hash to check.
@@ -1034,6 +1060,7 @@ library StateAbstraction {
      * @return Array of pending transaction IDs
      */
     function getPendingTransactionsList(SecureOperationState storage self) public view returns (uint256[] memory) {
+        if (!hasAnyRole(self, msg.sender)) revert SharedValidation.NoPermission(msg.sender);
         return _convertUintSetToArray(self.pendingTransactionsSet);
     }
 
@@ -1043,6 +1070,7 @@ library StateAbstraction {
      * @return Array of supported role hashes
      */
     function getSupportedRolesList(SecureOperationState storage self) public view returns (bytes32[] memory) {
+        if (!hasAnyRole(self, msg.sender)) revert SharedValidation.NoPermission(msg.sender);
         return _convertBytes32SetToArray(self.supportedRolesSet);
     }
 
@@ -1052,6 +1080,7 @@ library StateAbstraction {
      * @return Array of supported function selectors
      */
     function getSupportedFunctionsList(SecureOperationState storage self) public view returns (bytes4[] memory) {
+        if (!hasAnyRole(self, msg.sender)) revert SharedValidation.NoPermission(msg.sender);
         uint256 length = self.supportedFunctionsSet.length();
         bytes4[] memory result = new bytes4[](length);
         for (uint256 i = 0; i < length; i++) {
@@ -1066,6 +1095,7 @@ library StateAbstraction {
      * @return Array of supported operation type hashes
      */
     function getSupportedOperationTypesList(SecureOperationState storage self) public view returns (bytes32[] memory) {
+        if (!hasAnyRole(self, msg.sender)) revert SharedValidation.NoPermission(msg.sender);
         return _convertBytes32SetToArray(self.supportedOperationTypesSet);
     }
 
@@ -1091,6 +1121,7 @@ library StateAbstraction {
      * @return The current nonce for the signer.
      */
     function getSignerNonce(SecureOperationState storage self, address signer) public view returns (uint256) {
+        if (!hasAnyRole(self, msg.sender)) revert SharedValidation.NoPermission(msg.sender);
         return self.signerNonces[signer];
     }
 

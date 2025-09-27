@@ -29,7 +29,7 @@ class TimelockPeriodTests extends BaseSecureOwnableTest {
         
         // Try to get current timelock period first
         try {
-            const currentTimelockSeconds = await this.contract.methods.getTimeLockPeriodSec().call();
+            const currentTimelockSeconds = await this.callContractMethod(this.contract.methods.getTimeLockPeriodSec());
             console.log(`  📊 Current timelock period: ${currentTimelockSeconds} seconds`);
         } catch (error) {
             console.log(`  ⚠️ Cannot get timelock period: ${error.message}`);
@@ -61,7 +61,7 @@ class TimelockPeriodTests extends BaseSecureOwnableTest {
             // Get current timelock period
             let currentTimelockSeconds;
             try {
-                currentTimelockSeconds = await this.contract.methods.getTimeLockPeriodSec().call();
+                currentTimelockSeconds = await this.callContractMethod(this.contract.methods.getTimeLockPeriodSec());
                 console.log(`  📊 Current timelock period: ${currentTimelockSeconds} seconds`);
             } catch (error) {
                 console.log(`  ⚠️ Cannot get current timelock period: ${error.message}`);
@@ -69,13 +69,16 @@ class TimelockPeriodTests extends BaseSecureOwnableTest {
                 currentTimelockSeconds = '1'; // Default to 1 second
             }
 
-            // Test timelock functionality by changing it and then changing it back
-            if (parseInt(currentTimelockSeconds) === 1) {
-                console.log('  📋 Current timelock is 1 second - testing by changing to 2 seconds then back to 1');
+            // Test timelock functionality by changing it to a different value
+            const currentTimelock = parseInt(currentTimelockSeconds.toString());
+            if (currentTimelock === 1) {
+                console.log('  📋 Current timelock is 1 second - testing by changing to 2 seconds');
                 await this.testTimelockChange(2, '2 seconds');
+            } else if (currentTimelock === 2) {
+                console.log('  📋 Current timelock is 2 seconds - testing by changing to 1 second');
                 await this.testTimelockChange(1, '1 second');
             } else {
-                console.log(`  📋 Current timelock is ${currentTimelockSeconds} seconds - testing by changing to 1 second`);
+                console.log(`  📋 Current timelock is ${currentTimelock} seconds - testing by changing to 1 second`);
                 await this.testTimelockChange(1, '1 second');
             }
 
@@ -93,21 +96,21 @@ class TimelockPeriodTests extends BaseSecureOwnableTest {
 
         try {
             // Create execution options for timelock update
-            const executionOptions = await this.contract.methods.updateTimeLockExecutionOptions(newTimelockSeconds).call();
+            const executionOptions = await this.callContractMethod(this.contract.methods.updateTimeLockExecutionOptions(newTimelockSeconds));
             console.log(`    ✅ Execution options created for ${description}`);
 
             // Create meta-transaction parameters
-            const metaTxParams = await this.contract.methods.createMetaTxParams(
+            const metaTxParams = await this.callContractMethod(this.contract.methods.createMetaTxParams(
                 this.contractAddress,
                 '0x59474230', // UPDATE_TIMELOCK_META_SELECTOR
                 this.getTxAction('SIGN_META_REQUEST_AND_APPROVE'),
                 3600, // 1 hour deadline
                 0, // no max gas price
                 this.getRoleWalletObject('owner').address // Owner signs the meta-transaction
-            ).call();
+            ));
 
             // Create unsigned meta-transaction
-            const unsignedMetaTx = await this.contract.methods.generateUnsignedMetaTransactionForNew(
+            const unsignedMetaTx = await this.callContractMethod(this.contract.methods.generateUnsignedMetaTransactionForNew(
                 this.getRoleWalletObject('owner').address, // requester
                 this.contractAddress, // target
                 0, // no value
@@ -116,7 +119,7 @@ class TimelockPeriodTests extends BaseSecureOwnableTest {
                 this.getExecutionType('STANDARD'), // execution type
                 executionOptions, // execution options
                 metaTxParams // meta-transaction parameters
-            ).call();
+            ));
 
                         // Sign the meta-transaction using the standardized EIP712Signer utility
                         console.log(`    🔐 Signing meta-transaction for ${description}...`);
@@ -142,11 +145,11 @@ class TimelockPeriodTests extends BaseSecureOwnableTest {
 
             // Verify the timelock was updated
             try {
-                const updatedTimelockSeconds = await this.contract.methods.getTimeLockPeriodSec().call();
+                const updatedTimelockSeconds = await this.callContractMethod(this.contract.methods.getTimeLockPeriodSec());
                 console.log(`    ⏰ Updated timelock period: ${updatedTimelockSeconds} second(s)`);
                 
                 this.assertTest(
-                    parseInt(updatedTimelockSeconds) === newTimelockSeconds,
+                    parseInt(updatedTimelockSeconds.toString()) === newTimelockSeconds,
                     `Timelock period updated to ${newTimelockSeconds} second(s)`
                 );
             } catch (error) {

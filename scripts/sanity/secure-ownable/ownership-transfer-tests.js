@@ -73,7 +73,7 @@ class OwnershipTransferTests extends BaseSecureOwnableTest {
                 );
                 if (ownershipTx) {
                     // Get the full transaction record
-                    const fullTx = await this.contract.methods.getTransaction(ownershipTx.txId).call();
+                    const fullTx = await this.callContractMethod(this.contract.methods.getTransaction(ownershipTx.txId));
                     txRecord = { txId: ownershipTx.txId, ...fullTx };
                     console.log(`  📋 Using existing ownership transfer transaction ${txRecord.txId}`);
                 } else {
@@ -94,7 +94,7 @@ class OwnershipTransferTests extends BaseSecureOwnableTest {
             console.log(`  📋 Operation type: ${txRecord.params.operationType}`);
 
             // Verify transaction is pending
-            const tx = await this.contract.methods.getTransaction(txRecord.txId).call();
+            const tx = await this.callContractMethod(this.contract.methods.getTransaction(txRecord.txId));
             this.assertTest(tx.status === '1', 'Transaction is pending');
 
             console.log('  🎉 Step 1 completed: Ownership transfer request created');
@@ -137,7 +137,7 @@ class OwnershipTransferTests extends BaseSecureOwnableTest {
             );
             if (ownershipTx) {
                 // Get the full transaction record
-                const fullTx = await this.contract.methods.getTransaction(ownershipTx.txId).call();
+                const fullTx = await this.callContractMethod(this.contract.methods.getTransaction(ownershipTx.txId));
                 txRecord = { txId: ownershipTx.txId, ...fullTx };
                 console.log(`  📋 Using existing ownership transfer transaction ${txRecord.txId}`);
             } else {
@@ -153,20 +153,20 @@ class OwnershipTransferTests extends BaseSecureOwnableTest {
 
         try {
             // Create meta-transaction parameters for cancellation
-            const metaTxParams = await this.contract.methods.createMetaTxParams(
+            const metaTxParams = await this.callContractMethod(this.contract.methods.createMetaTxParams(
                 this.contractAddress,
                 '0x1ef7c2ec', // Ownership transfer cancellation selector
                 this.getTxAction('SIGN_META_CANCEL'),
                 3600, // 1 hour deadline
                 0, // no max gas price
                 this.getRoleWalletObject('owner').address // Owner signs the meta-transaction
-            ).call();
+            ));
 
             // Create unsigned meta-transaction for existing tx
-            const unsignedMetaTx = await this.contract.methods.generateUnsignedMetaTransactionForExisting(
+            const unsignedMetaTx = await this.callContractMethod(this.contract.methods.generateUnsignedMetaTransactionForExisting(
                 txRecord.txId,
                 metaTxParams
-            ).call();
+            ));
 
             // Sign meta-transaction
             console.log('  🔐 Signing meta-transaction cancellation...');
@@ -191,7 +191,7 @@ class OwnershipTransferTests extends BaseSecureOwnableTest {
             console.log(`  📋 Transaction Hash: ${receipt.transactionHash}`);
 
             // Verify transaction is cancelled
-            const tx = await this.contract.methods.getTransaction(txRecord.txId).call();
+            const tx = await this.callContractMethod(this.contract.methods.getTransaction(txRecord.txId));
             this.assertTest(tx.status === '2', 'Transaction cancelled successfully');
 
             console.log('  🎉 Step 2 completed: Meta cancel executed');
@@ -220,7 +220,7 @@ class OwnershipTransferTests extends BaseSecureOwnableTest {
             console.log(`  📋 Operation type: ${txRecord.params.operationType}`);
 
             // Verify transaction is pending
-            const tx = await this.contract.methods.getTransaction(txRecord.txId).call();
+            const tx = await this.callContractMethod(this.contract.methods.getTransaction(txRecord.txId));
             this.assertTest(tx.status === '1', 'Transaction is pending');
 
             console.log('  🎉 Step 3 completed: New ownership transfer request created');
@@ -258,7 +258,7 @@ class OwnershipTransferTests extends BaseSecureOwnableTest {
                 );
                 if (ownershipTx) {
                     // Get the full transaction record
-                    const fullTx = await this.contract.methods.getTransaction(ownershipTx.txId).call();
+                    const fullTx = await this.callContractMethod(this.contract.methods.getTransaction(ownershipTx.txId));
                     txRecord = { txId: ownershipTx.txId, ...fullTx };
                     console.log(`  📋 Using existing ownership transfer transaction ${txRecord.txId}`);
                 } else {
@@ -278,7 +278,7 @@ class OwnershipTransferTests extends BaseSecureOwnableTest {
             console.log('  ⏳ Waiting for timelock to expire...');
             
             // Get the actual timelock period and release time
-            const txBeforeCancellation = await this.contract.methods.getTransaction(txRecord.txId).call();
+            const txBeforeCancellation = await this.callContractMethod(this.contract.methods.getTransaction(txRecord.txId));
             const releaseTime = parseInt(txBeforeCancellation.releaseTime);
             
             // Get actual blockchain time instead of machine time
@@ -308,7 +308,7 @@ class OwnershipTransferTests extends BaseSecureOwnableTest {
             console.log(`  📋 Transaction Hash: ${receipt.transactionHash}`);
 
             // Verify transaction is cancelled
-            const tx = await this.contract.methods.getTransaction(txRecord.txId).call();
+            const tx = await this.callContractMethod(this.contract.methods.getTransaction(txRecord.txId));
             this.assertTest(tx.status === '2', 'Transaction cancelled successfully');
 
             console.log('  🎉 Step 4 completed: Time delay cancel executed');
@@ -337,7 +337,7 @@ class OwnershipTransferTests extends BaseSecureOwnableTest {
             console.log(`  📋 Operation type: ${txRecord.params.operationType}`);
 
             // Verify transaction is pending
-            const tx = await this.contract.methods.getTransaction(txRecord.txId).call();
+            const tx = await this.callContractMethod(this.contract.methods.getTransaction(txRecord.txId));
             this.assertTest(tx.status === '1', 'Transaction is pending');
 
             console.log('  🎉 Step 5 completed: New ownership transfer request created');
@@ -381,7 +381,7 @@ class OwnershipTransferTests extends BaseSecureOwnableTest {
                 );
                 if (ownershipTx) {
                     // Get the full transaction record
-                    const fullTx = await this.contract.methods.getTransaction(ownershipTx.txId).call();
+                    const fullTx = await this.callContractMethod(this.contract.methods.getTransaction(ownershipTx.txId));
                     txRecord = { txId: ownershipTx.txId, ...fullTx };
                     console.log(`  📋 Using existing ownership transfer transaction ${txRecord.txId}`);
                 } else {
@@ -398,20 +398,20 @@ class OwnershipTransferTests extends BaseSecureOwnableTest {
             }
 
             // Create meta-transaction parameters for approval
-        const metaTxParams = await this.contract.methods.createMetaTxParams(
+        const metaTxParams = await this.callContractMethod(this.contract.methods.createMetaTxParams(
             this.contractAddress,
             '0xb51ff5ce', // TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR (from deployed contract)
             this.getTxAction('SIGN_META_APPROVE'),
             3600, // 1 hour deadline
             0, // no max gas price
             this.getRoleWalletObject('owner').address // Owner signs the meta-transaction
-        ).call();
+        ));
 
             // Create unsigned meta-transaction for existing tx
-            const unsignedMetaTx = await this.contract.methods.generateUnsignedMetaTransactionForExisting(
+            const unsignedMetaTx = await this.callContractMethod(this.contract.methods.generateUnsignedMetaTransactionForExisting(
                 txRecord.txId,
                 metaTxParams
-            ).call();
+            ));
 
             // Sign meta-transaction
             console.log('  🔐 Signing meta-transaction approval...');
@@ -435,8 +435,8 @@ class OwnershipTransferTests extends BaseSecureOwnableTest {
             console.log('  ✅ Meta-transaction approval executed successfully');
             console.log(`  📋 Transaction Hash: ${receipt.transactionHash}`);
 
-            // Verify transaction is completed
-            const tx = await this.contract.methods.getTransaction(txRecord.txId).call();
+            // Verify transaction is completed (use recovery wallet since owner has changed)
+            const tx = await this.callContractMethod(this.contract.methods.getTransaction(txRecord.txId), this.getRoleWalletObject('recovery'));
             this.assertTest(tx.status === '3', 'Transaction completed successfully');
 
             console.log('  🎉 Step 6 completed: Meta approve executed');
@@ -454,7 +454,7 @@ class OwnershipTransferTests extends BaseSecureOwnableTest {
 
         try {
             // Get current owner
-            const currentOwner = await this.contract.methods.owner().call();
+            const currentOwner = await this.callContractMethod(this.contract.methods.owner());
             console.log(`  👑 Current owner: ${currentOwner}`);
             console.log(`  🛡️ Original recovery: ${this.roles.recovery}`);
 
@@ -483,26 +483,26 @@ class OwnershipTransferTests extends BaseSecureOwnableTest {
 
         try {
             // Find unused wallet for recovery update
-            const currentRecovery = await this.contract.methods.getRecovery().call();
+            const currentRecovery = await this.callContractMethod(this.contract.methods.getRecovery());
             const newRecovery = this.findUnusedWalletForRecovery(currentRecovery);
             console.log(`  🛡️ Current recovery: ${currentRecovery}`);
             console.log(`  🛡️ New recovery: ${newRecovery}`);
 
             // Create execution options for recovery update
-            const executionOptions = await this.contract.methods.updateRecoveryExecutionOptions(newRecovery).call();
+            const executionOptions = await this.callContractMethod(this.contract.methods.updateRecoveryExecutionOptions(newRecovery));
 
             // Create meta-transaction parameters
-            const metaTxParams = await this.contract.methods.createMetaTxParams(
+            const metaTxParams = await this.callContractMethod(this.contract.methods.createMetaTxParams(
                 this.contractAddress,
                 '0x2aa09cf6', // UPDATE_RECOVERY_META_SELECTOR
                 this.getTxAction('SIGN_META_REQUEST_AND_APPROVE'),
                 3600, // 1 hour deadline
                 0, // no max gas price
                 this.getRoleWalletObject('owner').address // Current owner signs
-            ).call();
+            ));
 
             // Create unsigned meta-transaction
-            const unsignedMetaTx = await this.contract.methods.generateUnsignedMetaTransactionForNew(
+            const unsignedMetaTx = await this.callContractMethod(this.contract.methods.generateUnsignedMetaTransactionForNew(
                 this.getRoleWalletObject('owner').address, // requester
                 this.contractAddress, // target
                 0, // no value
@@ -511,7 +511,7 @@ class OwnershipTransferTests extends BaseSecureOwnableTest {
                 this.getExecutionType('STANDARD'), // execution type
                 executionOptions, // execution options
                 metaTxParams // meta-transaction parameters
-            ).call();
+            ));
 
             // Sign the meta-transaction
             const signature = await this.eip712Signer.signMetaTransaction(unsignedMetaTx, this.getRoleWallet('owner'), this.contract);
@@ -563,7 +563,7 @@ class OwnershipTransferTests extends BaseSecureOwnableTest {
             console.log(`  📋 Operation type: ${txRecord.params.operationType}`);
 
             // Verify transaction is pending
-            const tx = await this.contract.methods.getTransaction(txRecord.txId).call();
+            const tx = await this.callContractMethod(this.contract.methods.getTransaction(txRecord.txId));
             this.assertTest(tx.status === '1', 'Transaction is pending');
 
             console.log('  🎉 Step 9 completed: New ownership transfer request created');
@@ -601,7 +601,7 @@ class OwnershipTransferTests extends BaseSecureOwnableTest {
             if (ownershipTx) {
                 console.log(`  📋 Using existing ownership transfer transaction ${ownershipTx.txId}`);
                 // Get the full transaction record
-                const fullTx = await this.contract.methods.getTransaction(ownershipTx.txId).call();
+                const fullTx = await this.callContractMethod(this.contract.methods.getTransaction(ownershipTx.txId));
                 txRecord = { txId: ownershipTx.txId, ...fullTx };
             } else {
                 console.log(`  📋 Creating new ownership transfer request...`);
@@ -619,7 +619,7 @@ class OwnershipTransferTests extends BaseSecureOwnableTest {
             console.log('  ⏳ Waiting for timelock to expire...');
             
             // Get the actual timelock period and release time
-            const txBeforeApproval = await this.contract.methods.getTransaction(txRecord.txId).call();
+            const txBeforeApproval = await this.callContractMethod(this.contract.methods.getTransaction(txRecord.txId));
             const releaseTime = parseInt(txBeforeApproval.releaseTime);
             
             // Get actual blockchain time instead of machine time
@@ -649,8 +649,8 @@ class OwnershipTransferTests extends BaseSecureOwnableTest {
             console.log('  ✅ Time delay approval executed successfully');
             console.log(`  📋 Transaction Hash: ${receipt.transactionHash}`);
 
-            // Verify transaction is completed
-            const tx = await this.contract.methods.getTransaction(txRecord.txId).call();
+            // Verify transaction is completed (use recovery wallet since owner has changed)
+            const tx = await this.callContractMethod(this.contract.methods.getTransaction(txRecord.txId), this.getRoleWalletObject('recovery'));
             this.assertTest(tx.status === '3', 'Transaction completed successfully');
 
             console.log('  🎉 Step 10 completed: Time delay approve executed');
@@ -668,7 +668,7 @@ class OwnershipTransferTests extends BaseSecureOwnableTest {
 
         try {
             // Get current owner
-            const currentOwner = await this.contract.methods.owner().call();
+            const currentOwner = await this.callContractMethod(this.contract.methods.owner());
             console.log(`  👑 Current owner: ${currentOwner}`);
             console.log(`  🛡️ New recovery: ${this.roles.recovery}`);
 
@@ -700,12 +700,12 @@ class OwnershipTransferTests extends BaseSecureOwnableTest {
 
         // Try to get the txId from pending transactions
         for (let i = 0; i < 5; i++) {
-            const pending = await this.contract.methods.getPendingTransactions().call();
+            const pending = await this.callContractMethod(this.contract.methods.getPendingTransactions());
             if (pending && pending.length > 0) {
                 const lastId = pending[pending.length - 1];
                 if (lastId) {
                     // Get the full transaction record
-                    const txRecord = await this.contract.methods.getTransaction(lastId).call();
+                    const txRecord = await this.callContractMethod(this.contract.methods.getTransaction(lastId));
                     return { txId: parseInt(lastId), ...txRecord };
                 }
             }
@@ -714,7 +714,7 @@ class OwnershipTransferTests extends BaseSecureOwnableTest {
 
         // Fallback: scan transaction history
         try {
-            const history = await this.contract.methods.getTransactionHistory(1, 50).call();
+            const history = await this.callContractMethod(this.contract.methods.getTransactionHistory(1, 50));
             const ownershipHash = this.web3.utils.keccak256('OWNERSHIP_TRANSFER');
             for (let i = history.length - 1; i >= 0; i--) {
                 const rec = history[i];
@@ -781,7 +781,7 @@ class OwnershipTransferTests extends BaseSecureOwnableTest {
         console.log('------------------------------------');
         
         try {
-            const pendingTxIds = await this.contract.methods.getPendingTransactions().call();
+            const pendingTxIds = await this.callContractMethod(this.contract.methods.getPendingTransactions());
             if (pendingTxIds.length === 0) {
                 console.log('✅ No pending transactions to clean up');
                 return;
@@ -790,7 +790,7 @@ class OwnershipTransferTests extends BaseSecureOwnableTest {
             console.log(`📋 Found ${pendingTxIds.length} pending transactions to clean up`);
             
             for (const txId of pendingTxIds) {
-                const tx = await this.contract.methods.getTransaction(txId).call();
+                const tx = await this.callContractMethod(this.contract.methods.getTransaction(txId));
                 console.log(`📋 Cleaning up transaction ${txId}: ${tx.params.operationType}`);
                 
                 try {
@@ -807,7 +807,7 @@ class OwnershipTransferTests extends BaseSecureOwnableTest {
             }
             
             // Verify cleanup
-            const remainingPendingTxIds = await this.contract.methods.getPendingTransactions().call();
+            const remainingPendingTxIds = await this.callContractMethod(this.contract.methods.getPendingTransactions());
             console.log(`📋 Remaining pending transactions: ${remainingPendingTxIds.length}`);
             
         } catch (error) {

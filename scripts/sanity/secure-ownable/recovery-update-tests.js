@@ -29,7 +29,7 @@ class RecoveryUpdateTests extends BaseSecureOwnableTest {
         
         // Try to get current recovery address first
         try {
-            const currentRecovery = await this.contract.methods.getRecovery().call();
+            const currentRecovery = await this.callContractMethod(this.contract.methods.getRecovery());
             console.log(`  📊 Current recovery address: ${currentRecovery}`);
         } catch (error) {
             console.log(`  ❌ Cannot get recovery address: ${error.message}`);
@@ -59,8 +59,8 @@ class RecoveryUpdateTests extends BaseSecureOwnableTest {
 
         try {
             // Get current recovery and owner addresses
-            const ownerAddress = await this.contract.methods.owner().call();
-            const currentRecovery = await this.contract.methods.getRecovery().call();
+            const ownerAddress = await this.callContractMethod(this.contract.methods.owner());
+            const currentRecovery = await this.callContractMethod(this.contract.methods.getRecovery());
             
             console.log(`  👑 Owner address: ${ownerAddress}`);
             console.log(`  🛡️ Current recovery address: ${currentRecovery}`);
@@ -69,11 +69,15 @@ class RecoveryUpdateTests extends BaseSecureOwnableTest {
             if (currentRecovery.toLowerCase() !== ownerAddress.toLowerCase()) {
                 console.log('  📋 Recovery is different from owner - testing by changing to unused wallet then back to original');
                 const newRecovery = this.findUnusedWalletForRecovery(currentRecovery);
+                console.log(`  🔍 New recovery address: ${newRecovery}`);
+                console.log(`  🔍 Current recovery address: ${currentRecovery}`);
+                console.log(`  🔍 Are they the same? ${newRecovery.toLowerCase() === currentRecovery.toLowerCase()}`);
                 await this.testRecoveryChange(newRecovery, 'unused wallet');
                 await this.testRecoveryChange(currentRecovery, 'original recovery');
             } else {
                 console.log('  📋 Recovery is same as owner - testing by changing to unused wallet');
                 const newRecovery = this.findUnusedWalletForRecovery(currentRecovery);
+                console.log(`  🔍 New recovery address: ${newRecovery}`);
                 await this.testRecoveryChange(newRecovery, 'unused wallet');
             }
 
@@ -91,21 +95,21 @@ class RecoveryUpdateTests extends BaseSecureOwnableTest {
 
         try {
             // Create execution options for recovery update
-            const executionOptions = await this.contract.methods.updateRecoveryExecutionOptions(newRecoveryAddress).call();
+            const executionOptions = await this.callContractMethod(this.contract.methods.updateRecoveryExecutionOptions(newRecoveryAddress));
             console.log(`    ✅ Execution options created for ${description}`);
 
             // Create meta-transaction parameters
-            const metaTxParams = await this.contract.methods.createMetaTxParams(
+            const metaTxParams = await this.callContractMethod(this.contract.methods.createMetaTxParams(
                 this.contractAddress,
                 '0x2aa09cf6', // UPDATE_RECOVERY_META_SELECTOR
                 this.getTxAction('SIGN_META_REQUEST_AND_APPROVE'),
                 3600, // 1 hour deadline
                 0, // no max gas price
                 this.getRoleWalletObject('owner').address // Owner signs the meta-transaction
-            ).call();
+            ));
 
             // Create unsigned meta-transaction
-            const unsignedMetaTx = await this.contract.methods.generateUnsignedMetaTransactionForNew(
+            const unsignedMetaTx = await this.callContractMethod(this.contract.methods.generateUnsignedMetaTransactionForNew(
                 this.getRoleWalletObject('owner').address, // requester
                 this.contractAddress, // target
                 0, // no value
@@ -114,7 +118,7 @@ class RecoveryUpdateTests extends BaseSecureOwnableTest {
                 this.getExecutionType('STANDARD'), // execution type
                 executionOptions, // execution options
                 metaTxParams // meta-transaction parameters
-            ).call();
+            ));
 
                         // Sign the meta-transaction using the standardized EIP712Signer utility
                         console.log(`    🔐 Signing meta-transaction for ${description}...`);
@@ -139,7 +143,7 @@ class RecoveryUpdateTests extends BaseSecureOwnableTest {
             console.log(`    📋 Transaction Hash: ${receipt.transactionHash}`);
 
             // Verify the recovery address was updated
-            const updatedRecovery = await this.contract.methods.getRecovery().call();
+            const updatedRecovery = await this.callContractMethod(this.contract.methods.getRecovery());
             console.log(`    🛡️ Updated recovery address: ${updatedRecovery}`);
             
             this.assertTest(

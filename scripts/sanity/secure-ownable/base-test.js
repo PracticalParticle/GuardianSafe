@@ -203,15 +203,18 @@ class BaseSecureOwnableTest {
         // Discover dynamic role assignments
         await this.discoverRoleAssignments();
         
+        // Clear any pending transactions to ensure clean test state
+        await this.clearPendingTransactions();
+        
         console.log(`✅ ${this.testName} initialized successfully\n`);
     }
 
     async discoverRoleAssignments() {
         try {
             // Get actual role addresses from contract
-            this.roles.owner = await this.contract.methods.owner().call();
-            this.roles.broadcaster = await this.contract.methods.getBroadcaster().call();
-            this.roles.recovery = await this.contract.methods.getRecovery().call();
+            this.roles.owner = await this.callContractMethod(this.contract.methods.owner());
+            this.roles.broadcaster = await this.callContractMethod(this.contract.methods.getBroadcaster());
+            this.roles.recovery = await this.callContractMethod(this.contract.methods.getRecovery());
             
             console.log('📋 DISCOVERED ROLE ASSIGNMENTS:');
             console.log(`  👑 Owner: ${this.roles.owner}`);
@@ -268,10 +271,22 @@ class BaseSecureOwnableTest {
         }
     }
 
-    async callContractMethod(method, wallet) {
+    async callContractMethod(method, wallet = null) {
         try {
+            let fromWallet;
+            
+            if (wallet) {
+                fromWallet = wallet;
+            } else if (this.roleWallets.owner) {
+                // Use owner wallet if available
+                fromWallet = this.roleWallets.owner;
+            } else {
+                // Fallback to first wallet if role wallets not discovered yet
+                fromWallet = this.wallets.wallet1;
+            }
+            
             // For contract methods that return values without changing state, use call()
-            const result = await method.call({ from: wallet.address });
+            const result = await method.call({ from: fromWallet.address });
             return result;
         } catch (error) {
             throw new Error(`Contract call failed: ${error.message}`);
@@ -316,7 +331,7 @@ class BaseSecureOwnableTest {
             console.log('🔍 Checking for pending transactions...');
             
             // Get all pending transactions
-            const pendingTxs = await this.contract.methods.getPendingTransactions().call();
+            const pendingTxs = await this.callContractMethod(this.contract.methods.getPendingTransactions());
             
             if (pendingTxs.length === 0) {
                 console.log('✅ No pending transactions found');
@@ -330,7 +345,7 @@ class BaseSecureOwnableTest {
             // Get details for each pending transaction
             for (const txId of pendingTxs) {
                 try {
-                    const tx = await this.contract.methods.getTransaction(txId).call();
+                    const tx = await this.callContractMethod(this.contract.methods.getTransaction(txId));
                     const operationType = tx.params.operationType;
                     const currentTime = Math.floor(Date.now() / 1000);
                     const timeRemaining = tx.releaseTime - currentTime;
@@ -409,6 +424,62 @@ class BaseSecureOwnableTest {
         }
     }
 
+    async clearPendingTransactions() {
+        console.log('🧹 CLEARING PENDING TRANSACTIONS');
+        console.log('-'.repeat(40));
+        
+        try {
+            // Get all pending transactions
+            const pendingTxs = await this.callContractMethod(this.contract.methods.getPendingTransactions());
+            
+            if (pendingTxs.length === 0) {
+                console.log('✅ No pending transactions to clear');
+                return true;
+            }
+            
+            console.log(`📋 Found ${pendingTxs.length} pending transactions to clear`);
+            
+            let clearedCount = 0;
+            
+            // Cancel each pending transaction
+            for (const txId of pendingTxs) {
+                try {
+                    const tx = await this.callContractMethod(this.contract.methods.getTransaction(txId));
+                    const operationType = tx.params.operationType;
+                    
+                    console.log(`  🗑️  Cancelling transaction ${txId} (${this.getOperationName(operationType)})`);
+                    
+                    const success = await this.cancelTransaction(txId, operationType, tx.params.requester);
+                    if (success) {
+                        clearedCount++;
+                        console.log(`    ✅ Transaction ${txId} cancelled successfully`);
+                    } else {
+                        console.log(`    ❌ Failed to cancel transaction ${txId}`);
+                    }
+                    
+                } catch (error) {
+                    console.log(`    ❌ Error cancelling transaction ${txId}: ${error.message}`);
+                }
+            }
+            
+            console.log(`📊 Cleared ${clearedCount}/${pendingTxs.length} pending transactions`);
+            
+            // Verify all transactions are cleared
+            const remainingPending = await this.callContractMethod(this.contract.methods.getPendingTransactions());
+            if (remainingPending.length === 0) {
+                console.log('✅ All pending transactions cleared successfully');
+                return true;
+            } else {
+                console.log(`⚠️  ${remainingPending.length} transactions still pending`);
+                return false;
+            }
+            
+        } catch (error) {
+            console.log(`❌ Error clearing pending transactions: ${error.message}`);
+            return false;
+        }
+    }
+
     getStatusName(status) {
         const statusMap = {
             0: 'UNDEFINED',
@@ -448,7 +519,7 @@ class BaseSecureOwnableTest {
                 const roleHash = await this.getRoleHash(role);
                 
                 // Get role permissions with timeout
-                const rolePermissionsPromise = this.contract.methods.getRolePermission(roleHash).call();
+                const rolePermissionsPromise = this.callContractMethod(this.contract.methods.getRolePermission(roleHash));
                 const timeoutPromise = new Promise((_, reject) => 
                     setTimeout(() => reject(new Error('getRolePermission timeout after 5 seconds')), 5000)
                 );
@@ -568,7 +639,7 @@ class BaseSecureOwnableTest {
         
         try {
             // Get transaction details
-            const tx = await this.contract.methods.getTransaction(txId).call();
+            const tx = await this.callContractMethod(this.contract.methods.getTransaction(txId));
             const releaseTime = parseInt(tx.releaseTime);
             const currentBlockTime = await this.web3.eth.getBlock('latest').then(block => block.timestamp);
             

@@ -79,20 +79,20 @@ class BroadcasterUpdateTests extends BaseSecureOwnableTest {
             }
 
             // Create meta-transaction parameters for cancellation
-            const metaTxParams = await this.contract.methods.createMetaTxParams(
+            const metaTxParams = await this.callContractMethod(this.contract.methods.createMetaTxParams(
                 this.contractAddress,
                 '0xf1209daa', // UPDATE_BROADCASTER_CANCEL_META_SELECTOR from SecureOwnableDefinitions
                 this.getTxAction('SIGN_META_CANCEL'),
                 3600, // 1 hour deadline
                 0, // no max gas price
                 this.getRoleWalletObject('owner').address // Owner signs the meta-transaction
-            ).call();
+            ));
 
             // Create unsigned meta-transaction for existing tx
-            const unsignedMetaTx = await this.contract.methods.generateUnsignedMetaTransactionForExisting(
+            const unsignedMetaTx = await this.callContractMethod(this.contract.methods.generateUnsignedMetaTransactionForExisting(
                 txRecord.txId,
                 metaTxParams
-            ).call();
+            ));
 
             // Sign meta-transaction
             console.log('  🔐 Signing meta-transaction cancellation...');
@@ -117,7 +117,7 @@ class BroadcasterUpdateTests extends BaseSecureOwnableTest {
             console.log(`  📋 Transaction Hash: ${receipt.transactionHash}`);
 
             // Verify transaction is cancelled
-            const tx = await this.contract.methods.getTransaction(txRecord.txId).call();
+            const tx = await this.callContractMethod(this.contract.methods.getTransaction(txRecord.txId));
             this.assertTest(tx.status === '2', 'Transaction cancelled successfully');
 
             console.log('  🎉 Meta-transaction cancellation test completed');
@@ -155,7 +155,7 @@ class BroadcasterUpdateTests extends BaseSecureOwnableTest {
             console.log('  ⏳ Waiting for timelock to expire...');
             
             // Get the actual timelock period and release time
-            const txBeforeCancellation = await this.contract.methods.getTransaction(txRecord.txId).call();
+            const txBeforeCancellation = await this.callContractMethod(this.contract.methods.getTransaction(txRecord.txId));
             const releaseTime = parseInt(txBeforeCancellation.releaseTime);
             
             // Get actual blockchain time instead of machine time
@@ -185,7 +185,7 @@ class BroadcasterUpdateTests extends BaseSecureOwnableTest {
             console.log(`  📋 Transaction Hash: ${receipt.transactionHash}`);
 
             // Verify transaction is cancelled
-            const tx = await this.contract.methods.getTransaction(txRecord.txId).call();
+            const tx = await this.callContractMethod(this.contract.methods.getTransaction(txRecord.txId));
             this.assertTest(tx.status === '2', 'Transaction cancelled successfully');
 
             console.log('  🎉 Time delay cancellation test completed');
@@ -226,20 +226,20 @@ class BroadcasterUpdateTests extends BaseSecureOwnableTest {
             this.assertTest(txRecord.txId > 0, 'Broadcaster update request created');
 
             // Create meta-transaction parameters for approval
-            const metaTxParams = await this.contract.methods.createMetaTxParams(
+            const metaTxParams = await this.callContractMethod(this.contract.methods.createMetaTxParams(
                 this.contractAddress,
                 '0xd04d6238', // UPDATE_BROADCASTER_APPROVE_META_SELECTOR from SecureOwnableDefinitions
                 this.getTxAction('SIGN_META_APPROVE'),
                 3600, // 1 hour deadline
                 0, // no max gas price
                 this.getRoleWalletObject('owner').address // Owner signs the meta-transaction
-            ).call();
+            ));
 
             // Create unsigned meta-transaction for existing tx
-            const unsignedMetaTx = await this.contract.methods.generateUnsignedMetaTransactionForExisting(
+            const unsignedMetaTx = await this.callContractMethod(this.contract.methods.generateUnsignedMetaTransactionForExisting(
                 txRecord.txId,
                 metaTxParams
-            ).call();
+            ));
 
             // Sign meta-transaction
             console.log('  🔐 Signing meta-transaction approval...');
@@ -264,11 +264,11 @@ class BroadcasterUpdateTests extends BaseSecureOwnableTest {
             console.log(`  📋 Transaction Hash: ${receipt.transactionHash}`);
 
             // Verify transaction is completed
-            const tx = await this.contract.methods.getTransaction(txRecord.txId).call();
+            const tx = await this.callContractMethod(this.contract.methods.getTransaction(txRecord.txId));
             this.assertTest(tx.status === '3', 'Transaction completed successfully');
 
             // Verify broadcaster address changed
-            const newBroadcaster = await this.contract.methods.getBroadcaster().call();
+            const newBroadcaster = await this.callContractMethod(this.contract.methods.getBroadcaster());
             console.log(`  📡 New broadcaster address: ${newBroadcaster}`);
 
             console.log('  🎉 Meta-transaction approval test completed');
@@ -299,7 +299,7 @@ class BroadcasterUpdateTests extends BaseSecureOwnableTest {
 
         try {
             // Get current broadcaster before the test
-            const currentBroadcaster = await this.contract.methods.getBroadcaster().call();
+            const currentBroadcaster = await this.callContractMethod(this.contract.methods.getBroadcaster());
             
             // Create a new broadcaster update request (use wallet5 since broadcaster is now wallet2)
             const txRecord = await this.createBroadcasterRequestForTimeDelayApproval();
@@ -313,7 +313,7 @@ class BroadcasterUpdateTests extends BaseSecureOwnableTest {
             console.log('  ⏳ Waiting for timelock to expire...');
             
             // Get the actual timelock period and release time
-            const txBeforeApproval = await this.contract.methods.getTransaction(txRecord.txId).call();
+            const txBeforeApproval = await this.callContractMethod(this.contract.methods.getTransaction(txRecord.txId));
             const releaseTime = parseInt(txBeforeApproval.releaseTime);
             
             // Get actual blockchain time instead of machine time
@@ -343,14 +343,14 @@ class BroadcasterUpdateTests extends BaseSecureOwnableTest {
             console.log('  ✅ Time delay approval executed successfully');
             console.log(`  📋 Transaction Hash: ${receipt.transactionHash}`);
 
-            // Verify transaction is completed
-            const tx = await this.contract.methods.getTransaction(txRecord.txId).call();
+            // Verify transaction is completed (use owner wallet since broadcaster has changed)
+            const tx = await this.callContractMethod(this.contract.methods.getTransaction(txRecord.txId), this.getRoleWalletObject('owner'));
             this.assertTest(tx.status === '3', 'Transaction completed successfully');
 
             // Verify broadcaster address changed to target
-            const finalBroadcaster = await this.contract.methods.getBroadcaster().call();
+            const finalBroadcaster = await this.callContractMethod(this.contract.methods.getBroadcaster());
             console.log(`  📡 Final broadcaster address: ${finalBroadcaster}`);
-            console.log(`  🛡️ Current recovery address: ${await this.contract.methods.getRecovery().call()}`);
+            console.log(`  🛡️ Current recovery address: ${await this.callContractMethod(this.contract.methods.getRecovery())}`);
             
             // Verify that the broadcaster was successfully updated to a different address
             this.assertTest(
@@ -368,7 +368,7 @@ class BroadcasterUpdateTests extends BaseSecureOwnableTest {
 
     async createBroadcasterRequestAndDeriveTxId() {
         // Get current broadcaster address
-        const currentBroadcaster = await this.contract.methods.getBroadcaster().call();
+        const currentBroadcaster = await this.callContractMethod(this.contract.methods.getBroadcaster());
         
         // Find first unused wallet for broadcaster update
         const newBroadcaster = this.findUnusedWalletForBroadcaster(currentBroadcaster);
@@ -383,7 +383,7 @@ class BroadcasterUpdateTests extends BaseSecureOwnableTest {
 
         // Try to get the txId from pending transactions
         for (let i = 0; i < 5; i++) {
-            const pending = await this.contract.methods.getPendingTransactions().call();
+            const pending = await this.callContractMethod(this.contract.methods.getPendingTransactions());
             if (pending && pending.length > 0) {
                 const lastId = pending[pending.length - 1];
                 if (lastId) return { txId: parseInt(lastId) };
@@ -393,7 +393,7 @@ class BroadcasterUpdateTests extends BaseSecureOwnableTest {
 
         // Fallback: scan transaction history
         try {
-            const history = await this.contract.methods.getTransactionHistory(1, 50).call();
+            const history = await this.callContractMethod(this.contract.methods.getTransactionHistory(1, 50));
             const broadcasterHash = this.web3.utils.keccak256('BROADCASTER_UPDATE');
             for (let i = history.length - 1; i >= 0; i--) {
                 const rec = history[i];
@@ -413,7 +413,7 @@ class BroadcasterUpdateTests extends BaseSecureOwnableTest {
         console.log('------------------------------------');
         
         try {
-            const pendingTxIds = await this.contract.methods.getPendingTransactions().call();
+            const pendingTxIds = await this.callContractMethod(this.contract.methods.getPendingTransactions());
             if (pendingTxIds.length === 0) {
                 console.log('✅ No pending transactions to clean up');
                 return;
@@ -422,7 +422,7 @@ class BroadcasterUpdateTests extends BaseSecureOwnableTest {
             console.log(`📋 Found ${pendingTxIds.length} pending transactions to clean up`);
             
             for (const txId of pendingTxIds) {
-                const tx = await this.contract.methods.getTransaction(txId).call();
+                const tx = await this.callContractMethod(this.contract.methods.getTransaction(txId));
                 console.log(`📋 Cleaning up transaction ${txId}: ${tx.params.operationType}`);
                 
                 try {
@@ -438,7 +438,7 @@ class BroadcasterUpdateTests extends BaseSecureOwnableTest {
             }
             
             // Verify cleanup
-            const remainingPendingTxIds = await this.contract.methods.getPendingTransactions().call();
+            const remainingPendingTxIds = await this.callContractMethod(this.contract.methods.getPendingTransactions());
             console.log(`📋 Remaining pending transactions: ${remainingPendingTxIds.length}`);
             
         } catch (error) {
@@ -448,7 +448,7 @@ class BroadcasterUpdateTests extends BaseSecureOwnableTest {
 
     async createBroadcasterRequestForTimeDelayApproval() {
         // Get current broadcaster address
-        const currentBroadcaster = await this.contract.methods.getBroadcaster().call();
+        const currentBroadcaster = await this.callContractMethod(this.contract.methods.getBroadcaster());
         
         // For time delay approval, we want to change to any unused address
         // Use the dynamic wallet selection to find an unused wallet
@@ -464,10 +464,10 @@ class BroadcasterUpdateTests extends BaseSecureOwnableTest {
 
         // Try to get the txId from pending transactions
         for (let i = 0; i < 5; i++) {
-            const pending = await this.contract.methods.getPendingTransactions().call();
+            const pending = await this.callContractMethod(this.contract.methods.getPendingTransactions());
             if (pending.length > 0) {
                 const txId = pending[0];
-                const txRecord = await this.contract.methods.getTransaction(txId).call();
+                const txRecord = await this.callContractMethod(this.contract.methods.getTransaction(txId));
                 if (txRecord.params.operationType === this.getOperationType('BROADCASTER_UPDATE')) {
                     console.log(`  ✅ Broadcaster update request created`);
                     return txRecord;
