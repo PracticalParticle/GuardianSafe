@@ -1128,7 +1128,7 @@ library StateAbstraction {
     function verifySignature(
         SecureOperationState storage self,
         MetaTransaction memory metaTx
-    ) public view returns (bool) {
+    ) private view returns (bool) {
         // Basic validation
         SharedValidation.validateSignatureLength(metaTx.signature);
         SharedValidation.validatePendingTransaction(uint8(metaTx.txRecord.status));
@@ -1213,7 +1213,7 @@ library StateAbstraction {
      * @param signature The signature to recover the address from.
      * @return The address of the signer.
      */
-    function recoverSigner(bytes32 messageHash, bytes memory signature) private pure returns (address) {
+    function recoverSigner(bytes32 messageHash, bytes memory signature) public pure returns (address) {
         SharedValidation.validateSignatureLength(signature);
 
         bytes32 r;
