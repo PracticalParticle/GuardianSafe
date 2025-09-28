@@ -26,12 +26,6 @@ interface IDefinition {
     }
 
     /**
-     * @dev Returns all operation type definitions
-     * @return Array of operation type definitions
-     */
-    function getOperationTypes() external pure returns (StateAbstraction.ReadableOperationType[] memory);
-    
-    /**
      * @dev Returns all function schema definitions
      * @return Array of function schema definitions
      */

@@ -16,5 +16,4 @@ interface ISecureOwnable {
     function getTransactionHistory(uint256 fromTxId, uint256 toTxId) external view returns (StateAbstraction.TxRecord[] memory);
     function getTransaction(uint256 txId) external view returns (StateAbstraction.TxRecord memory);
     function getSupportedOperationTypes() external view returns (bytes32[] memory);
-    function isOperationTypeSupported(bytes32 operationType) external view returns (bool);
 }

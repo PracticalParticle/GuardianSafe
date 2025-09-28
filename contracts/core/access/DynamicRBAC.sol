@@ -65,7 +65,6 @@ abstract contract DynamicRBAC is Initializable, SecureOwnable {
         IDefinition.RolePermission memory permissions = DynamicRBACDefinitions.getRolePermissions();
         StateAbstraction.loadDefinitions(
             _getSecureState(),
-            DynamicRBACDefinitions.getOperationTypes(),
             DynamicRBACDefinitions.getFunctionSchemas(),
             permissions.roleHashes,
             permissions.functionPermissions

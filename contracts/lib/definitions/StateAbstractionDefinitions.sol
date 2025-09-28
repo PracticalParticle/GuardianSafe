@@ -21,21 +21,6 @@ library StateAbstractionDefinitions {
     
     
     /**
-     * @dev Returns predefined operation types
-     * @return Array of operation type definitions
-     */
-    function getOperationTypes() public pure returns (StateAbstraction.ReadableOperationType[] memory) {
-        StateAbstraction.ReadableOperationType[] memory types = new StateAbstraction.ReadableOperationType[](1);
-        
-        types[0] = StateAbstraction.ReadableOperationType({
-            operationType: SYSTEM_OPERATION,
-            name: "SYSTEM_OPERATION"
-        });
-        
-        return types;
-    }
-    
-    /**
      * @dev Returns predefined function schemas based on StateAbstraction.initializeBaseFunctionSchemas
      * @return Array of function schema definitions
      */
@@ -70,6 +55,7 @@ library StateAbstractionDefinitions {
             functionName: "txRequest",
             functionSelector: StateAbstraction.TX_REQUEST_SELECTOR,
             operationType: SYSTEM_OPERATION,
+            operationName: "SYSTEM_OPERATION",
             supportedActions: timeDelayRequestActions
         });
         
@@ -77,6 +63,7 @@ library StateAbstractionDefinitions {
             functionName: "txDelayedApproval",
             functionSelector: StateAbstraction.TX_DELAYED_APPROVAL_SELECTOR,
             operationType: SYSTEM_OPERATION,
+            operationName: "SYSTEM_OPERATION",
             supportedActions: timeDelayApproveActions
         });
         
@@ -84,6 +71,7 @@ library StateAbstractionDefinitions {
             functionName: "txCancellation",
             functionSelector: StateAbstraction.TX_CANCELLATION_SELECTOR,
             operationType: SYSTEM_OPERATION,
+            operationName: "SYSTEM_OPERATION",
             supportedActions: timeDelayCancelActions
         });
         
@@ -91,6 +79,7 @@ library StateAbstractionDefinitions {
             functionName: "txApprovalWithMetaTx",
             functionSelector: StateAbstraction.META_TX_APPROVAL_SELECTOR,
             operationType: SYSTEM_OPERATION,
+            operationName: "SYSTEM_OPERATION",
             supportedActions: metaTxApproveActions
         });
         
@@ -98,6 +87,7 @@ library StateAbstractionDefinitions {
             functionName: "txCancellationWithMetaTx",
             functionSelector: StateAbstraction.META_TX_CANCELLATION_SELECTOR,
             operationType: SYSTEM_OPERATION,
+            operationName: "SYSTEM_OPERATION",
             supportedActions: metaTxCancelActions
         });
         
@@ -105,6 +95,7 @@ library StateAbstractionDefinitions {
             functionName: "requestAndApprove",
             functionSelector: StateAbstraction.META_TX_REQUEST_AND_APPROVE_SELECTOR,
             operationType: SYSTEM_OPERATION,
+            operationName: "SYSTEM_OPERATION",
             supportedActions: metaTxRequestApproveActions
         });
         
@@ -116,6 +107,7 @@ library StateAbstractionDefinitions {
             functionName: "updatePaymentForTransaction",
             functionSelector: StateAbstraction.UPDATE_PAYMENT_SELECTOR,
             operationType: SYSTEM_OPERATION,
+            operationName: "SYSTEM_OPERATION",
             supportedActions: updatePaymentActions
         });
         

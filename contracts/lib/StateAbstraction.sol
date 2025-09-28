@@ -147,12 +147,8 @@ library StateAbstraction {
         string functionName;
         bytes4 functionSelector;
         bytes32 operationType;
+        string operationName;
         TxAction[] supportedActions;
-    }
-
-    struct ReadableOperationType {
-        bytes32 operationType;
-        string name;
     }
 
     // ============ DEFINITION STRUCTS ============
@@ -174,9 +170,6 @@ library StateAbstraction {
         // ============ FUNCTION MANAGEMENT ============
         mapping(bytes4 => FunctionSchema) functions;
         EnumerableSet.Bytes32Set supportedFunctionsSet; // Using Bytes32Set for bytes4 selectors
-        
-        // ============ OPERATION TYPES ============
-        mapping(bytes32 => ReadableOperationType) supportedOperationTypes;
         EnumerableSet.Bytes32Set supportedOperationTypesSet;
         
         // ============ META-TRANSACTION SUPPORT ============
@@ -984,11 +977,13 @@ library StateAbstraction {
         string memory functionName,
         bytes4 functionSelector,
         bytes32 operationType,
+        string memory operationName,
         TxAction[] memory supportedActions
     ) public {
         if (!self.supportedOperationTypesSet.contains(operationType)) {
-            revert SharedValidation.OperationNotSupported();
-        }
+            SharedValidation.validateOperationTypeNotZero(operationType);
+            self.supportedOperationTypesSet.add(operationType);
+        }  
         
         if (self.functions[functionSelector].functionSelector == functionSelector) {
             revert SharedValidation.FunctionAlreadyExists(functionSelector);
@@ -998,9 +993,10 @@ library StateAbstraction {
             functionName: functionName,
             functionSelector: functionSelector,
             operationType: operationType,
+            operationName: operationName,
             supportedActions: supportedActions
         });
-        self.supportedFunctionsSet.add(bytes32(functionSelector));
+        self.supportedFunctionsSet.add(bytes32(functionSelector)); 
     }
 
     /**
@@ -1031,28 +1027,14 @@ library StateAbstraction {
     // ============ OPERATION TYPES FUNCTIONS ============
 
     /**
-    * @dev Registers a new operation type with a human-readable name
-    * @param self The SecureOperationState to modify
-    * @param readableType The operation type with its human-readable name
-    */
-    function addOperationType(
-        SecureOperationState storage self,
-        ReadableOperationType memory readableType
-    ) public {
-        SharedValidation.validateOperationTypeNotZero(readableType.operationType);
-        if (self.supportedOperationTypesSet.contains(readableType.operationType)) revert SharedValidation.OperationTypeExists();
-        self.supportedOperationTypes[readableType.operationType] = readableType;
-        self.supportedOperationTypesSet.add(readableType.operationType);
-    }
-
-    /**
      * @dev Checks if an operation type is supported
      * @param self The SecureOperationState to check
      * @param operationType The operation type to check
      * @return bool True if the operation type is supported
      */
     function isOperationTypeSupported(SecureOperationState storage self, bytes32 operationType) public view returns (bool) {
-        return self.supportedOperationTypes[operationType].operationType != bytes32(0);
+        if (!hasAnyRole(self, msg.sender)) revert SharedValidation.NoPermission(msg.sender);
+        return self.supportedOperationTypesSet.contains(operationType);
     }
 
     // ============ BACKWARD COMPATIBILITY FUNCTIONS ============
@@ -1447,23 +1429,16 @@ library StateAbstraction {
      * @dev Loads definitions directly into a SecureOperationState
      * This function initializes the secure state with all predefined definitions
      * @param secureState The SecureOperationState to initialize
-     * @param operationTypes Array of operation type definitions
      * @param functionSchemas Array of function schema definitions  
      * @param roleHashes Array of role hashes
      * @param functionPermissions Array of function permissions (parallel to roleHashes)
      */
     function loadDefinitions(
         SecureOperationState storage secureState,
-        ReadableOperationType[] memory operationTypes,
         FunctionSchema[] memory functionSchemas,
         bytes32[] memory roleHashes,
         FunctionPermission[] memory functionPermissions
-    ) public {
-        // Load operation types
-        for (uint256 i = 0; i < operationTypes.length; i++) {
-            addOperationType(secureState, operationTypes[i]);
-        }
-        
+    ) public {  
         // Load function schemas
         for (uint256 i = 0; i < functionSchemas.length; i++) {
             createFunctionSchema(
@@ -1471,6 +1446,7 @@ library StateAbstraction {
                 functionSchemas[i].functionName,
                 functionSchemas[i].functionSelector,
                 functionSchemas[i].operationType,
+                functionSchemas[i].operationName,
                 functionSchemas[i].supportedActions
             );
         }

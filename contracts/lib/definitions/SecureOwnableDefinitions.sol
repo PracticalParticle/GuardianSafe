@@ -47,36 +47,6 @@ library SecureOwnableDefinitions {
     // These are now defined in the main library
     
     /**
-     * @dev Returns predefined operation types
-     * @return Array of operation type definitions
-     */
-    function getOperationTypes() public pure returns (StateAbstraction.ReadableOperationType[] memory) {
-        StateAbstraction.ReadableOperationType[] memory types = new StateAbstraction.ReadableOperationType[](4);
-        
-        types[0] = StateAbstraction.ReadableOperationType({
-            operationType: keccak256("OWNERSHIP_TRANSFER"),
-            name: "OWNERSHIP_TRANSFER"
-        });
-        
-        types[1] = StateAbstraction.ReadableOperationType({
-            operationType: keccak256("BROADCASTER_UPDATE"),
-            name: "BROADCASTER_UPDATE"
-        });
-        
-        types[2] = StateAbstraction.ReadableOperationType({
-            operationType: keccak256("RECOVERY_UPDATE"),
-            name: "RECOVERY_UPDATE"
-        });
-        
-        types[3] = StateAbstraction.ReadableOperationType({
-            operationType: keccak256("TIMELOCK_UPDATE"),
-            name: "TIMELOCK_UPDATE"
-        });
-        
-        return types;
-    }
-    
-    /**
      * @dev Returns predefined function schemas
      * @return Array of function schema definitions
      */
@@ -111,6 +81,7 @@ library SecureOwnableDefinitions {
             functionName: "transferOwnershipApprovalWithMetaTx",
             functionSelector: TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR,
             operationType: OWNERSHIP_TRANSFER,
+            operationName: "OWNERSHIP_TRANSFER",
             supportedActions: metaApproveActions
         });
         
@@ -118,6 +89,7 @@ library SecureOwnableDefinitions {
             functionName: "transferOwnershipCancellationWithMetaTx",
             functionSelector: TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR,
             operationType: OWNERSHIP_TRANSFER,
+            operationName: "OWNERSHIP_TRANSFER",
             supportedActions: metaCancelActions
         });
         
@@ -125,6 +97,7 @@ library SecureOwnableDefinitions {
             functionName: "updateBroadcasterApprovalWithMetaTx",
             functionSelector: UPDATE_BROADCASTER_APPROVE_META_SELECTOR,
             operationType: BROADCASTER_UPDATE,
+            operationName: "BROADCASTER_UPDATE",
             supportedActions: metaApproveActions
         });
         
@@ -132,6 +105,7 @@ library SecureOwnableDefinitions {
             functionName: "updateBroadcasterCancellationWithMetaTx",
             functionSelector: UPDATE_BROADCASTER_CANCEL_META_SELECTOR,
             operationType: BROADCASTER_UPDATE,
+            operationName: "BROADCASTER_UPDATE",
             supportedActions: metaCancelActions
         });
         
@@ -139,6 +113,7 @@ library SecureOwnableDefinitions {
             functionName: "updateRecoveryRequestAndApprove",
             functionSelector: UPDATE_RECOVERY_META_SELECTOR,
             operationType: RECOVERY_UPDATE,
+            operationName: "RECOVERY_UPDATE",
             supportedActions: metaRequestApproveActions
         });
         
@@ -146,6 +121,7 @@ library SecureOwnableDefinitions {
             functionName: "updateTimeLockRequestAndApprove",
             functionSelector: UPDATE_TIMELOCK_META_SELECTOR,
             operationType: TIMELOCK_UPDATE,
+            operationName: "TIMELOCK_UPDATE",
             supportedActions: metaRequestApproveActions
         });
         
@@ -154,6 +130,7 @@ library SecureOwnableDefinitions {
             functionName: "transferOwnershipRequest",
             functionSelector: TRANSFER_OWNERSHIP_REQUEST_SELECTOR,
             operationType: OWNERSHIP_TRANSFER,
+            operationName: "OWNERSHIP_TRANSFER",
             supportedActions: timeDelayRequestActions
         });
         
@@ -161,6 +138,7 @@ library SecureOwnableDefinitions {
             functionName: "transferOwnershipDelayedApproval",
             functionSelector: TRANSFER_OWNERSHIP_DELAYED_APPROVAL_SELECTOR,
             operationType: OWNERSHIP_TRANSFER,
+            operationName: "OWNERSHIP_TRANSFER",
             supportedActions: timeDelayApproveActions
         });
         
@@ -168,6 +146,7 @@ library SecureOwnableDefinitions {
             functionName: "transferOwnershipCancellation",
             functionSelector: TRANSFER_OWNERSHIP_CANCELLATION_SELECTOR,
             operationType: OWNERSHIP_TRANSFER,
+            operationName: "OWNERSHIP_TRANSFER",
             supportedActions: timeDelayCancelActions
         });
         
@@ -175,6 +154,7 @@ library SecureOwnableDefinitions {
             functionName: "updateBroadcasterRequest",
             functionSelector: UPDATE_BROADCASTER_REQUEST_SELECTOR,
             operationType: BROADCASTER_UPDATE,
+            operationName: "BROADCASTER_UPDATE",
             supportedActions: timeDelayRequestActions
         });
         
@@ -182,6 +162,7 @@ library SecureOwnableDefinitions {
             functionName: "updateBroadcasterDelayedApproval",
             functionSelector: UPDATE_BROADCASTER_DELAYED_APPROVAL_SELECTOR,
             operationType: BROADCASTER_UPDATE,
+            operationName: "BROADCASTER_UPDATE",
             supportedActions: timeDelayApproveActions
         });
         
@@ -189,6 +170,7 @@ library SecureOwnableDefinitions {
             functionName: "updateBroadcasterCancellation",
             functionSelector: UPDATE_BROADCASTER_CANCELLATION_SELECTOR,
             operationType: BROADCASTER_UPDATE,
+            operationName: "BROADCASTER_UPDATE",
             supportedActions: timeDelayCancelActions
         });
         

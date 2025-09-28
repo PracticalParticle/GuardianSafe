@@ -98,7 +98,6 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
         IDefinition.RolePermission memory multiPhasePermissions = StateAbstractionDefinitions.getRolePermissions();
         StateAbstraction.loadDefinitions(
             _secureState,
-            StateAbstractionDefinitions.getOperationTypes(),
             StateAbstractionDefinitions.getFunctionSchemas(),
             multiPhasePermissions.roleHashes,
             multiPhasePermissions.functionPermissions
@@ -107,7 +106,6 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
         IDefinition.RolePermission memory secureOwnablePermissions = SecureOwnableDefinitions.getRolePermissions();
         StateAbstraction.loadDefinitions(
             _secureState,
-            SecureOwnableDefinitions.getOperationTypes(),
             SecureOwnableDefinitions.getFunctionSchemas(),
             secureOwnablePermissions.roleHashes,
             secureOwnablePermissions.functionPermissions
@@ -465,15 +463,6 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
         StateAbstraction.MetaTxParams memory metaTxParams
     ) public view returns (StateAbstraction.MetaTransaction memory) {
         return _secureState.generateUnsignedForExistingMetaTx(txId, metaTxParams);
-    }
-
-    /**
-     * @dev Checks if an operation type is supported
-     * @param operationType The operation type to check
-     * @return bool True if the operation type is supported
-     */
-    function isOperationTypeSupported(bytes32 operationType) public view returns (bool) {
-        return _secureState.isOperationTypeSupported(operationType);
     }
 
     /**

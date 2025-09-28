@@ -25,21 +25,6 @@ library DynamicRBACDefinitions {
     bytes4 public constant ROLE_EDITING_TOGGLE_META_SELECTOR = bytes4(keccak256("updateRoleEditingToggleRequestAndApprove(((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes32,bytes,(address,uint256,address,uint256)),(uint256,uint256,address,bytes4,uint8,uint256,uint256,address),bytes32,bytes,bytes))"));
     
     /**
-     * @dev Returns predefined operation types
-     * @return Array of operation type definitions
-     */
-    function getOperationTypes() public pure returns (StateAbstraction.ReadableOperationType[] memory) {
-        StateAbstraction.ReadableOperationType[] memory types = new StateAbstraction.ReadableOperationType[](1);
-        
-        types[0] = StateAbstraction.ReadableOperationType({
-            operationType: keccak256("ROLE_EDITING_TOGGLE"),
-            name: "ROLE_EDITING_TOGGLE"
-        });
-        
-        return types;
-    }
-    
-    /**
      * @dev Returns predefined function schemas
      * @return Array of function schema definitions
      */
@@ -55,6 +40,7 @@ library DynamicRBACDefinitions {
             functionName: "updateRoleEditingToggleRequestAndApprove",
             functionSelector: ROLE_EDITING_TOGGLE_META_SELECTOR,
             operationType: ROLE_EDITING_TOGGLE,
+            operationName: "ROLE_EDITING_TOGGLE",
             supportedActions: metaRequestApproveActions
         });
         

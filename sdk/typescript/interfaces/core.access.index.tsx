@@ -120,7 +120,6 @@ export interface ISecureOwnable {
   getSupportedOperationTypes(): Promise<Hex[]>;
   getSupportedRoles(): Promise<Hex[]>;
   getSupportedFunctions(): Promise<Hex[]>;
-  isOperationTypeSupported(operationType: Hex): Promise<boolean>;
 
   // Additional Query Functions
   hasRole(roleHash: Hex, wallet: Address): Promise<boolean>;

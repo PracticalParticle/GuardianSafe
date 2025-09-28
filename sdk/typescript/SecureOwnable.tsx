@@ -394,15 +394,6 @@ export class SecureOwnable implements ISecureOwnable {
     }) as Hex[];
   }
 
-  async isOperationTypeSupported(operationType: Hex): Promise<boolean> {
-    return await this.client.readContract({
-      address: this.contractAddress,
-      abi: SecureOwnableABIJson,
-      functionName: 'isOperationTypeSupported',
-      args: [operationType]
-    }) as boolean;
-  }
-
   async hasRole(roleHash: Hex, wallet: Address): Promise<boolean> {
     return await this.client.readContract({
       address: this.contractAddress,
