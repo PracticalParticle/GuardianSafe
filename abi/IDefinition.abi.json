@@ -1,31 +1,6 @@
 [
   {
     "inputs": [],
-    "name": "getOperationTypes",
-    "outputs": [
-      {
-        "components": [
-          {
-            "internalType": "bytes32",
-            "name": "operationType",
-            "type": "bytes32"
-          },
-          {
-            "internalType": "string",
-            "name": "name",
-            "type": "string"
-          }
-        ],
-        "internalType": "struct StateAbstraction.ReadableOperationType[]",
-        "name": "",
-        "type": "tuple[]"
-      }
-    ],
-    "stateMutability": "pure",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "getFunctionSchemas",
     "outputs": [
       {
@@ -44,6 +19,11 @@
             "internalType": "bytes32",
             "name": "operationType",
             "type": "bytes32"
+          },
+          {
+            "internalType": "string",
+            "name": "operationName",
+            "type": "string"
           },
           {
             "internalType": "enum StateAbstraction.TxAction[]",

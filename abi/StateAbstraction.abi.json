@@ -356,11 +356,6 @@
     "type": "error"
   },
   {
-    "inputs": [],
-    "name": "OperationTypeExists",
-    "type": "error"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",

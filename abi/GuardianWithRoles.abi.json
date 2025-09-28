@@ -1631,26 +1631,6 @@
     "constant": true
   },
   {
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "operationType",
-        "type": "bytes32"
-      }
-    ],
-    "name": "isOperationTypeSupported",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function",
-    "constant": true
-  },
-  {
     "inputs": [],
     "name": "owner",
     "outputs": [
