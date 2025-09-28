@@ -304,7 +304,6 @@ library StateAbstraction {
             revert SharedValidation.NoPermissionExecute(msg.sender);
         }
         SharedValidation.validateNotZeroAddress(target);
-        if (!isOperationTypeSupported(self, operationType)) revert SharedValidation.OperationNotSupported();
 
         TxRecord memory txRequestRecord = createNewTxRecord(
             self,
@@ -987,7 +986,10 @@ library StateAbstraction {
         bytes32 operationType,
         TxAction[] memory supportedActions
     ) public {
-        SharedValidation.validateOperationTypeNotZero(operationType);
+        if (!self.supportedOperationTypesSet.contains(operationType)) {
+            revert SharedValidation.OperationNotSupported();
+        }
+        
         if (self.functions[functionSelector].functionSelector == functionSelector) {
             revert SharedValidation.FunctionAlreadyExists(functionSelector);
         }
@@ -1037,7 +1039,8 @@ library StateAbstraction {
         SecureOperationState storage self,
         ReadableOperationType memory readableType
     ) public {
-        if (self.supportedOperationTypes[readableType.operationType].operationType == readableType.operationType) revert SharedValidation.OperationTypeExists();
+        SharedValidation.validateOperationTypeNotZero(readableType.operationType);
+        if (self.supportedOperationTypesSet.contains(readableType.operationType)) revert SharedValidation.OperationTypeExists();
         self.supportedOperationTypes[readableType.operationType] = readableType;
         self.supportedOperationTypesSet.add(readableType.operationType);
     }
@@ -1150,7 +1153,6 @@ library StateAbstraction {
         
         // Transaction parameters validation
         SharedValidation.validateNotZeroAddress(metaTx.txRecord.params.requester);
-        if (!isOperationTypeSupported(self, metaTx.txRecord.params.operationType)) revert SharedValidation.OperationNotSupported();
         
         // Meta-transaction parameters validation
         SharedValidation.validateChainId(metaTx.params.chainId);
@@ -1271,7 +1273,6 @@ library StateAbstraction {
         TxParams memory txParams,
         MetaTxParams memory metaTxParams
     ) public view returns (MetaTransaction memory) {
-        if (!isOperationTypeSupported(self, txParams.operationType)) revert SharedValidation.OperationNotSupported();
         SharedValidation.validateNotZeroAddress(txParams.target);
         
         TxRecord memory txRecord = createNewTxRecord(
