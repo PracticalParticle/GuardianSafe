@@ -161,13 +161,16 @@ class BroadcasterUpdateTests extends BaseSecureOwnableTest {
             // Get actual blockchain time instead of machine time
             const currentBlock = await this.web3.eth.getBlock('latest');
             const currentBlockchainTime = currentBlock.timestamp;
-            const timeToAdvance = releaseTime - currentBlockchainTime + 10; // Add 10 seconds buffer
+            
+            // Calculate time to advance with safety buffer
+            // We need to advance at least 1 second MORE than the timelock period to ensure it has expired
+            const timeToAdvance = Math.max(0, releaseTime - currentBlockchainTime + 2); // Add 2 seconds buffer (1 sec + 1 sec safety)
             
             console.log(`  📋 Release time: ${releaseTime}`);
             console.log(`  📋 Current blockchain time: ${currentBlockchainTime}`);
-            console.log(`  📋 Time to advance: ${timeToAdvance} seconds`);
+            console.log(`  📋 Time to advance: ${timeToAdvance} seconds (includes 2-second safety buffer)`);
             
-            // Now that timelock period update is working, advance time by the calculated amount
+            // Advance time by the calculated amount to ensure timelock has expired
             if (timeToAdvance > 0) {
                 console.log(`  ⏰ Advancing blockchain time by ${timeToAdvance} seconds...`);
                 await this.advanceBlockchainTime(timeToAdvance);
@@ -319,13 +322,16 @@ class BroadcasterUpdateTests extends BaseSecureOwnableTest {
             // Get actual blockchain time instead of machine time
             const currentBlock = await this.web3.eth.getBlock('latest');
             const currentBlockchainTime = currentBlock.timestamp;
-            const timeToAdvance = releaseTime - currentBlockchainTime + 10; // Add 10 seconds buffer
+            
+            // Calculate time to advance with safety buffer
+            // We need to advance at least 1 second MORE than the timelock period to ensure it has expired
+            const timeToAdvance = Math.max(0, releaseTime - currentBlockchainTime + 2); // Add 2 seconds buffer (1 sec + 1 sec safety)
             
             console.log(`  📋 Release time: ${releaseTime}`);
             console.log(`  📋 Current blockchain time: ${currentBlockchainTime}`);
-            console.log(`  📋 Time to advance: ${timeToAdvance} seconds`);
+            console.log(`  📋 Time to advance: ${timeToAdvance} seconds (includes 2-second safety buffer)`);
             
-            // Now that timelock period update is working, advance time by the calculated amount
+            // Advance time by the calculated amount to ensure timelock has expired
             if (timeToAdvance > 0) {
                 console.log(`  ⏰ Advancing blockchain time by ${timeToAdvance} seconds...`);
                 await this.advanceBlockchainTime(timeToAdvance);
