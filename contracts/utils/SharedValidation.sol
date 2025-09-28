@@ -444,12 +444,15 @@ library SharedValidation {
     }
     
     /**
-     * @dev Validates gas price is within limits
-     * @param maxGasPrice The maximum allowed gas price
+     * @dev Validates that the current transaction's gas price is within limits
+     * @param maxGasPrice The maximum allowed gas price (in wei)
      */
     function validateGasPrice(uint256 maxGasPrice) internal view {
-        if (maxGasPrice > 0 && block.basefee > maxGasPrice) {
-            revert GasPriceExceedsMax(block.basefee, maxGasPrice);
+        if (maxGasPrice == 0) return; // No limit set
+        
+        uint256 currentGasPrice = tx.gasprice;
+        if (currentGasPrice > maxGasPrice) {
+            revert GasPriceExceedsMax(currentGasPrice, maxGasPrice);
         }
     }
     

@@ -1142,7 +1142,7 @@ library StateAbstraction {
         SharedValidation.validateMetaTxDeadline(metaTx.params.deadline);
         
         // Gas price validation (if applicable)
-        // SharedValidation.validateGasPrice(metaTx.params.maxGasPrice);
+        SharedValidation.validateGasPrice(metaTx.params.maxGasPrice);
         
         // Validate signer-specific nonce
         SharedValidation.validateNonce(metaTx.params.nonce, getSignerNonce(self, metaTx.params.signer));

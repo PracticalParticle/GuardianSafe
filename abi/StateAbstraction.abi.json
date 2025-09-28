@@ -158,6 +158,22 @@
   {
     "inputs": [
       {
+        "internalType": "uint256",
+        "name": "currentGasPrice",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "maxGasPrice",
+        "type": "uint256"
+      }
+    ],
+    "name": "GasPriceExceedsMax",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
         "name": "handlerContract",
         "type": "address"
