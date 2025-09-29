@@ -182,12 +182,8 @@ module.exports = async function(deployer, network, accounts) {
             
             // Verify deployment
             const isInitialized = await guardianBare.initialized();
-            const ownerRoleHash = "0x0000000000000000000000000000000000000000000000000000000000000000"; // OWNER_ROLE
-            const hasOwnerRole = await guardianBare.hasRole(ownerRoleHash, initialOwner);
             
-            console.log("Verification:");
             console.log("- Initialized:", isInitialized);
-            console.log("- Owner role assigned:", hasOwnerRole);
         } catch (error) {
             console.log("❌ GuardianBare initialization failed:");
             console.log("   Error message:", error.message);
