@@ -4,353 +4,90 @@ import { TransactionOptions, TransactionResult } from './interfaces/base.index';
 import { ISecureOwnable } from './interfaces/core.access.index';
 import { TxRecord, MetaTransaction, MetaTxParams } from './interfaces/lib.index';
 import { ExecutionType, TxAction } from './types/lib.index';
+import { BaseStateMachine } from './BaseStateMachine';
 
 /**
  * @title SecureOwnable
  * @notice TypeScript wrapper for SecureOwnable smart contract
  */
-export class SecureOwnable implements ISecureOwnable {
+export class SecureOwnable extends BaseStateMachine implements ISecureOwnable {
   constructor(
-    protected client: PublicClient,
-    protected walletClient: WalletClient | undefined,
-    protected contractAddress: Address,
-    protected chain: Chain
-  ) {}
+    client: PublicClient,
+    walletClient: WalletClient | undefined,
+    contractAddress: Address,
+    chain: Chain
+  ) {
+    super(client, walletClient, contractAddress, chain, SecureOwnableABIJson);
+  }
 
   // Ownership Management
   async transferOwnershipRequest(options: TransactionOptions): Promise<TransactionResult> {
-    if (!this.walletClient) throw new Error('Wallet client is required');
-    
-    const hash = await this.walletClient.writeContract({
-      chain: this.chain,
-      address: this.contractAddress,
-      abi: SecureOwnableABIJson,
-      functionName: 'transferOwnershipRequest',
-      account: options.from
-    });
-
-    return {
-      hash,
-      wait: () => this.client.waitForTransactionReceipt({ hash })
-    };
+    return this.executeWriteContract('transferOwnershipRequest', [], options);
   }
 
   async transferOwnershipDelayedApproval(txId: bigint, options: TransactionOptions): Promise<TransactionResult> {
-    if (!this.walletClient) throw new Error('Wallet client is required');
-    
-    const hash = await this.walletClient.writeContract({
-      chain: this.chain,
-      address: this.contractAddress,
-      abi: SecureOwnableABIJson,
-      functionName: 'transferOwnershipDelayedApproval',
-      args: [txId],
-      account: options.from
-    });
-
-    return {
-      hash,
-      wait: () => this.client.waitForTransactionReceipt({ hash })
-    };
+    return this.executeWriteContract('transferOwnershipDelayedApproval', [txId], options);
   }
 
   async transferOwnershipApprovalWithMetaTx(metaTx: MetaTransaction, options: TransactionOptions): Promise<TransactionResult> {
-    if (!this.walletClient) throw new Error('Wallet client is required');
-    
-    const hash = await this.walletClient.writeContract({
-      chain: this.chain,
-      address: this.contractAddress,
-      abi: SecureOwnableABIJson,
-      functionName: 'transferOwnershipApprovalWithMetaTx',
-      args: [metaTx],
-      account: options.from
-    });
-
-    return {
-      hash,
-      wait: () => this.client.waitForTransactionReceipt({ hash })
-    };
+    return this.executeWriteContract('transferOwnershipApprovalWithMetaTx', [metaTx], options);
   }
 
   async transferOwnershipCancellation(txId: bigint, options: TransactionOptions): Promise<TransactionResult> {
-    if (!this.walletClient) throw new Error('Wallet client is required');
-    
-    const hash = await this.walletClient.writeContract({
-      chain: this.chain,
-      address: this.contractAddress,
-      abi: SecureOwnableABIJson,
-      functionName: 'transferOwnershipCancellation',
-      args: [txId],
-      account: options.from
-    });
-
-    return {
-      hash,
-      wait: () => this.client.waitForTransactionReceipt({ hash })
-    };
+    return this.executeWriteContract('transferOwnershipCancellation', [txId], options);
   }
 
   async transferOwnershipCancellationWithMetaTx(metaTx: MetaTransaction, options: TransactionOptions): Promise<TransactionResult> {
-    if (!this.walletClient) throw new Error('Wallet client is required');
-    
-    const hash = await this.walletClient.writeContract({
-      chain: this.chain,
-      address: this.contractAddress,
-      abi: SecureOwnableABIJson,
-      functionName: 'transferOwnershipCancellationWithMetaTx',
-      args: [metaTx],
-      account: options.from
-    });
-
-    return {
-      hash,
-      wait: () => this.client.waitForTransactionReceipt({ hash })
-    };
+    return this.executeWriteContract('transferOwnershipCancellationWithMetaTx', [metaTx], options);
   }
 
   // Broadcaster Management
   async updateBroadcasterRequest(newBroadcaster: Address, options: TransactionOptions): Promise<TransactionResult> {
-    if (!this.walletClient) throw new Error('Wallet client is required');
-    
-    const hash = await this.walletClient.writeContract({
-      chain: this.chain,
-      address: this.contractAddress,
-      abi: SecureOwnableABIJson,
-      functionName: 'updateBroadcasterRequest',
-      args: [newBroadcaster],
-      account: options.from
-    });
-
-    return {
-      hash,
-      wait: () => this.client.waitForTransactionReceipt({ hash })
-    };
+    return this.executeWriteContract('updateBroadcasterRequest', [newBroadcaster], options);
   }
 
   async updateBroadcasterDelayedApproval(txId: bigint, options: TransactionOptions): Promise<TransactionResult> {
-    if (!this.walletClient) throw new Error('Wallet client is required');
-    
-    const hash = await this.walletClient.writeContract({
-      chain: this.chain,
-      address: this.contractAddress,
-      abi: SecureOwnableABIJson,
-      functionName: 'updateBroadcasterDelayedApproval',
-      args: [txId],
-      account: options.from
-    });
-
-    return {
-      hash,
-      wait: () => this.client.waitForTransactionReceipt({ hash })
-    };
+    return this.executeWriteContract('updateBroadcasterDelayedApproval', [txId], options);
   }
 
   async updateBroadcasterApprovalWithMetaTx(metaTx: MetaTransaction, options: TransactionOptions): Promise<TransactionResult> {
-    if (!this.walletClient) throw new Error('Wallet client is required');
-    
-    const hash = await this.walletClient.writeContract({
-      chain: this.chain,
-      address: this.contractAddress,
-      abi: SecureOwnableABIJson,
-      functionName: 'updateBroadcasterApprovalWithMetaTx',
-      args: [metaTx],
-      account: options.from
-    });
-
-    return {
-      hash,
-      wait: () => this.client.waitForTransactionReceipt({ hash })
-    };
+    return this.executeWriteContract('updateBroadcasterApprovalWithMetaTx', [metaTx], options);
   }
 
   async updateBroadcasterCancellation(txId: bigint, options: TransactionOptions): Promise<TransactionResult> {
-    if (!this.walletClient) throw new Error('Wallet client is required');
-    
-    const hash = await this.walletClient.writeContract({
-      chain: this.chain,
-      address: this.contractAddress,
-      abi: SecureOwnableABIJson,
-      functionName: 'updateBroadcasterCancellation',
-      args: [txId],
-      account: options.from
-    });
-
-    return {
-      hash,
-      wait: () => this.client.waitForTransactionReceipt({ hash })
-    };
+    return this.executeWriteContract('updateBroadcasterCancellation', [txId], options);
   }
 
   async updateBroadcasterCancellationWithMetaTx(metaTx: MetaTransaction, options: TransactionOptions): Promise<TransactionResult> {
-    if (!this.walletClient) throw new Error('Wallet client is required');
-    
-    const hash = await this.walletClient.writeContract({
-      chain: this.chain,
-      address: this.contractAddress,
-      abi: SecureOwnableABIJson,
-      functionName: 'updateBroadcasterCancellationWithMetaTx',
-      args: [metaTx],
-      account: options.from
-    });
-
-    return {
-      hash,
-      wait: () => this.client.waitForTransactionReceipt({ hash })
-    };
+    return this.executeWriteContract('updateBroadcasterCancellationWithMetaTx', [metaTx], options);
   }
 
   // Recovery Management
   async updateRecoveryExecutionOptions(newRecoveryAddress: Address): Promise<Hex> {
-    return await this.client.readContract({
-      address: this.contractAddress,
-      abi: SecureOwnableABIJson,
-      functionName: 'updateRecoveryExecutionOptions',
-      args: [newRecoveryAddress]
-    }) as Hex;
+    return this.executeReadContract<Hex>('updateRecoveryExecutionOptions', [newRecoveryAddress]);
   }
 
   async updateRecoveryRequestAndApprove(metaTx: MetaTransaction, options: TransactionOptions): Promise<TransactionResult> {
-    if (!this.walletClient) throw new Error('Wallet client is required');
-
-    const hash = await this.walletClient.writeContract({
-      chain: this.chain,
-      address: this.contractAddress,
-      abi: SecureOwnableABIJson,
-      functionName: 'updateRecoveryRequestAndApprove',
-      args: [metaTx],
-      account: options.from
-    });
-
-    return {
-      hash,
-      wait: () => this.client.waitForTransactionReceipt({ hash })
-    };
+    return this.executeWriteContract('updateRecoveryRequestAndApprove', [metaTx], options);
   }
 
   // TimeLock Management
   async updateTimeLockExecutionOptions(newTimeLockPeriodInMinutes: bigint): Promise<Hex> {
-    return await this.client.readContract({
-      address: this.contractAddress,
-      abi: SecureOwnableABIJson,
-      functionName: 'updateTimeLockExecutionOptions',
-      args: [newTimeLockPeriodInMinutes]
-    }) as Hex;
+    return this.executeReadContract<Hex>('updateTimeLockExecutionOptions', [newTimeLockPeriodInMinutes]);
   }
 
   async updateTimeLockRequestAndApprove(metaTx: MetaTransaction, options: TransactionOptions): Promise<TransactionResult> {
-    if (!this.walletClient) throw new Error('Wallet client is required');
-
-    const hash = await this.walletClient.writeContract({
-      chain: this.chain,
-      address: this.contractAddress,
-      abi: SecureOwnableABIJson,
-      functionName: 'updateTimeLockRequestAndApprove',
-      args: [metaTx],
-      account: options.from
-    });
-
-    return {
-      hash,
-      wait: () => this.client.waitForTransactionReceipt({ hash })
-    };
+    return this.executeWriteContract('updateTimeLockRequestAndApprove', [metaTx], options);
   }
 
-  // Meta Transaction Generation
-  async createMetaTxParams(
-    handlerContract: Address,
-    handlerSelector: Hex,
-    action: TxAction,
-    deadline: bigint,
-    maxGasPrice: bigint,
-    signer: Address
-  ): Promise<MetaTxParams> {
-    return await this.client.readContract({
-      address: this.contractAddress,
-      abi: SecureOwnableABIJson,
-      functionName: 'createMetaTxParams',
-      args: [handlerContract, handlerSelector, action, deadline, maxGasPrice, signer]
-    }) as MetaTxParams;
-  }
-
-  async generateUnsignedMetaTransactionForNew(
-    requester: Address,
-    target: Address,
-    value: bigint,
-    gasLimit: bigint,
-    operationType: Hex,
-    executionType: ExecutionType,
-    executionOptions: Hex,
-    metaTxParams: MetaTxParams
-  ): Promise<MetaTransaction> {
-    return await this.client.readContract({
-      address: this.contractAddress,
-      abi: SecureOwnableABIJson,
-      functionName: 'generateUnsignedMetaTransactionForNew',
-      args: [
-        requester,
-        target,
-        value,
-        gasLimit,
-        operationType,
-        executionType,
-        executionOptions,
-        metaTxParams
-      ]
-    }) as MetaTransaction;
-  }
-
-  async generateUnsignedMetaTransactionForExisting(
-    txId: bigint,
-    metaTxParams: MetaTxParams
-  ): Promise<MetaTransaction> {
-    return await this.client.readContract({
-      address: this.contractAddress,
-      abi: SecureOwnableABIJson,
-      functionName: 'generateUnsignedMetaTransactionForExisting',
-      args: [txId, metaTxParams]
-    }) as MetaTransaction;
-  }
-
-  // Getters
-  async getTransactionHistory(fromTxId: bigint, toTxId: bigint): Promise<TxRecord[]> {
-    return await this.client.readContract({
-      address: this.contractAddress,
-      abi: SecureOwnableABIJson,
-      functionName: 'getTransactionHistory',
-      args: [fromTxId, toTxId]
-    }) as TxRecord[];
-  }
-
-  async getTransaction(txId: bigint): Promise<TxRecord> {
-    return await this.client.readContract({
-      address: this.contractAddress,
-      abi: SecureOwnableABIJson,
-      functionName: 'getTransaction',
-      args: [txId]
-    }) as TxRecord;
-  }
-
-  async getPendingTransactions(): Promise<bigint[]> {
-    return await this.client.readContract({
-      address: this.contractAddress,
-      abi: SecureOwnableABIJson,
-      functionName: 'getPendingTransactions'
-    }) as bigint[];
-  }
+  // SecureOwnable-specific getters
 
   async getBroadcaster(): Promise<Address> {
-    return await this.client.readContract({
-      address: this.contractAddress,
-      abi: SecureOwnableABIJson,
-      functionName: 'getBroadcaster'
-    }) as Address;
+    return this.executeReadContract<Address>('getBroadcaster');
   }
 
   async getRecovery(): Promise<Address> {
-    return await this.client.readContract({
-      address: this.contractAddress,
-      abi: SecureOwnableABIJson,
-      functionName: 'getRecovery'
-    }) as Address;
+    return this.executeReadContract<Address>('getRecovery');
   }
 
 
@@ -363,11 +100,7 @@ export class SecureOwnable implements ISecureOwnable {
   }
 
   async owner(): Promise<Address> {
-    return await this.client.readContract({
-      address: this.contractAddress,
-      abi: SecureOwnableABIJson,
-      functionName: 'owner'
-    }) as Address;
+    return this.executeReadContract<Address>('owner');
   }
 
   async getSupportedOperationTypes(): Promise<Hex[]> {

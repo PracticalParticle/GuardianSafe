@@ -1,13 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
 pragma solidity ^0.8.2;
 
-// OpenZeppelin imports
-import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-
 // Contracts imports
-import "../../lib/StateAbstraction.sol";
-import "../../lib/definitions/StateAbstractionDefinitions.sol";
+import "../base/BaseStateMachine.sol";
 import "../../lib/definitions/SecureOwnableDefinitions.sol";
 import "../../interfaces/IDefinition.sol";
 import "../../utils/SharedValidation.sol";
@@ -15,13 +10,13 @@ import "./interface/ISecureOwnable.sol";
 
 /**
  * @title SecureOwnable
- * @dev An enhanced version of OpenZeppelin's Ownable contract with multi-phase security operations
+ * @dev Security-focused contract extending BaseStateMachine with ownership management
  *
- * SecureOwnable extends the standard ownership model with advanced security mechanisms:
- * - Time-locked operations that require a waiting period before execution
+ * SecureOwnable provides security-specific functionality built on top of the base state machine:
  * - Multi-role security model with Owner, Broadcaster, and Recovery roles
- * - Meta-transaction support for delegated operations
- * - Secure multi-phase operations for critical administrative functions
+ * - Secure ownership transfer with time-locked operations
+ * - Broadcaster and recovery address management
+ * - Time-lock period configuration
  *
  * The contract implements four primary secure operation types:
  * 1. OWNERSHIP_TRANSFER - For securely transferring contract ownership
@@ -32,14 +27,11 @@ import "./interface/ISecureOwnable.sol";
  * Each operation follows a request -> approval workflow with appropriate time locks
  * and authorization checks. Operations can be cancelled within specific time windows.
  *
- * This contract is designed for high-security systems where immediate administrative
- * changes would pose security risks.
+ * This contract focuses purely on security logic while leveraging the BaseStateMachine
+ * for transaction management, meta-transactions, and state machine operations.
  */
-abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwnable {
-    using StateAbstraction for StateAbstraction.SecureOperationState;
+abstract contract SecureOwnable is BaseStateMachine, ISecureOwnable {
     using SharedValidation for *;
-
-    StateAbstraction.SecureOperationState private _secureState;
 
 
     // Request flags
@@ -90,28 +82,17 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
         uint256 timeLockPeriodSec,    
         address eventForwarder
     ) public virtual onlyInitializing {
-        __ERC165_init();
+        // Initialize base state machine
+        _initializeBaseStateMachine(initialOwner, broadcaster, recovery, timeLockPeriodSec, eventForwarder);
         
-        _secureState.initialize(initialOwner, broadcaster, recovery, timeLockPeriodSec);
-        
-        // Load definitions directly from StateAbstraction library
-        IDefinition.RolePermission memory multiPhasePermissions = StateAbstractionDefinitions.getRolePermissions();
-        StateAbstraction.loadDefinitions(
-            _secureState,
-            StateAbstractionDefinitions.getFunctionSchemas(),
-            multiPhasePermissions.roleHashes,
-            multiPhasePermissions.functionPermissions
-        );
-        
+        // Load SecureOwnable-specific definitions
         IDefinition.RolePermission memory secureOwnablePermissions = SecureOwnableDefinitions.getRolePermissions();
         StateAbstraction.loadDefinitions(
-            _secureState,
+            _getSecureState(),
             SecureOwnableDefinitions.getFunctionSchemas(),
             secureOwnablePermissions.roleHashes,
             secureOwnablePermissions.functionPermissions
         );
-
-        _secureState.setEventForwarder(eventForwarder);
     }
 
     // Ownership Management
@@ -121,19 +102,14 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      */
     function transferOwnershipRequest() public onlyRecovery returns (StateAbstraction.TxRecord memory) {
         if (_hasOpenOwnershipRequest) revert SharedValidation.RequestAlreadyPending(0);
-        bytes memory executionOptions = StateAbstraction.createStandardExecutionOptions(
-            SecureOwnableDefinitions.TRANSFER_OWNERSHIP_SELECTOR,
-            abi.encode(getRecovery())
-        );
-
-        StateAbstraction.TxRecord memory txRecord = _secureState.txRequest(
+        
+        StateAbstraction.TxRecord memory txRecord = _requestStandardTransaction(
             msg.sender,
             address(this),
-            0, // no value
             0, // no gas limit
             SecureOwnableDefinitions.OWNERSHIP_TRANSFER,
-            StateAbstraction.ExecutionType.STANDARD,
-            executionOptions
+            SecureOwnableDefinitions.TRANSFER_OWNERSHIP_SELECTOR,
+            abi.encode(getRecovery())
         );
 
         _hasOpenOwnershipRequest = true;
@@ -147,8 +123,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @return The updated transaction record
      */
     function transferOwnershipDelayedApproval(uint256 txId) public onlyOwnerOrRecovery returns (StateAbstraction.TxRecord memory) {
-        StateAbstraction.TxRecord memory updatedRecord = _secureState.txDelayedApproval(txId);
-        SharedValidation.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.OWNERSHIP_TRANSFER);
+        StateAbstraction.TxRecord memory updatedRecord = _approveTransaction(txId, SecureOwnableDefinitions.OWNERSHIP_TRANSFER);
         _hasOpenOwnershipRequest = false;
         return updatedRecord;
     }
@@ -159,12 +134,12 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @return The updated transaction record
      */
     function transferOwnershipApprovalWithMetaTx(StateAbstraction.MetaTransaction memory metaTx) public onlyBroadcaster returns (StateAbstraction.TxRecord memory) {
-        if (!_secureState.hasActionPermission(msg.sender, SecureOwnableDefinitions.TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR, StateAbstraction.TxAction.EXECUTE_META_APPROVE)) {
-            revert SharedValidation.NoPermission(msg.sender);
-        }
-        SharedValidation.validateHandlerSelectorMatch(metaTx.params.handlerSelector, SecureOwnableDefinitions.TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR);
-        StateAbstraction.TxRecord memory updatedRecord = _secureState.txApprovalWithMetaTx(metaTx);
-        SharedValidation.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.OWNERSHIP_TRANSFER);
+        StateAbstraction.TxRecord memory updatedRecord = _approveTransactionWithMetaTx(
+            metaTx,
+            SecureOwnableDefinitions.OWNERSHIP_TRANSFER,
+            SecureOwnableDefinitions.TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR,
+            StateAbstraction.TxAction.EXECUTE_META_APPROVE
+        );
         _hasOpenOwnershipRequest = false;
         return updatedRecord;
     }
@@ -175,8 +150,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @return The updated transaction record
      */
     function transferOwnershipCancellation(uint256 txId) public onlyRecovery returns (StateAbstraction.TxRecord memory) {
-        StateAbstraction.TxRecord memory updatedRecord = _secureState.txCancellation(txId);
-        SharedValidation.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.OWNERSHIP_TRANSFER);
+        StateAbstraction.TxRecord memory updatedRecord = _cancelTransaction(txId, SecureOwnableDefinitions.OWNERSHIP_TRANSFER);
         _hasOpenOwnershipRequest = false;
         emit OwnershipTransferCancelled(txId);
         return updatedRecord;
@@ -188,12 +162,12 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @return The updated transaction record
      */
     function transferOwnershipCancellationWithMetaTx(StateAbstraction.MetaTransaction memory metaTx) public onlyBroadcaster returns (StateAbstraction.TxRecord memory) {
-        if (!_secureState.hasActionPermission(msg.sender, SecureOwnableDefinitions.TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR, StateAbstraction.TxAction.EXECUTE_META_CANCEL)) {
-            revert SharedValidation.NoPermission(msg.sender);
-        }
-        SharedValidation.validateHandlerSelectorMatch(metaTx.params.handlerSelector, SecureOwnableDefinitions.TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR);
-        StateAbstraction.TxRecord memory updatedRecord = _secureState.txCancellationWithMetaTx(metaTx);
-        SharedValidation.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.OWNERSHIP_TRANSFER);
+        StateAbstraction.TxRecord memory updatedRecord = _cancelTransactionWithMetaTx(
+            metaTx,
+            SecureOwnableDefinitions.OWNERSHIP_TRANSFER,
+            SecureOwnableDefinitions.TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR,
+            StateAbstraction.TxAction.EXECUTE_META_CANCEL
+        );
         _hasOpenOwnershipRequest = false;
         emit OwnershipTransferCancelled(updatedRecord.txId);
         return updatedRecord;
@@ -209,19 +183,13 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
         if (_hasOpenBroadcasterRequest) revert SharedValidation.RequestAlreadyPending(0);
         SharedValidation.validateAddressUpdate(newBroadcaster, getBroadcaster());
         
-        bytes memory executionOptions = StateAbstraction.createStandardExecutionOptions(
-            SecureOwnableDefinitions.UPDATE_BROADCASTER_SELECTOR,
-            abi.encode(newBroadcaster)
-        );
-
-        StateAbstraction.TxRecord memory txRecord = _secureState.txRequest(
+        StateAbstraction.TxRecord memory txRecord = _requestStandardTransaction(
             msg.sender,
             address(this),
-            0, // no value
-            0, // no gas limit
+            0,
             SecureOwnableDefinitions.BROADCASTER_UPDATE,
-            StateAbstraction.ExecutionType.STANDARD,
-            executionOptions
+            SecureOwnableDefinitions.UPDATE_BROADCASTER_SELECTOR,
+            abi.encode(newBroadcaster)
         );
 
         _hasOpenBroadcasterRequest = true;
@@ -235,8 +203,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @return The updated transaction record
      */
     function updateBroadcasterDelayedApproval(uint256 txId) public onlyOwner returns (StateAbstraction.TxRecord memory) {
-        StateAbstraction.TxRecord memory updatedRecord = _secureState.txDelayedApproval(txId);
-        SharedValidation.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.BROADCASTER_UPDATE);
+        StateAbstraction.TxRecord memory updatedRecord = _approveTransaction(txId, SecureOwnableDefinitions.BROADCASTER_UPDATE);
         _hasOpenBroadcasterRequest = false;
         return updatedRecord;
     }
@@ -247,12 +214,12 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @return The updated transaction record
      */
     function updateBroadcasterApprovalWithMetaTx(StateAbstraction.MetaTransaction memory metaTx) public onlyBroadcaster returns (StateAbstraction.TxRecord memory) {
-        if (!_secureState.hasActionPermission(msg.sender, SecureOwnableDefinitions.UPDATE_BROADCASTER_APPROVE_META_SELECTOR, StateAbstraction.TxAction.EXECUTE_META_APPROVE)) {
-            revert SharedValidation.NoPermission(msg.sender);
-        }
-        SharedValidation.validateHandlerSelectorMatch(metaTx.params.handlerSelector, SecureOwnableDefinitions.UPDATE_BROADCASTER_APPROVE_META_SELECTOR);
-        StateAbstraction.TxRecord memory updatedRecord = _secureState.txApprovalWithMetaTx(metaTx);
-        SharedValidation.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.BROADCASTER_UPDATE);
+        StateAbstraction.TxRecord memory updatedRecord = _approveTransactionWithMetaTx(
+            metaTx,
+            SecureOwnableDefinitions.BROADCASTER_UPDATE,
+            SecureOwnableDefinitions.UPDATE_BROADCASTER_APPROVE_META_SELECTOR,
+            StateAbstraction.TxAction.EXECUTE_META_APPROVE
+        );
         _hasOpenBroadcasterRequest = false;
         return updatedRecord;
     }
@@ -263,8 +230,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @return The updated transaction record
      */
     function updateBroadcasterCancellation(uint256 txId) public onlyOwner returns (StateAbstraction.TxRecord memory) {
-        StateAbstraction.TxRecord memory updatedRecord = _secureState.txCancellation(txId);
-        SharedValidation.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.BROADCASTER_UPDATE);
+        StateAbstraction.TxRecord memory updatedRecord = _cancelTransaction(txId, SecureOwnableDefinitions.BROADCASTER_UPDATE);
         _hasOpenBroadcasterRequest = false;
         emit BroadcasterUpdateCancelled(txId);
         return updatedRecord;
@@ -276,12 +242,12 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @return The updated transaction record
      */
     function updateBroadcasterCancellationWithMetaTx(StateAbstraction.MetaTransaction memory metaTx) public onlyBroadcaster returns (StateAbstraction.TxRecord memory) {
-        if (!_secureState.hasActionPermission(msg.sender, SecureOwnableDefinitions.UPDATE_BROADCASTER_CANCEL_META_SELECTOR, StateAbstraction.TxAction.EXECUTE_META_CANCEL)) {
-            revert SharedValidation.NoPermission(msg.sender);
-        }
-        SharedValidation.validateHandlerSelectorMatch(metaTx.params.handlerSelector, SecureOwnableDefinitions.UPDATE_BROADCASTER_CANCEL_META_SELECTOR);
-        StateAbstraction.TxRecord memory updatedRecord = _secureState.txCancellationWithMetaTx(metaTx);
-        SharedValidation.validateOperationType(updatedRecord.params.operationType, SecureOwnableDefinitions.BROADCASTER_UPDATE);
+        StateAbstraction.TxRecord memory updatedRecord = _cancelTransactionWithMetaTx(
+            metaTx,
+            SecureOwnableDefinitions.BROADCASTER_UPDATE,
+            SecureOwnableDefinitions.UPDATE_BROADCASTER_CANCEL_META_SELECTOR,
+            StateAbstraction.TxAction.EXECUTE_META_CANCEL
+        );
         _hasOpenBroadcasterRequest = false;
         emit BroadcasterUpdateCancelled(updatedRecord.txId);
         return updatedRecord;
@@ -297,7 +263,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
         address newRecoveryAddress
     ) public view returns (bytes memory) {
         SharedValidation.validateAddressUpdate(newRecoveryAddress, getRecovery());
-        return StateAbstraction.createStandardExecutionOptions(
+        return _createStandardExecutionOptions(
             SecureOwnableDefinitions.UPDATE_RECOVERY_SELECTOR,
             abi.encode(newRecoveryAddress)
         );
@@ -311,10 +277,11 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
     function updateRecoveryRequestAndApprove(
         StateAbstraction.MetaTransaction memory metaTx
     ) public onlyBroadcaster returns (StateAbstraction.TxRecord memory) {
-        if (!_secureState.hasActionPermission(msg.sender, SecureOwnableDefinitions.UPDATE_RECOVERY_META_SELECTOR, StateAbstraction.TxAction.EXECUTE_META_REQUEST_AND_APPROVE)) {
-            revert SharedValidation.NoPermission(msg.sender);
-        }
-        return _requestAndApprove(metaTx);
+        return _requestAndApproveTransaction(
+            metaTx,
+            SecureOwnableDefinitions.UPDATE_RECOVERY_META_SELECTOR,
+            StateAbstraction.TxAction.EXECUTE_META_REQUEST_AND_APPROVE
+        );
     }
 
     // TimeLock Management
@@ -327,7 +294,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
         uint256 newTimeLockPeriodSec
     ) public view returns (bytes memory) {
         SharedValidation.validateTimeLockUpdate(newTimeLockPeriodSec, getTimeLockPeriodSec());
-        return StateAbstraction.createStandardExecutionOptions(
+        return _createStandardExecutionOptions(
             SecureOwnableDefinitions.UPDATE_TIMELOCK_SELECTOR,
             abi.encode(newTimeLockPeriodSec)
         );
@@ -341,136 +308,20 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
     function updateTimeLockRequestAndApprove(
         StateAbstraction.MetaTransaction memory metaTx
     ) public onlyBroadcaster returns (StateAbstraction.TxRecord memory) {
-        if (!_secureState.hasActionPermission(msg.sender, SecureOwnableDefinitions.UPDATE_TIMELOCK_META_SELECTOR, StateAbstraction.TxAction.EXECUTE_META_REQUEST_AND_APPROVE)) {
-            revert SharedValidation.NoPermission(msg.sender);
-        }
-        return _requestAndApprove(metaTx);
-    }
-
-    // Getters
-    /**
-     * @dev Gets transaction history within a specified range
-     * @param fromTxId The starting transaction ID (inclusive)
-     * @param toTxId The ending transaction ID (inclusive)
-     * @return The transaction history within the specified range
-     */
-    function getTransactionHistory(uint256 fromTxId, uint256 toTxId) public view returns (StateAbstraction.TxRecord[] memory) {    
-        // Validate the range
-        fromTxId = fromTxId > 0 ? fromTxId : 1;
-        toTxId = toTxId > _secureState.txCounter ? _secureState.txCounter : toTxId;
-        
-        // Validate that fromTxId is less than toTxId
-        SharedValidation.validateLessThan(fromTxId, toTxId);
-
-        uint256 rangeSize = toTxId - fromTxId + 1;
-        StateAbstraction.TxRecord[] memory history = new StateAbstraction.TxRecord[](rangeSize);
-        
-        for (uint256 i = 0; i < rangeSize; i++) {
-            history[i] = _secureState.getTxRecord(fromTxId + i);
-        }
-        
-        return history;
-    }
-
-    /**
-     * @dev Gets a transaction
-     * @param txId The transaction ID
-     * @return The transaction record
-     */
-    function getTransaction(uint256 txId) public view returns (StateAbstraction.TxRecord memory) {
-        return _secureState.getTxRecord(txId);
-    }
-
-    /**
-     * @dev Gets all pending transaction IDs
-     * @return Array of pending transaction IDs
-     */
-    function getPendingTransactions() public view returns (uint256[] memory) {
-        return _secureState.getPendingTransactionsList();
-    }
-
-    /**
-     * @dev Creates meta-transaction parameters with specified values
-     * @param handlerContract The contract that will handle the meta-transaction
-     * @param handlerSelector The function selector for the handler
-     * @param action The transaction action type
-     * @param deadline The timestamp after which the meta-transaction expires
-     * @param maxGasPrice The maximum gas price allowed for execution
-     * @param signer The address that will sign the meta-transaction
-     * @return The formatted meta-transaction parameters
-     */
-    function createMetaTxParams(
-        address handlerContract,
-        bytes4 handlerSelector,
-        StateAbstraction.TxAction action,
-        uint256 deadline,
-        uint256 maxGasPrice,
-        address signer
-    ) public view returns (StateAbstraction.MetaTxParams memory) {
-        return _secureState.createMetaTxParams(
-            handlerContract,
-            handlerSelector,
-            action,
-            block.timestamp + (deadline * 1 hours),
-            maxGasPrice,
-            signer
+        return _requestAndApproveTransaction(
+            metaTx,
+            SecureOwnableDefinitions.UPDATE_TIMELOCK_META_SELECTOR,
+            StateAbstraction.TxAction.EXECUTE_META_REQUEST_AND_APPROVE
         );
     }
 
-    /**
-     * @dev Generates an unsigned meta-transaction for a new operation
-     * @param requester The address requesting the operation
-     * @param target The target contract address
-     * @param value The ETH value to send
-     * @param gasLimit The gas limit for execution
-     * @param operationType The type of operation
-     * @param executionType The type of execution (STANDARD or RAW)
-     * @param executionOptions The encoded execution options
-     * @param metaTxParams The meta-transaction parameters
-     * @return The unsigned meta-transaction
-     */
-    function generateUnsignedMetaTransactionForNew(
-        address requester,
-        address target,
-        uint256 value,
-        uint256 gasLimit,
-        bytes32 operationType,
-        StateAbstraction.ExecutionType executionType,
-        bytes memory executionOptions,
-        StateAbstraction.MetaTxParams memory metaTxParams
-    ) public view returns (StateAbstraction.MetaTransaction memory) {
-        StateAbstraction.TxParams memory txParams = StateAbstraction.TxParams({
-            requester: requester,
-            target: target,
-            value: value,
-            gasLimit: gasLimit,
-            operationType: operationType,
-            executionType: executionType,
-            executionOptions: executionOptions
-        });
-
-        return _secureState.generateUnsignedForNewMetaTx(txParams, metaTxParams);
-    }
-
-    /**
-     * @dev Generates an unsigned meta-transaction for an existing transaction
-     * @param txId The ID of the existing transaction
-     * @param metaTxParams The meta-transaction parameters
-     * @return The unsigned meta-transaction
-     */
-    function generateUnsignedMetaTransactionForExisting(
-        uint256 txId,
-        StateAbstraction.MetaTxParams memory metaTxParams
-    ) public view returns (StateAbstraction.MetaTransaction memory) {
-        return _secureState.generateUnsignedForExistingMetaTx(txId, metaTxParams);
-    }
-
+    // Execution Functions
     /**
      * @dev External function that can only be called by the contract itself to execute ownership transfer
      * @param newOwner The new owner address
      */
     function executeTransferOwnership(address newOwner) external {
-        SharedValidation.validateInternalCall(address(this));
+        SharedValidation.validateInternalCallInternal(address(this));
         _transferOwnership(newOwner);
     }
 
@@ -479,7 +330,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @param newBroadcaster The new broadcaster address
      */
     function executeBroadcasterUpdate(address newBroadcaster) external {
-        SharedValidation.validateInternalCall(address(this));
+        SharedValidation.validateInternalCallInternal(address(this));
         _updateBroadcaster(newBroadcaster);
     }
 
@@ -488,7 +339,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @param newRecoveryAddress The new recovery address
      */
     function executeRecoveryUpdate(address newRecoveryAddress) external {
-        SharedValidation.validateInternalCall(address(this));
+        SharedValidation.validateInternalCallInternal(address(this));
         _updateRecoveryAddress(newRecoveryAddress);
     }
 
@@ -497,21 +348,8 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @param newTimeLockPeriodSec The new timelock period in seconds
      */
     function executeTimeLockUpdate(uint256 newTimeLockPeriodSec) external {
-        SharedValidation.validateInternalCall(address(this));
+        SharedValidation.validateInternalCallInternal(address(this));
         _updateTimeLockPeriod(newTimeLockPeriodSec);
-    }
-
-    // Internal functions
-    /**
-     * @dev Requests and approves a meta-transaction
-     * @param metaTx The meta-transaction
-     * @return The transaction record
-     */
-    function _requestAndApprove(
-        StateAbstraction.MetaTransaction memory metaTx
-    ) internal returns (StateAbstraction.TxRecord memory) {
-        StateAbstraction.TxRecord memory txRecord = _secureState.requestAndApprove(metaTx);
-        return txRecord;
     }
 
     // Ownership management
@@ -520,7 +358,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @return The owner of the contract
      */
     function owner() public view virtual override returns (address) {
-        return _secureState.getAuthorizedWalletAt(StateAbstraction.OWNER_ROLE, 0);
+        return _getAuthorizedWalletAt(StateAbstraction.OWNER_ROLE, 0);
     }
 
     /**
@@ -528,7 +366,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @return The broadcaster address
      */
     function getBroadcaster() public view virtual override returns (address) {
-        return _secureState.getAuthorizedWalletAt(StateAbstraction.BROADCASTER_ROLE, 0);
+        return _getAuthorizedWalletAt(StateAbstraction.BROADCASTER_ROLE, 0);
     }
 
     /**
@@ -536,86 +374,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @return The recovery address
      */
     function getRecovery() public view virtual override returns (address) {
-        return _secureState.getAuthorizedWalletAt(StateAbstraction.RECOVERY_ROLE, 0);
-    }
-
-    /**
-     * @dev Returns if a wallet is authorized for a role
-     * @param roleHash The hash of the role to check
-     * @param wallet The wallet address to check
-     * @return True if the wallet is authorized for the role, false otherwise
-     */
-    function hasRole(bytes32 roleHash, address wallet) public view returns (bool) {
-        return _secureState.hasRole(roleHash, wallet);
-    }
-
-    /**
-     * @dev Returns if an action is supported by a function
-     * @param functionSelector The function selector to check
-     * @param action The action to check
-     * @return True if the action is supported by the function, false otherwise
-     */
-    function isActionSupportedByFunction(bytes4 functionSelector, StateAbstraction.TxAction action) public view returns (bool) {
-        return _secureState.isActionSupportedByFunction(functionSelector, action);
-    }
-
-    /**
-     * @dev Returns the time lock period
-     * @return The time lock period in seconds
-     */
-    function getTimeLockPeriodSec() public view virtual returns (uint256) {
-        return _secureState.timeLockPeriodSec;
-    }
-
-    /**
-     * @dev Returns the supported operation types
-     * @return The supported operation types
-     */
-    function getSupportedOperationTypes() public view override returns (bytes32[] memory) {
-        return _secureState.getSupportedOperationTypesList();
-    }
-
-    /**
-     * @dev Returns the supported roles list
-     * @return The supported roles list
-     */
-    function getSupportedRoles() public view returns (bytes32[] memory) {
-        return _secureState.getSupportedRolesList();
-    }
-
-    /**
-     * @dev Returns the supported functions list
-     * @return The supported functions list
-     */
-    function getSupportedFunctions() public view returns (bytes4[] memory) {
-        return _secureState.getSupportedFunctionsList();
-    }
-
-    /**
-     * @dev Gets the current nonce for a specific signer
-     * @param signer The address of the signer
-     * @return The current nonce for the signer
-     */
-    function getSignerNonce(address signer) public view returns (uint256) {
-        return _secureState.getSignerNonce(signer);
-    }
-
-    /**
-     * @dev Gets the function permissions for a specific role
-     * @param roleHash The hash of the role to get permissions for
-     * @return The function permissions array for the role
-     */
-    function getRolePermission(bytes32 roleHash) public view returns (StateAbstraction.FunctionPermission[] memory) {
-        StateAbstraction.Role storage role = _secureState.getRole(roleHash);
-        return role.functionPermissions;
-    }
-
-    /**
-     * @dev Internal function to get the secure state
-     * @return secureState The secure state
-     */
-    function _getSecureState() internal view returns (StateAbstraction.SecureOperationState storage) {
-        return _secureState;
+        return _getAuthorizedWalletAt(StateAbstraction.RECOVERY_ROLE, 0);
     }
 
     /**
@@ -624,7 +383,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      */
     function _transferOwnership(address newOwner) internal virtual {
         address oldOwner = owner();
-        _secureState.updateAssignedWallet(StateAbstraction.OWNER_ROLE, newOwner, oldOwner);
+        _updateAssignedWallet(StateAbstraction.OWNER_ROLE, newOwner, oldOwner);
         emit OwnershipTransferUpdated(oldOwner, newOwner);
     }
 
@@ -634,7 +393,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      */
     function _updateBroadcaster(address newBroadcaster) internal virtual {
         address oldBroadcaster = getBroadcaster();
-        _secureState.updateAssignedWallet(StateAbstraction.BROADCASTER_ROLE, newBroadcaster, oldBroadcaster);
+        _updateAssignedWallet(StateAbstraction.BROADCASTER_ROLE, newBroadcaster, oldBroadcaster);
         emit BroadcasterUpdated(oldBroadcaster, newBroadcaster);
     }
 
@@ -644,7 +403,7 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      */
     function _updateRecoveryAddress(address newRecoveryAddress) internal virtual {
         address oldRecovery = getRecovery();
-        _secureState.updateAssignedWallet(StateAbstraction.RECOVERY_ROLE, newRecoveryAddress, oldRecovery);
+        _updateAssignedWallet(StateAbstraction.RECOVERY_ROLE, newRecoveryAddress, oldRecovery);
         emit RecoveryAddressUpdated(oldRecovery, newRecoveryAddress);
     }
 
@@ -652,30 +411,16 @@ abstract contract SecureOwnable is Initializable, ERC165Upgradeable, ISecureOwna
      * @dev Updates the time lock period
      * @param newTimeLockPeriodSec The new time lock period in seconds
      */
-    function _updateTimeLockPeriod(uint256 newTimeLockPeriodSec) internal virtual {
+    function _updateTimeLockPeriod(uint256 newTimeLockPeriodSec) internal virtual override {
         uint256 oldPeriod = getTimeLockPeriodSec();
-        _secureState.updateTimeLockPeriod(newTimeLockPeriodSec);
+        StateAbstraction.updateTimeLockPeriod(_getSecureState(), newTimeLockPeriodSec);
         emit TimeLockPeriodUpdated(oldPeriod, newTimeLockPeriodSec);
-    }
-
-    /**
-     * @dev Returns whether the contract is initialized
-     * @return bool True if the contract is initialized, false otherwise
-     * 
-     * This function checks both:
-     * 1. The Initializable contract state (from OpenZeppelin)
-     * 2. The _secureState.initialized flag (from our custom library)
-     * 
-     * Both conditions must be true for the contract to be considered fully initialized.
-     */
-    function initialized() public view virtual returns (bool) {
-        return _getInitializedVersion() != type(uint8).max && _secureState.initialized;
     }
 
     /**
      * @dev See {IERC165-supportsInterface}.
      */
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165Upgradeable) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return
             interfaceId == type(ISecureOwnable).interfaceId ||
             super.supportsInterface(interfaceId);

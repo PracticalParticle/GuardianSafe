@@ -4,269 +4,125 @@ import { TransactionOptions, TransactionResult } from './interfaces/base.index';
 import { IDynamicRBAC } from './interfaces/core.access.index';
 import { TxAction } from './types/lib.index';
 import { DYNAMIC_RBAC_FUNCTION_SELECTORS } from './types/core.access.index';
+import { BaseStateMachine } from './BaseStateMachine';
 
 /**
  * @title DynamicRBAC
  * @notice TypeScript wrapper for DynamicRBAC smart contract
  */
-export class DynamicRBAC implements IDynamicRBAC {
+export class DynamicRBAC extends BaseStateMachine implements IDynamicRBAC {
   constructor(
-    protected client: PublicClient,
-    protected walletClient: WalletClient | undefined,
-    protected contractAddress: Address,
-    protected chain: Chain
-  ) {}
+    client: PublicClient,
+    walletClient: WalletClient | undefined,
+    contractAddress: Address,
+    chain: Chain
+  ) {
+    super(client, walletClient, contractAddress, chain, DynamicRBACABIJson);
+  }
 
   // Role Management Functions
   async createRole(roleName: string, maxWallets: bigint, options: TransactionOptions): Promise<TransactionResult> {
-    if (!this.walletClient) throw new Error('Wallet client is required');
-    
-    const hash = await this.walletClient.writeContract({
-      chain: this.chain,
-      address: this.contractAddress,
-      abi: DynamicRBACABIJson,
-      functionName: 'createRole',
-      args: [roleName, maxWallets],
-      account: options.from
-    });
-
-    return {
-      hash,
-      wait: () => this.client.waitForTransactionReceipt({ hash })
-    };
+    return this.executeWriteContract('createRole', [roleName, maxWallets], options);
   }
 
   async updateRole(roleHash: Hex, newRoleName: string, newMaxWallets: bigint, options: TransactionOptions): Promise<TransactionResult> {
-    if (!this.walletClient) throw new Error('Wallet client is required');
-    
-    const hash = await this.walletClient.writeContract({
-      chain: this.chain,
-      address: this.contractAddress,
-      abi: DynamicRBACABIJson,
-      functionName: 'updateRole',
-      args: [roleHash, newRoleName, newMaxWallets],
-      account: options.from
-    });
-
-    return {
-      hash,
-      wait: () => this.client.waitForTransactionReceipt({ hash })
-    };
+    return this.executeWriteContract('updateRole', [roleHash, newRoleName, newMaxWallets], options);
   }
 
   async deleteRole(roleHash: Hex, options: TransactionOptions): Promise<TransactionResult> {
-    if (!this.walletClient) throw new Error('Wallet client is required');
-    
-    const hash = await this.walletClient.writeContract({
-      chain: this.chain,
-      address: this.contractAddress,
-      abi: DynamicRBACABIJson,
-      functionName: 'deleteRole',
-      args: [roleHash],
-      account: options.from
-    });
-
-    return {
-      hash,
-      wait: () => this.client.waitForTransactionReceipt({ hash })
-    };
+    return this.executeWriteContract('deleteRole', [roleHash], options);
   }
 
   // Wallet Management Functions
   async addWalletToRole(roleHash: Hex, wallet: Address, options: TransactionOptions): Promise<TransactionResult> {
-    if (!this.walletClient) throw new Error('Wallet client is required');
-    
-    const hash = await this.walletClient.writeContract({
-      chain: this.chain,
-      address: this.contractAddress,
-      abi: DynamicRBACABIJson,
-      functionName: 'addWalletToRole',
-      args: [roleHash, wallet],
-      account: options.from
-    });
-
-    return {
-      hash,
-      wait: () => this.client.waitForTransactionReceipt({ hash })
-    };
+    return this.executeWriteContract('addWalletToRole', [roleHash, wallet], options);
   }
 
   async revokeWallet(roleHash: Hex, wallet: Address, options: TransactionOptions): Promise<TransactionResult> {
-    if (!this.walletClient) throw new Error('Wallet client is required');
-    
-    const hash = await this.walletClient.writeContract({
-      chain: this.chain,
-      address: this.contractAddress,
-      abi: DynamicRBACABIJson,
-      functionName: 'revokeWallet',
-      args: [roleHash, wallet],
-      account: options.from
-    });
-
-    return {
-      hash,
-      wait: () => this.client.waitForTransactionReceipt({ hash })
-    };
+    return this.executeWriteContract('revokeWallet', [roleHash, wallet], options);
   }
 
   async replaceWalletInRole(roleHash: Hex, newWallet: Address, oldWallet: Address, options: TransactionOptions): Promise<TransactionResult> {
-    if (!this.walletClient) throw new Error('Wallet client is required');
-    
-    const hash = await this.walletClient.writeContract({
-      chain: this.chain,
-      address: this.contractAddress,
-      abi: DynamicRBACABIJson,
-      functionName: 'replaceWalletInRole',
-      args: [roleHash, newWallet, oldWallet],
-      account: options.from
-    });
-
-    return {
-      hash,
-      wait: () => this.client.waitForTransactionReceipt({ hash })
-    };
+    return this.executeWriteContract('replaceWalletInRole', [roleHash, newWallet, oldWallet], options);
   }
 
   // Permission Management Functions
   async addFunctionPermissionToRole(roleHash: Hex, functionSelector: Hex, action: TxAction, options: TransactionOptions): Promise<TransactionResult> {
-    if (!this.walletClient) throw new Error('Wallet client is required');
-    
-    const hash = await this.walletClient.writeContract({
-      chain: this.chain,
-      address: this.contractAddress,
-      abi: DynamicRBACABIJson,
-      functionName: 'addFunctionPermissionToRole',
-      args: [roleHash, functionSelector, action],
-      account: options.from
-    });
-
-    return {
-      hash,
-      wait: () => this.client.waitForTransactionReceipt({ hash })
-    };
+    return this.executeWriteContract('addFunctionPermissionToRole', [roleHash, functionSelector, action], options);
   }
 
   async removeFunctionPermissionFromRole(roleHash: Hex, functionSelector: Hex, options: TransactionOptions): Promise<TransactionResult> {
-    if (!this.walletClient) throw new Error('Wallet client is required');
-    
-    const hash = await this.walletClient.writeContract({
-      chain: this.chain,
-      address: this.contractAddress,
-      abi: DynamicRBACABIJson,
-      functionName: 'removeFunctionPermissionFromRole',
-      args: [roleHash, functionSelector],
-      account: options.from
-    });
-
-    return {
-      hash,
-      wait: () => this.client.waitForTransactionReceipt({ hash })
-    };
+    return this.executeWriteContract('removeFunctionPermissionFromRole', [roleHash, functionSelector], options);
   }
 
   // Query Functions
   async getDynamicRoles(): Promise<Hex[]> {
-    return await this.client.readContract({
-      address: this.contractAddress,
-      abi: DynamicRBACABIJson,
-      functionName: 'getDynamicRoles'
-    }) as Hex[];
+    return this.executeReadContract<Hex[]>('getDynamicRoles');
   }
 
   async getAllRoles(): Promise<Hex[]> {
-    return await this.client.readContract({
-      address: this.contractAddress,
-      abi: DynamicRBACABIJson,
-      functionName: 'getAllRoles'
-    }) as Hex[];
+    return this.executeReadContract<Hex[]>('getAllRoles');
   }
 
   async getRoleInfo(roleHash: Hex): Promise<{
     roleName: string;
+    roleHashReturn: Hex;
     maxWallets: bigint;
+    walletCount: bigint;
     isProtected: boolean;
     authorizedWallets: Address[];
+    functionPermissions: any[];
   }> {
-    return await this.client.readContract({
-      address: this.contractAddress,
-      abi: DynamicRBACABIJson,
-      functionName: 'getRoleInfo',
-      args: [roleHash]
-    }) as {
-      roleName: string;
-      maxWallets: bigint;
-      isProtected: boolean;
-      authorizedWallets: Address[];
+    // Get basic role info from BaseStateMachine
+    const roleInfo = await this.getRole(roleHash);
+    
+    // Get authorized wallets list
+    const authorizedWallets = await this.getWalletsInRole(roleHash);
+    
+    // Get function permissions for the role
+    const functionPermissions = await this.getRolePermission(roleHash);
+    
+    return {
+      roleName: roleInfo.roleName,
+      roleHashReturn: roleInfo.roleHashReturn,
+      maxWallets: roleInfo.maxWallets,
+      walletCount: roleInfo.walletCount,
+      isProtected: roleInfo.isProtected,
+      authorizedWallets,
+      functionPermissions
     };
   }
 
-  async hasRole(roleHash: Hex, wallet: Address): Promise<boolean> {
-    return await this.client.readContract({
-      address: this.contractAddress,
-      abi: DynamicRBACABIJson,
-      functionName: 'hasRole',
-      args: [roleHash, wallet]
-    }) as boolean;
-  }
+  // DynamicRBAC-specific methods
 
   async getWalletsInRole(roleHash: Hex): Promise<Address[]> {
-    return await this.client.readContract({
-      address: this.contractAddress,
-      abi: DynamicRBACABIJson,
-      functionName: 'getWalletsInRole',
-      args: [roleHash]
-    }) as Address[];
+    return this.executeReadContract<Address[]>('getWalletsInRole', [roleHash]);
   }
 
   async getRolePermissions(roleHash: Hex): Promise<{
     functionSelectors: Hex[];
     actions: TxAction[];
   }> {
-    return await this.client.readContract({
-      address: this.contractAddress,
-      abi: DynamicRBACABIJson,
-      functionName: 'getRolePermissions',
-      args: [roleHash]
-    }) as {
+    return this.executeReadContract<{
       functionSelectors: Hex[];
       actions: TxAction[];
-    };
+    }>('getRolePermissions', [roleHash]);
   }
 
   async roleExists(roleHash: Hex): Promise<boolean> {
-    return await this.client.readContract({
-      address: this.contractAddress,
-      abi: DynamicRBACABIJson,
-      functionName: 'roleExists',
-      args: [roleHash]
-    }) as boolean;
+    return this.executeReadContract<boolean>('roleExists', [roleHash]);
   }
 
   async isRoleProtected(roleHash: Hex): Promise<boolean> {
-    return await this.client.readContract({
-      address: this.contractAddress,
-      abi: DynamicRBACABIJson,
-      functionName: 'isRoleProtected',
-      args: [roleHash]
-    }) as boolean;
+    return this.executeReadContract<boolean>('isRoleProtected', [roleHash]);
   }
 
   async getRoleWalletCount(roleHash: Hex): Promise<bigint> {
-    return await this.client.readContract({
-      address: this.contractAddress,
-      abi: DynamicRBACABIJson,
-      functionName: 'getRoleWalletCount',
-      args: [roleHash]
-    }) as bigint;
+    return this.executeReadContract<bigint>('getRoleWalletCount', [roleHash]);
   }
 
   async isRoleAtCapacity(roleHash: Hex): Promise<boolean> {
-    return await this.client.readContract({
-      address: this.contractAddress,
-      abi: DynamicRBACABIJson,
-      functionName: 'isRoleAtCapacity',
-      args: [roleHash]
-    }) as boolean;
+    return this.executeReadContract<boolean>('isRoleAtCapacity', [roleHash]);
   }
 }
 

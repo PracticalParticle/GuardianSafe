@@ -2,6 +2,7 @@
 // Main entry point for all SDK functionality
 
 // Core Classes
+export { default as BaseStateMachine } from './BaseStateMachine';
 export { default as SecureOwnable } from './SecureOwnable';
 export { default as DynamicRBAC } from './DynamicRBAC';
 export { Definitions } from './Definition';
@@ -9,6 +10,7 @@ export { Workflow } from './Workflow';
 
 // Interfaces
 export * from './interfaces/base.index';
+export * from './interfaces/base.state.machine.index';
 export * from './interfaces/core.access.index';
 export * from './interfaces/lib.index';
 export * from './interfaces/definition.index';
@@ -20,6 +22,7 @@ export {
   OperationType, 
   DYNAMIC_RBAC_FUNCTION_SELECTORS
 } from './types/core.access.index';
+export * from './types/base.state.machine.index';
 export * from './types/lib.index';
 export * from './types/definition.index';
 export * from './types/workflow.index';

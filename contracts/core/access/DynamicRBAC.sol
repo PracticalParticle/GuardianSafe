@@ -83,7 +83,7 @@ abstract contract DynamicRBAC is Initializable, SecureOwnable {
     function updateRoleEditingToggleExecutionOptions(
         bool enabled
     ) public pure returns (bytes memory) {
-        return StateAbstraction.createStandardExecutionOptions(
+        return _createStandardExecutionOptions(
             DynamicRBACDefinitions.ROLE_EDITING_TOGGLE_SELECTOR,
             abi.encode(enabled)
         );
@@ -97,11 +97,11 @@ abstract contract DynamicRBAC is Initializable, SecureOwnable {
     function updateRoleEditingToggleRequestAndApprove(
         StateAbstraction.MetaTransaction memory metaTx
     ) public onlyBroadcaster returns (StateAbstraction.TxRecord memory) {
-        if (!_getSecureState().hasActionPermission(msg.sender, DynamicRBACDefinitions.ROLE_EDITING_TOGGLE_META_SELECTOR, StateAbstraction.TxAction.EXECUTE_META_REQUEST_AND_APPROVE)) {
-            revert SharedValidation.NoPermission(msg.sender);
-        }
-
-        return _requestAndApprove(metaTx);
+        return _requestAndApproveTransaction(
+            metaTx,
+            DynamicRBACDefinitions.ROLE_EDITING_TOGGLE_META_SELECTOR,
+            StateAbstraction.TxAction.EXECUTE_META_REQUEST_AND_APPROVE
+        );
     }
 
     // Core Role Management Functions

@@ -9,6 +9,7 @@ const path = require('path');
 // List of contract names to process
 const contractsToProcess = [
   'StateAbstraction',
+  'BaseStateMachine',
   'SecureOwnable',
   'SecureOwnableDefinitions',
   'SecureOwnableWorkflows',
@@ -16,6 +17,7 @@ const contractsToProcess = [
   'IDefinition',
   'IWorkflow',
   'Guardian',
+  'GuardianBare',
   'GuardianWithRoles',
   'SimpleVault',
   'SimpleRWA20',

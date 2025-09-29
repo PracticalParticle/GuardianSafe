@@ -135,6 +135,7 @@ library StateAbstraction {
         EnumerableSet.AddressSet authorizedWallets;
         FunctionPermission[] functionPermissions;
         uint256 maxWallets;
+        uint256 walletCount;
         bool isProtected;
     }
 
@@ -535,6 +536,8 @@ library StateAbstraction {
         } else if (record.params.executionType == ExecutionType.RAW) {
             RawExecutionOptions memory options = abi.decode(record.params.executionOptions, (RawExecutionOptions));
             return options.rawTxData;
+        } else if (record.params.executionType == ExecutionType.NONE) {
+            return "";
         } else {
             revert SharedValidation.OperationNotSupported();
         }
@@ -704,6 +707,7 @@ library StateAbstraction {
         self.roles[roleHash].roleName = roleName;
         self.roles[roleHash].roleHash = roleHash;
         self.roles[roleHash].maxWallets = maxWallets;
+        self.roles[roleHash].walletCount = 0;
         self.roles[roleHash].isProtected = isProtected;
         
         self.supportedRolesSet.add(roleHash);
@@ -763,6 +767,7 @@ library StateAbstraction {
         if (roleData.authorizedWallets.contains(wallet)) revert SharedValidation.WalletAlreadyInRole(wallet);
         
         roleData.authorizedWallets.add(wallet);
+        roleData.walletCount = roleData.authorizedWallets.length();
     }
 
     /**
@@ -813,6 +818,7 @@ library StateAbstraction {
         
         // Remove the wallet (O(1) operation)
         roleData.authorizedWallets.remove(wallet);
+        roleData.walletCount = roleData.authorizedWallets.length();
     }
 
     /**
@@ -1287,9 +1293,10 @@ library StateAbstraction {
     }
 
     /**
-     * @notice Creates a meta-transaction structure with default parameters
+     * @notice Creates a meta-transaction structure with populated nonce from storage
      * @dev Initializes a MetaTransaction with transaction record data and empty signature fields.
-     *      The caller is responsible for filling in the following fields:
+     *      The nonce is populated directly from storage for security. The caller is responsible 
+     *      for filling in the following fields:
      *      - handlerContract: The contract that will handle the meta-transaction
      *      - handlerSelector: The function selector for the handler
      *      - deadline: The timestamp after which the meta-transaction expires
@@ -1306,11 +1313,13 @@ library StateAbstraction {
         MetaTxParams memory metaTxParams
     ) private view returns (MetaTransaction memory) {
         SharedValidation.validateChainId(metaTxParams.chainId);
-        SharedValidation.validateNonce(metaTxParams.nonce, getSignerNonce(self, metaTxParams.signer));
         SharedValidation.validateHandlerContract(metaTxParams.handlerContract);
         SharedValidation.validateHandlerSelector(metaTxParams.handlerSelector);
         SharedValidation.validateDeadline(metaTxParams.deadline);
         SharedValidation.validateNotZeroAddress(metaTxParams.signer);
+
+        // Populate the nonce directly from storage for security
+        metaTxParams.nonce = getSignerNonce(self, metaTxParams.signer);
 
         MetaTransaction memory metaTx = MetaTransaction({
             txRecord: txRecord,
@@ -1339,7 +1348,6 @@ library StateAbstraction {
      * @return MetaTxParams The formatted meta-transaction parameters
      */
     function createMetaTxParams(
-        SecureOperationState storage self,
         address handlerContract,
         bytes4 handlerSelector,
         TxAction action,
@@ -1353,7 +1361,7 @@ library StateAbstraction {
         SharedValidation.validateNotZeroAddress(signer);
         return MetaTxParams({
             chainId: block.chainid,
-            nonce: getSignerNonce(self, signer),
+            nonce: 0, // Uninitialized - will be populated in generateMetaTransaction
             handlerContract: handlerContract,
             handlerSelector: handlerSelector,
             action: action,

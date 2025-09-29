@@ -155,9 +155,12 @@ export interface IDynamicRBAC {
   getAllRoles(): Promise<Hex[]>;
   getRoleInfo(roleHash: Hex): Promise<{
     roleName: string;
+    roleHashReturn: Hex;
     maxWallets: bigint;
+    walletCount: bigint;
     isProtected: boolean;
     authorizedWallets: Address[];
+    functionPermissions: any[];
   }>;
   hasRole(roleHash: Hex, wallet: Address): Promise<boolean>;
   getWalletsInRole(roleHash: Hex): Promise<Address[]>;

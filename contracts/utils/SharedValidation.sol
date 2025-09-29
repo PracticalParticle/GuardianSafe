@@ -687,4 +687,32 @@ library SharedValidation {
     function validateIndexInBounds(uint256 index, uint256 arrayLength) internal pure {
         if (index >= arrayLength) revert IndexOutOfBounds(index, arrayLength);
     }
+    
+    // ============ INTERNAL VALIDATION WRAPPER FUNCTIONS ============
+    
+    /**
+     * @dev Internal function to validate operation type
+     * @param operationType The operation type to validate
+     * @param expectedType The expected operation type
+     */
+    function validateOperationTypeInternal(bytes32 operationType, bytes32 expectedType) internal pure {
+        validateOperationType(operationType, expectedType);
+    }
+
+    /**
+     * @dev Internal function to validate handler selector match
+     * @param handlerSelector The handler selector to validate
+     * @param expectedSelector The expected handler selector
+     */
+    function validateHandlerSelectorMatchInternal(bytes4 handlerSelector, bytes4 expectedSelector) internal pure {
+        validateHandlerSelectorMatch(handlerSelector, expectedSelector);
+    }
+
+    /**
+     * @dev Internal function to validate internal call
+     * @param expectedCaller The expected caller address
+     */
+    function validateInternalCallInternal(address expectedCaller) internal view {
+        validateInternalCall(expectedCaller);
+    }
 }

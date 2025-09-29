@@ -12,8 +12,4 @@ interface ISecureOwnable {
     function owner() external view returns (address);
     function getBroadcaster() external view returns (address);
     function getRecovery() external view returns (address);
-    function getTimeLockPeriodSec() external view returns (uint256);
-    function getTransactionHistory(uint256 fromTxId, uint256 toTxId) external view returns (StateAbstraction.TxRecord[] memory);
-    function getTransaction(uint256 txId) external view returns (StateAbstraction.TxRecord memory);
-    function getSupportedOperationTypes() external view returns (bytes32[] memory);
 }
