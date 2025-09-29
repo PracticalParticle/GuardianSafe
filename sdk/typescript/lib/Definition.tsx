@@ -2,15 +2,15 @@ import { PublicClient, WalletClient, Address, Chain, Hex } from 'viem';
 import { 
   IDefinition, 
   DefinitionsConfig
-} from './interfaces/definition.index';
+} from '../interfaces/definition.index';
 import { 
   ReadableOperationType, 
   FunctionSchema, 
   RolePermission
-} from './types/definition.index';
+} from '../types/definition.index';
 
 // Import the ABI
-import IDefinitionABI from '../../abi/IDefinition.abi.json';
+import IDefinitionABI from '../../../abi/IDefinition.abi.json';
 
 /**
  * Definitions class for interacting with any definition library

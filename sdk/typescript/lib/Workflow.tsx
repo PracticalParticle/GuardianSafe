@@ -2,14 +2,14 @@ import { PublicClient, WalletClient, Address, Chain, Hex } from 'viem';
 import { 
   IWorkflow, 
   WorkflowConfig
-} from './interfaces/workflow.index';
+} from '../interfaces/workflow.index';
 import { 
   OperationWorkflow, 
   WorkflowPath 
-} from './types/workflow.index';
+} from '../types/workflow.index';
 
 // Import the ABI
-import IWorkflowABI from '../../abi/IWorkflow.abi.json';
+import IWorkflowABI from '../../../abi/IWorkflow.abi.json';
 
 /**
  * Workflow class for interacting with any workflow library

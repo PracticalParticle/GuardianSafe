@@ -1,9 +1,9 @@
 import { Address, PublicClient, WalletClient, Chain, Hex } from 'viem';
-import SecureOwnableABIJson from '../../abi/SecureOwnable.abi.json';
-import { TransactionOptions, TransactionResult } from './interfaces/base.index';
-import { ISecureOwnable } from './interfaces/core.access.index';
-import { TxRecord, MetaTransaction, MetaTxParams } from './interfaces/lib.index';
-import { ExecutionType, TxAction } from './types/lib.index';
+import SecureOwnableABIJson from '../../../abi/SecureOwnable.abi.json';
+import { TransactionOptions, TransactionResult } from '../interfaces/base.index';
+import { ISecureOwnable } from '../interfaces/core.access.index';
+import { TxRecord, MetaTransaction, MetaTxParams } from '../interfaces/lib.index';
+import { ExecutionType, TxAction } from '../types/lib.index';
 import { BaseStateMachine } from './BaseStateMachine';
 
 /**

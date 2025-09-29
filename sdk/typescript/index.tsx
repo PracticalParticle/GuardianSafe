@@ -2,11 +2,11 @@
 // Main entry point for all SDK functionality
 
 // Core Classes
-export { default as BaseStateMachine } from './BaseStateMachine';
-export { default as SecureOwnable } from './SecureOwnable';
-export { default as DynamicRBAC } from './DynamicRBAC';
-export { Definitions } from './Definition';
-export { Workflow } from './Workflow';
+export { default as BaseStateMachine } from './contracts/BaseStateMachine';
+export { default as SecureOwnable } from './contracts/SecureOwnable';
+export { default as DynamicRBAC } from './contracts/DynamicRBAC';
+export { Definitions } from './lib/Definition';
+export { Workflow } from './lib/Workflow';
 
 // Interfaces
 export * from './interfaces/base.index';
