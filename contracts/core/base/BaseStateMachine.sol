@@ -310,7 +310,7 @@ abstract contract BaseStateMachine is Initializable, ERC165Upgradeable {
             handlerContract,
             handlerSelector,
             action,
-            block.timestamp + (deadline * 1 hours),
+            deadline,
             maxGasPrice,
             signer
         );

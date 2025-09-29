@@ -1357,7 +1357,6 @@ library StateAbstraction {
     ) public view returns (MetaTxParams memory) {
         SharedValidation.validateHandlerContract(handlerContract);
         SharedValidation.validateHandlerSelector(handlerSelector);
-        SharedValidation.validateDeadline(deadline);
         SharedValidation.validateNotZeroAddress(signer);
         return MetaTxParams({
             chainId: block.chainid,
@@ -1365,7 +1364,7 @@ library StateAbstraction {
             handlerContract: handlerContract,
             handlerSelector: handlerSelector,
             action: action,
-            deadline:  deadline,
+            deadline: block.timestamp + deadline * 1 seconds,
             maxGasPrice: maxGasPrice,
             signer: signer
         });
