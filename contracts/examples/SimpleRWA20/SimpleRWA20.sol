@@ -7,29 +7,21 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20Burnable
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 // Particle imports
-import "../../GuardianAccountAbstraction.sol";
-import "../../lib/SharedValidationLibrary.sol";
+import "../../core/access/SecureOwnable.sol";
+import "../../utils/SharedValidation.sol";
+import "../../interfaces/IDefinition.sol";
+import "./SimpleRWA20Definitions.sol";
 
 /**
  * @title SimpleRWA20
- * @dev A secure ERC20 token for real-world assets with enhanced security via GuardianAccountAbstraction.
- * Uses MultiPhaseSecureOperation for mint and burn operations, restricted to broadcaster.
+ * @dev A secure ERC20 token for real-world assets with enhanced security via Guardian.
+ * Uses StateAbstraction for mint and burn operations, restricted to broadcaster.
  * Implements ERC20Burnable for secure burn operations with allowance checks.
  */
-contract SimpleRWA20 is ERC20Upgradeable, ERC20BurnableUpgradeable, GuardianAccountAbstraction {
+contract SimpleRWA20 is ERC20Upgradeable, ERC20BurnableUpgradeable, SecureOwnable {
     using SafeERC20 for IERC20;
 
-    // Constants for operation types
-    bytes32 public constant MINT_TOKENS = keccak256("MINT_TOKENS");
-    bytes32 public constant BURN_TOKENS = keccak256("BURN_TOKENS");
-
-    // Function selector constants
-    bytes4 private constant MINT_TOKENS_SELECTOR = bytes4(keccak256("executeMint(address,uint256)"));
-    bytes4 private constant BURN_TOKENS_SELECTOR = bytes4(keccak256("executeBurn(address,uint256)"));
-
-    // Meta-transaction function selectors
-    bytes4 private constant MINT_TOKENS_META_SELECTOR = bytes4(keccak256("mintWithMetaTx((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes32,bytes,(address,uint256,address,uint256),(uint256,uint256,address,bytes4,uint256,uint256,address),bytes,bytes))"));
-    bytes4 private constant BURN_TOKENS_META_SELECTOR = bytes4(keccak256("burnWithMetaTx((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes32,bytes,(address,uint256,address,uint256),(uint256,uint256,address,bytes4,uint256,uint256,address),bytes,bytes))"));
+    // Constants are now defined in SimpleRWA20Definitions.sol
 
     // Struct for meta-transaction parameters
     struct TokenMetaTxParams {
@@ -48,7 +40,7 @@ contract SimpleRWA20 is ERC20Upgradeable, ERC20BurnableUpgradeable, GuardianAcco
      * @param initialOwner The initial owner address
      * @param broadcaster The broadcaster address
      * @param recovery The recovery address
-     * @param timeLockPeriodInMinutes The timelock period in minutes
+     * @param timeLockPeriodSec The timelock period in seconds
      */
     function initialize(
         string memory name,
@@ -56,50 +48,24 @@ contract SimpleRWA20 is ERC20Upgradeable, ERC20BurnableUpgradeable, GuardianAcco
         address initialOwner,
         address broadcaster,
         address recovery,
-        uint256 timeLockPeriodInMinutes,
+        uint256 timeLockPeriodSec,
         address eventForwarder
     ) public initializer {
         // Initialize ERC20 state variables manually
         __ERC20_init(name, symbol);
         
-        // Initialize GuardianAccountAbstraction
-        super.initialize(initialOwner, broadcaster, recovery, timeLockPeriodInMinutes, eventForwarder);
+        // Initialize SecureOwnable directly
+        _initializeBaseStateMachine(initialOwner, broadcaster, recovery, timeLockPeriodSec, eventForwarder);
         
-        // Add operation types with human-readable names
-        MultiPhaseSecureOperation.ReadableOperationType memory mintOp = MultiPhaseSecureOperation.ReadableOperationType({
-            operationType: MINT_TOKENS,
-            name: "MINT_TOKENS"
-        });
-        
-        MultiPhaseSecureOperation.ReadableOperationType memory burnOp = MultiPhaseSecureOperation.ReadableOperationType({
-            operationType: BURN_TOKENS,
-            name: "BURN_TOKENS"
-        });
-        
-        MultiPhaseSecureOperation.addOperationType(_getSecureState(), mintOp);
-        MultiPhaseSecureOperation.addOperationType(_getSecureState(), burnOp);
-        
-        // Create function schemas for SimpleRWA20-specific functions
-        MultiPhaseSecureOperation.TxAction[] memory mintActions = new MultiPhaseSecureOperation.TxAction[](2);
-        mintActions[0] = MultiPhaseSecureOperation.TxAction.SIGN_META_REQUEST_AND_APPROVE;
-        mintActions[1] = MultiPhaseSecureOperation.TxAction.EXECUTE_META_REQUEST_AND_APPROVE;
-        
-        MultiPhaseSecureOperation.TxAction[] memory burnActions = new MultiPhaseSecureOperation.TxAction[](2);
-        burnActions[0] = MultiPhaseSecureOperation.TxAction.SIGN_META_REQUEST_AND_APPROVE;
-        burnActions[1] = MultiPhaseSecureOperation.TxAction.EXECUTE_META_REQUEST_AND_APPROVE;
-        
-        MultiPhaseSecureOperation.createFunctionSchema(_getSecureState(), "mintWithMetaTx", MINT_TOKENS_META_SELECTOR, MINT_TOKENS, mintActions);
-        MultiPhaseSecureOperation.createFunctionSchema(_getSecureState(), "burnWithMetaTx", BURN_TOKENS_META_SELECTOR, BURN_TOKENS, burnActions);
-        
-        // Add function permissions to broadcaster role
-        MultiPhaseSecureOperation.addFunctionToRole(_getSecureState(), MultiPhaseSecureOperation.BROADCASTER_ROLE, MultiPhaseSecureOperation.FunctionPermission({
-            functionSelector: MINT_TOKENS_META_SELECTOR,
-            grantedActions: mintActions
-        }));
-        MultiPhaseSecureOperation.addFunctionToRole(_getSecureState(), MultiPhaseSecureOperation.BROADCASTER_ROLE, MultiPhaseSecureOperation.FunctionPermission({
-            functionSelector: BURN_TOKENS_META_SELECTOR,
-            grantedActions: burnActions
-        }));
+        // Load SimpleRWA20-specific definitions
+        IDefinition.RolePermission memory permissions = 
+            SimpleRWA20Definitions.getRolePermissions();
+        StateAbstraction.loadDefinitions(
+            _getSecureState(),
+            SimpleRWA20Definitions.getFunctionSchemas(),
+            permissions.roleHashes,
+            permissions.functionPermissions
+        );
     }
 
     /**
@@ -107,12 +73,12 @@ contract SimpleRWA20 is ERC20Upgradeable, ERC20BurnableUpgradeable, GuardianAcco
      * @param metaTx Meta transaction data containing mint parameters
      * @return The transaction record
      */
-    function mintWithMetaTx(MultiPhaseSecureOperation.MetaTransaction memory metaTx) 
+    function mintWithMetaTx(StateAbstraction.MetaTransaction memory metaTx) 
         public 
         onlyBroadcaster 
-        returns (MultiPhaseSecureOperation.TxRecord memory) 
+        returns (StateAbstraction.TxRecord memory) 
     {
-        return _handleTokenMetaTx(metaTx, MINT_TOKENS_META_SELECTOR, MINT_TOKENS);
+        return _handleTokenMetaTx(metaTx, SimpleRWA20Definitions.MINT_TOKENS_META_SELECTOR, SimpleRWA20Definitions.MINT_TOKENS);
     }
 
     /**
@@ -120,12 +86,12 @@ contract SimpleRWA20 is ERC20Upgradeable, ERC20BurnableUpgradeable, GuardianAcco
      * @param metaTx Meta transaction data containing burn parameters
      * @return The transaction record
      */
-    function burnWithMetaTx(MultiPhaseSecureOperation.MetaTransaction memory metaTx) 
+    function burnWithMetaTx(StateAbstraction.MetaTransaction memory metaTx) 
         public 
         onlyBroadcaster 
-        returns (MultiPhaseSecureOperation.TxRecord memory) 
+        returns (StateAbstraction.TxRecord memory) 
     {
-        return _handleTokenMetaTx(metaTx, BURN_TOKENS_META_SELECTOR, BURN_TOKENS);
+        return _handleTokenMetaTx(metaTx, SimpleRWA20Definitions.BURN_TOKENS_META_SELECTOR, SimpleRWA20Definitions.BURN_TOKENS);
     }
 
     /**
@@ -139,16 +105,16 @@ contract SimpleRWA20 is ERC20Upgradeable, ERC20BurnableUpgradeable, GuardianAcco
         address to,
         uint256 amount,
         TokenMetaTxParams memory params
-    ) public view returns (MultiPhaseSecureOperation.MetaTransaction memory) {
-        SharedValidationLibrary.validateNotZeroAddress(to);
+    ) public view returns (StateAbstraction.MetaTransaction memory) {
+        SharedValidation.validateNotZeroAddress(to);
         
         return _generateUnsignedTokenMetaTx(
             to,
             amount,
             params,
-            MINT_TOKENS,
-            MINT_TOKENS_SELECTOR,
-            MINT_TOKENS_META_SELECTOR
+            SimpleRWA20Definitions.MINT_TOKENS,
+            SimpleRWA20Definitions.MINT_TOKENS_SELECTOR,
+            SimpleRWA20Definitions.MINT_TOKENS_META_SELECTOR
         );
     }
 
@@ -163,17 +129,17 @@ contract SimpleRWA20 is ERC20Upgradeable, ERC20BurnableUpgradeable, GuardianAcco
         address from,
         uint256 amount,
         TokenMetaTxParams memory params
-    ) public view returns (MultiPhaseSecureOperation.MetaTransaction memory) {
-        SharedValidationLibrary.validateNotZeroAddress(from);
-        if (balanceOf(from) < amount) revert SharedValidationLibrary.OperationNotSupported("Insufficient balance");
+    ) public view returns (StateAbstraction.MetaTransaction memory) {
+        SharedValidation.validateNotZeroAddress(from);
+        if (balanceOf(from) < amount) revert SharedValidation.OperationNotSupported();
         
         return _generateUnsignedTokenMetaTx(
             from,
             amount,
             params,
-            BURN_TOKENS,
-            BURN_TOKENS_SELECTOR,
-            BURN_TOKENS_META_SELECTOR
+            SimpleRWA20Definitions.BURN_TOKENS,
+            SimpleRWA20Definitions.BURN_TOKENS_SELECTOR,
+            SimpleRWA20Definitions.BURN_TOKENS_META_SELECTOR
         );
     }
 
@@ -183,7 +149,7 @@ contract SimpleRWA20 is ERC20Upgradeable, ERC20BurnableUpgradeable, GuardianAcco
      * @param amount Amount to mint
      */
     function executeMint(address to, uint256 amount) external {
-        SharedValidationLibrary.validateInternalCall(address(this));
+        SharedValidation.validateInternalCall(address(this));
         _mint(to, amount);
         emit TokensMinted(to, amount);
     }
@@ -194,7 +160,7 @@ contract SimpleRWA20 is ERC20Upgradeable, ERC20BurnableUpgradeable, GuardianAcco
      * @param amount Amount to burn
      */
     function executeBurn(address from, uint256 amount) external {
-        SharedValidationLibrary.validateInternalCall(address(this));
+        SharedValidation.validateInternalCall(address(this));
         // Use burnFrom from ERC20Burnable which handles allowance checks
         burnFrom(from, amount);
         emit TokensBurned(from, amount);
@@ -208,20 +174,22 @@ contract SimpleRWA20 is ERC20Upgradeable, ERC20BurnableUpgradeable, GuardianAcco
      * @return The transaction record
      */
     function _handleTokenMetaTx(
-        MultiPhaseSecureOperation.MetaTransaction memory metaTx,
+        StateAbstraction.MetaTransaction memory metaTx,
         bytes4 expectedSelector,
         bytes32 expectedOperationType
-    ) internal returns (MultiPhaseSecureOperation.TxRecord memory) {
-        MultiPhaseSecureOperation.checkPermission(_getSecureState(), expectedSelector);
-        SharedValidationLibrary.validateHandlerSelectorMatch(metaTx.params.handlerSelector, expectedSelector);
+    ) internal returns (StateAbstraction.TxRecord memory) {
+        if (!StateAbstraction.hasActionPermission(_getSecureState(), msg.sender, expectedSelector, StateAbstraction.TxAction.EXECUTE_META_REQUEST_AND_APPROVE)) {
+            revert SharedValidation.NoPermission(msg.sender);
+        }
+        SharedValidation.validateHandlerSelectorMatch(metaTx.params.handlerSelector, expectedSelector);
         
-        MultiPhaseSecureOperation.TxRecord memory txRecord = MultiPhaseSecureOperation.requestAndApprove(
+        StateAbstraction.TxRecord memory txRecord = StateAbstraction.requestAndApprove(
             _getSecureState(),
             metaTx
         );
         
-        SharedValidationLibrary.validateOperationType(txRecord.params.operationType, expectedOperationType);
-        // Operation is automatically handled by MultiPhaseSecureOperation
+        SharedValidation.validateOperationType(txRecord.params.operationType, expectedOperationType);
+        // Operation is automatically handled by StateAbstraction
         return txRecord;
     }
 
@@ -242,18 +210,18 @@ contract SimpleRWA20 is ERC20Upgradeable, ERC20BurnableUpgradeable, GuardianAcco
         bytes32 operationType,
         bytes4 functionSelector,
         bytes4 metaTxSelector
-    ) internal view returns (MultiPhaseSecureOperation.MetaTransaction memory) {
+    ) internal view returns (StateAbstraction.MetaTransaction memory) {
         // Create execution options
-        bytes memory executionOptions = MultiPhaseSecureOperation.createStandardExecutionOptions(
+        bytes memory executionOptions = StateAbstraction.createStandardExecutionOptions(
             functionSelector,
             abi.encode(account, amount)
         );
         
         // Create meta-transaction parameters
-        MultiPhaseSecureOperation.MetaTxParams memory metaTxParams = createMetaTxParams(
+        StateAbstraction.MetaTxParams memory metaTxParams = createMetaTxParams(
             address(this),
             metaTxSelector,
-            MultiPhaseSecureOperation.TxAction.EXECUTE_META_REQUEST_AND_APPROVE,
+            StateAbstraction.TxAction.SIGN_META_REQUEST_AND_APPROVE,
             params.deadline,
             params.maxGasPrice,
             owner()
@@ -266,7 +234,7 @@ contract SimpleRWA20 is ERC20Upgradeable, ERC20BurnableUpgradeable, GuardianAcco
             0, // no value
             gasleft(),
             operationType,
-            MultiPhaseSecureOperation.ExecutionType.STANDARD,
+            StateAbstraction.ExecutionType.STANDARD,
             executionOptions,
             metaTxParams
         );

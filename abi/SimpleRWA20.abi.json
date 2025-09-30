@@ -161,6 +161,17 @@
     "type": "error"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "caller",
+        "type": "address"
+      }
+    ],
+    "name": "NoPermission",
+    "type": "error"
+  },
+  {
     "inputs": [],
     "name": "NotInitializing",
     "type": "error"
@@ -514,6 +525,112 @@
     "inputs": [
       {
         "indexed": true,
+        "internalType": "uint256",
+        "name": "txId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "operationType",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "approver",
+        "type": "address"
+      }
+    ],
+    "name": "TransactionApproved",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "txId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "operationType",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "canceller",
+        "type": "address"
+      }
+    ],
+    "name": "TransactionCancelled",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "txId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "operationType",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "success",
+        "type": "bool"
+      }
+    ],
+    "name": "TransactionExecuted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "txId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "requester",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "operationType",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "releaseTime",
+        "type": "uint256"
+      }
+    ],
+    "name": "TransactionRequested",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
         "internalType": "address",
         "name": "from",
         "type": "address"
@@ -556,7 +673,8 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
+    "type": "function",
+    "constant": true
   },
   {
     "inputs": [
@@ -599,7 +717,8 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
+    "type": "function",
+    "constant": true
   },
   {
     "inputs": [
@@ -645,7 +764,7 @@
         "type": "bytes4"
       },
       {
-        "internalType": "enum MultiPhaseSecureOperation.TxAction",
+        "internalType": "enum StateAbstraction.TxAction",
         "name": "action",
         "type": "uint8"
       },
@@ -690,7 +809,7 @@
             "type": "bytes4"
           },
           {
-            "internalType": "enum MultiPhaseSecureOperation.TxAction",
+            "internalType": "enum StateAbstraction.TxAction",
             "name": "action",
             "type": "uint8"
           },
@@ -710,13 +829,14 @@
             "type": "address"
           }
         ],
-        "internalType": "struct MultiPhaseSecureOperation.MetaTxParams",
+        "internalType": "struct StateAbstraction.MetaTxParams",
         "name": "",
         "type": "tuple"
       }
     ],
     "stateMutability": "view",
-    "type": "function"
+    "type": "function",
+    "constant": true
   },
   {
     "inputs": [],
@@ -729,7 +849,8 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
+    "type": "function",
+    "constant": true
   },
   {
     "inputs": [
@@ -761,7 +882,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "newTimeLockPeriodInMinutes",
+        "name": "newTimeLockPeriodSec",
         "type": "uint256"
       }
     ],
@@ -813,7 +934,7 @@
             "type": "bytes4"
           },
           {
-            "internalType": "enum MultiPhaseSecureOperation.TxAction",
+            "internalType": "enum StateAbstraction.TxAction",
             "name": "action",
             "type": "uint8"
           },
@@ -833,7 +954,7 @@
             "type": "address"
           }
         ],
-        "internalType": "struct MultiPhaseSecureOperation.MetaTxParams",
+        "internalType": "struct StateAbstraction.MetaTxParams",
         "name": "metaTxParams",
         "type": "tuple"
       }
@@ -855,7 +976,7 @@
                 "type": "uint256"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.TxStatus",
+                "internalType": "enum StateAbstraction.TxStatus",
                 "name": "status",
                 "type": "uint8"
               },
@@ -887,7 +1008,7 @@
                     "type": "bytes32"
                   },
                   {
-                    "internalType": "enum MultiPhaseSecureOperation.ExecutionType",
+                    "internalType": "enum StateAbstraction.ExecutionType",
                     "name": "executionType",
                     "type": "uint8"
                   },
@@ -897,7 +1018,7 @@
                     "type": "bytes"
                   }
                 ],
-                "internalType": "struct MultiPhaseSecureOperation.TxParams",
+                "internalType": "struct StateAbstraction.TxParams",
                 "name": "params",
                 "type": "tuple"
               },
@@ -934,12 +1055,12 @@
                     "type": "uint256"
                   }
                 ],
-                "internalType": "struct MultiPhaseSecureOperation.PaymentDetails",
+                "internalType": "struct StateAbstraction.PaymentDetails",
                 "name": "payment",
                 "type": "tuple"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.TxRecord",
+            "internalType": "struct StateAbstraction.TxRecord",
             "name": "txRecord",
             "type": "tuple"
           },
@@ -966,7 +1087,7 @@
                 "type": "bytes4"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.TxAction",
+                "internalType": "enum StateAbstraction.TxAction",
                 "name": "action",
                 "type": "uint8"
               },
@@ -986,7 +1107,7 @@
                 "type": "address"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.MetaTxParams",
+            "internalType": "struct StateAbstraction.MetaTxParams",
             "name": "params",
             "type": "tuple"
           },
@@ -1006,13 +1127,14 @@
             "type": "bytes"
           }
         ],
-        "internalType": "struct MultiPhaseSecureOperation.MetaTransaction",
+        "internalType": "struct StateAbstraction.MetaTransaction",
         "name": "",
         "type": "tuple"
       }
     ],
     "stateMutability": "view",
-    "type": "function"
+    "type": "function",
+    "constant": true
   },
   {
     "inputs": [
@@ -1042,7 +1164,7 @@
         "type": "bytes32"
       },
       {
-        "internalType": "enum MultiPhaseSecureOperation.ExecutionType",
+        "internalType": "enum StateAbstraction.ExecutionType",
         "name": "executionType",
         "type": "uint8"
       },
@@ -1074,7 +1196,7 @@
             "type": "bytes4"
           },
           {
-            "internalType": "enum MultiPhaseSecureOperation.TxAction",
+            "internalType": "enum StateAbstraction.TxAction",
             "name": "action",
             "type": "uint8"
           },
@@ -1094,7 +1216,7 @@
             "type": "address"
           }
         ],
-        "internalType": "struct MultiPhaseSecureOperation.MetaTxParams",
+        "internalType": "struct StateAbstraction.MetaTxParams",
         "name": "metaTxParams",
         "type": "tuple"
       }
@@ -1116,7 +1238,7 @@
                 "type": "uint256"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.TxStatus",
+                "internalType": "enum StateAbstraction.TxStatus",
                 "name": "status",
                 "type": "uint8"
               },
@@ -1148,7 +1270,7 @@
                     "type": "bytes32"
                   },
                   {
-                    "internalType": "enum MultiPhaseSecureOperation.ExecutionType",
+                    "internalType": "enum StateAbstraction.ExecutionType",
                     "name": "executionType",
                     "type": "uint8"
                   },
@@ -1158,7 +1280,7 @@
                     "type": "bytes"
                   }
                 ],
-                "internalType": "struct MultiPhaseSecureOperation.TxParams",
+                "internalType": "struct StateAbstraction.TxParams",
                 "name": "params",
                 "type": "tuple"
               },
@@ -1195,12 +1317,12 @@
                     "type": "uint256"
                   }
                 ],
-                "internalType": "struct MultiPhaseSecureOperation.PaymentDetails",
+                "internalType": "struct StateAbstraction.PaymentDetails",
                 "name": "payment",
                 "type": "tuple"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.TxRecord",
+            "internalType": "struct StateAbstraction.TxRecord",
             "name": "txRecord",
             "type": "tuple"
           },
@@ -1227,7 +1349,7 @@
                 "type": "bytes4"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.TxAction",
+                "internalType": "enum StateAbstraction.TxAction",
                 "name": "action",
                 "type": "uint8"
               },
@@ -1247,7 +1369,7 @@
                 "type": "address"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.MetaTxParams",
+            "internalType": "struct StateAbstraction.MetaTxParams",
             "name": "params",
             "type": "tuple"
           },
@@ -1267,13 +1389,14 @@
             "type": "bytes"
           }
         ],
-        "internalType": "struct MultiPhaseSecureOperation.MetaTransaction",
+        "internalType": "struct StateAbstraction.MetaTransaction",
         "name": "",
         "type": "tuple"
       }
     ],
     "stateMutability": "view",
-    "type": "function"
+    "type": "function",
+    "constant": true
   },
   {
     "inputs": [],
@@ -1286,7 +1409,8 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
+    "type": "function",
+    "constant": true
   },
   {
     "inputs": [],
@@ -1299,7 +1423,8 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
+    "type": "function",
+    "constant": true
   },
   {
     "inputs": [],
@@ -1312,7 +1437,100 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "roleHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getRole",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "roleName",
+        "type": "string"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "roleHashReturn",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "uint256",
+        "name": "maxWallets",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "walletCount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "isProtected",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "roleHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getRolePermission",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "bytes4",
+            "name": "functionSelector",
+            "type": "bytes4"
+          },
+          {
+            "internalType": "enum StateAbstraction.TxAction[]",
+            "name": "grantedActions",
+            "type": "uint8[]"
+          }
+        ],
+        "internalType": "struct StateAbstraction.FunctionPermission[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "signer",
+        "type": "address"
+      }
+    ],
+    "name": "getSignerNonce",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
   },
   {
     "inputs": [],
@@ -1325,7 +1543,8 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
+    "type": "function",
+    "constant": true
   },
   {
     "inputs": [],
@@ -1338,7 +1557,8 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
+    "type": "function",
+    "constant": true
   },
   {
     "inputs": [],
@@ -1351,11 +1571,12 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
+    "type": "function",
+    "constant": true
   },
   {
     "inputs": [],
-    "name": "getTimeLockPeriodInMinutes",
+    "name": "getTimeLockPeriodSec",
     "outputs": [
       {
         "internalType": "uint256",
@@ -1364,7 +1585,8 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
+    "type": "function",
+    "constant": true
   },
   {
     "inputs": [
@@ -1389,7 +1611,7 @@
             "type": "uint256"
           },
           {
-            "internalType": "enum MultiPhaseSecureOperation.TxStatus",
+            "internalType": "enum StateAbstraction.TxStatus",
             "name": "status",
             "type": "uint8"
           },
@@ -1421,7 +1643,7 @@
                 "type": "bytes32"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.ExecutionType",
+                "internalType": "enum StateAbstraction.ExecutionType",
                 "name": "executionType",
                 "type": "uint8"
               },
@@ -1431,7 +1653,7 @@
                 "type": "bytes"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.TxParams",
+            "internalType": "struct StateAbstraction.TxParams",
             "name": "params",
             "type": "tuple"
           },
@@ -1468,18 +1690,19 @@
                 "type": "uint256"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.PaymentDetails",
+            "internalType": "struct StateAbstraction.PaymentDetails",
             "name": "payment",
             "type": "tuple"
           }
         ],
-        "internalType": "struct MultiPhaseSecureOperation.TxRecord",
+        "internalType": "struct StateAbstraction.TxRecord",
         "name": "",
         "type": "tuple"
       }
     ],
     "stateMutability": "view",
-    "type": "function"
+    "type": "function",
+    "constant": true
   },
   {
     "inputs": [
@@ -1509,7 +1732,7 @@
             "type": "uint256"
           },
           {
-            "internalType": "enum MultiPhaseSecureOperation.TxStatus",
+            "internalType": "enum StateAbstraction.TxStatus",
             "name": "status",
             "type": "uint8"
           },
@@ -1541,7 +1764,7 @@
                 "type": "bytes32"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.ExecutionType",
+                "internalType": "enum StateAbstraction.ExecutionType",
                 "name": "executionType",
                 "type": "uint8"
               },
@@ -1551,7 +1774,7 @@
                 "type": "bytes"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.TxParams",
+            "internalType": "struct StateAbstraction.TxParams",
             "name": "params",
             "type": "tuple"
           },
@@ -1588,18 +1811,44 @@
                 "type": "uint256"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.PaymentDetails",
+            "internalType": "struct StateAbstraction.PaymentDetails",
             "name": "payment",
             "type": "tuple"
           }
         ],
-        "internalType": "struct MultiPhaseSecureOperation.TxRecord[]",
+        "internalType": "struct StateAbstraction.TxRecord[]",
         "name": "",
         "type": "tuple[]"
       }
     ],
     "stateMutability": "view",
-    "type": "function"
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "roleHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "wallet",
+        "type": "address"
+      }
+    ],
+    "name": "hasRole",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
   },
   {
     "inputs": [],
@@ -1612,7 +1861,33 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes4",
+        "name": "functionSelector",
+        "type": "bytes4"
+      },
+      {
+        "internalType": "enum StateAbstraction.TxAction",
+        "name": "action",
+        "type": "uint8"
+      }
+    ],
+    "name": "isActionSupportedByFunction",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
   },
   {
     "inputs": [],
@@ -1625,7 +1900,8 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
+    "type": "function",
+    "constant": true
   },
   {
     "inputs": [],
@@ -1638,7 +1914,8 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
+    "type": "function",
+    "constant": true
   },
   {
     "inputs": [
@@ -1657,7 +1934,8 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
+    "type": "function",
+    "constant": true
   },
   {
     "inputs": [],
@@ -1670,7 +1948,8 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
+    "type": "function",
+    "constant": true
   },
   {
     "inputs": [],
@@ -1683,7 +1962,8 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
+    "type": "function",
+    "constant": true
   },
   {
     "inputs": [
@@ -1755,7 +2035,7 @@
                 "type": "uint256"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.TxStatus",
+                "internalType": "enum StateAbstraction.TxStatus",
                 "name": "status",
                 "type": "uint8"
               },
@@ -1787,7 +2067,7 @@
                     "type": "bytes32"
                   },
                   {
-                    "internalType": "enum MultiPhaseSecureOperation.ExecutionType",
+                    "internalType": "enum StateAbstraction.ExecutionType",
                     "name": "executionType",
                     "type": "uint8"
                   },
@@ -1797,7 +2077,7 @@
                     "type": "bytes"
                   }
                 ],
-                "internalType": "struct MultiPhaseSecureOperation.TxParams",
+                "internalType": "struct StateAbstraction.TxParams",
                 "name": "params",
                 "type": "tuple"
               },
@@ -1834,12 +2114,12 @@
                     "type": "uint256"
                   }
                 ],
-                "internalType": "struct MultiPhaseSecureOperation.PaymentDetails",
+                "internalType": "struct StateAbstraction.PaymentDetails",
                 "name": "payment",
                 "type": "tuple"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.TxRecord",
+            "internalType": "struct StateAbstraction.TxRecord",
             "name": "txRecord",
             "type": "tuple"
           },
@@ -1866,7 +2146,7 @@
                 "type": "bytes4"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.TxAction",
+                "internalType": "enum StateAbstraction.TxAction",
                 "name": "action",
                 "type": "uint8"
               },
@@ -1886,7 +2166,7 @@
                 "type": "address"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.MetaTxParams",
+            "internalType": "struct StateAbstraction.MetaTxParams",
             "name": "params",
             "type": "tuple"
           },
@@ -1906,7 +2186,7 @@
             "type": "bytes"
           }
         ],
-        "internalType": "struct MultiPhaseSecureOperation.MetaTransaction",
+        "internalType": "struct StateAbstraction.MetaTransaction",
         "name": "metaTx",
         "type": "tuple"
       }
@@ -1926,7 +2206,7 @@
             "type": "uint256"
           },
           {
-            "internalType": "enum MultiPhaseSecureOperation.TxStatus",
+            "internalType": "enum StateAbstraction.TxStatus",
             "name": "status",
             "type": "uint8"
           },
@@ -1958,7 +2238,7 @@
                 "type": "bytes32"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.ExecutionType",
+                "internalType": "enum StateAbstraction.ExecutionType",
                 "name": "executionType",
                 "type": "uint8"
               },
@@ -1968,7 +2248,7 @@
                 "type": "bytes"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.TxParams",
+            "internalType": "struct StateAbstraction.TxParams",
             "name": "params",
             "type": "tuple"
           },
@@ -2005,12 +2285,12 @@
                 "type": "uint256"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.PaymentDetails",
+            "internalType": "struct StateAbstraction.PaymentDetails",
             "name": "payment",
             "type": "tuple"
           }
         ],
-        "internalType": "struct MultiPhaseSecureOperation.TxRecord",
+        "internalType": "struct StateAbstraction.TxRecord",
         "name": "",
         "type": "tuple"
       }
@@ -2041,7 +2321,7 @@
             "type": "uint256"
           },
           {
-            "internalType": "enum MultiPhaseSecureOperation.TxStatus",
+            "internalType": "enum StateAbstraction.TxStatus",
             "name": "status",
             "type": "uint8"
           },
@@ -2073,7 +2353,7 @@
                 "type": "bytes32"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.ExecutionType",
+                "internalType": "enum StateAbstraction.ExecutionType",
                 "name": "executionType",
                 "type": "uint8"
               },
@@ -2083,7 +2363,7 @@
                 "type": "bytes"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.TxParams",
+            "internalType": "struct StateAbstraction.TxParams",
             "name": "params",
             "type": "tuple"
           },
@@ -2120,12 +2400,12 @@
                 "type": "uint256"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.PaymentDetails",
+            "internalType": "struct StateAbstraction.PaymentDetails",
             "name": "payment",
             "type": "tuple"
           }
         ],
-        "internalType": "struct MultiPhaseSecureOperation.TxRecord",
+        "internalType": "struct StateAbstraction.TxRecord",
         "name": "",
         "type": "tuple"
       }
@@ -2150,7 +2430,7 @@
                 "type": "uint256"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.TxStatus",
+                "internalType": "enum StateAbstraction.TxStatus",
                 "name": "status",
                 "type": "uint8"
               },
@@ -2182,7 +2462,7 @@
                     "type": "bytes32"
                   },
                   {
-                    "internalType": "enum MultiPhaseSecureOperation.ExecutionType",
+                    "internalType": "enum StateAbstraction.ExecutionType",
                     "name": "executionType",
                     "type": "uint8"
                   },
@@ -2192,7 +2472,7 @@
                     "type": "bytes"
                   }
                 ],
-                "internalType": "struct MultiPhaseSecureOperation.TxParams",
+                "internalType": "struct StateAbstraction.TxParams",
                 "name": "params",
                 "type": "tuple"
               },
@@ -2229,12 +2509,12 @@
                     "type": "uint256"
                   }
                 ],
-                "internalType": "struct MultiPhaseSecureOperation.PaymentDetails",
+                "internalType": "struct StateAbstraction.PaymentDetails",
                 "name": "payment",
                 "type": "tuple"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.TxRecord",
+            "internalType": "struct StateAbstraction.TxRecord",
             "name": "txRecord",
             "type": "tuple"
           },
@@ -2261,7 +2541,7 @@
                 "type": "bytes4"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.TxAction",
+                "internalType": "enum StateAbstraction.TxAction",
                 "name": "action",
                 "type": "uint8"
               },
@@ -2281,7 +2561,7 @@
                 "type": "address"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.MetaTxParams",
+            "internalType": "struct StateAbstraction.MetaTxParams",
             "name": "params",
             "type": "tuple"
           },
@@ -2301,7 +2581,7 @@
             "type": "bytes"
           }
         ],
-        "internalType": "struct MultiPhaseSecureOperation.MetaTransaction",
+        "internalType": "struct StateAbstraction.MetaTransaction",
         "name": "metaTx",
         "type": "tuple"
       }
@@ -2321,7 +2601,7 @@
             "type": "uint256"
           },
           {
-            "internalType": "enum MultiPhaseSecureOperation.TxStatus",
+            "internalType": "enum StateAbstraction.TxStatus",
             "name": "status",
             "type": "uint8"
           },
@@ -2353,7 +2633,7 @@
                 "type": "bytes32"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.ExecutionType",
+                "internalType": "enum StateAbstraction.ExecutionType",
                 "name": "executionType",
                 "type": "uint8"
               },
@@ -2363,7 +2643,7 @@
                 "type": "bytes"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.TxParams",
+            "internalType": "struct StateAbstraction.TxParams",
             "name": "params",
             "type": "tuple"
           },
@@ -2400,12 +2680,12 @@
                 "type": "uint256"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.PaymentDetails",
+            "internalType": "struct StateAbstraction.PaymentDetails",
             "name": "payment",
             "type": "tuple"
           }
         ],
-        "internalType": "struct MultiPhaseSecureOperation.TxRecord",
+        "internalType": "struct StateAbstraction.TxRecord",
         "name": "",
         "type": "tuple"
       }
@@ -2436,7 +2716,7 @@
             "type": "uint256"
           },
           {
-            "internalType": "enum MultiPhaseSecureOperation.TxStatus",
+            "internalType": "enum StateAbstraction.TxStatus",
             "name": "status",
             "type": "uint8"
           },
@@ -2468,7 +2748,7 @@
                 "type": "bytes32"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.ExecutionType",
+                "internalType": "enum StateAbstraction.ExecutionType",
                 "name": "executionType",
                 "type": "uint8"
               },
@@ -2478,7 +2758,7 @@
                 "type": "bytes"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.TxParams",
+            "internalType": "struct StateAbstraction.TxParams",
             "name": "params",
             "type": "tuple"
           },
@@ -2515,12 +2795,12 @@
                 "type": "uint256"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.PaymentDetails",
+            "internalType": "struct StateAbstraction.PaymentDetails",
             "name": "payment",
             "type": "tuple"
           }
         ],
-        "internalType": "struct MultiPhaseSecureOperation.TxRecord",
+        "internalType": "struct StateAbstraction.TxRecord",
         "name": "",
         "type": "tuple"
       }
@@ -2545,7 +2825,7 @@
             "type": "uint256"
           },
           {
-            "internalType": "enum MultiPhaseSecureOperation.TxStatus",
+            "internalType": "enum StateAbstraction.TxStatus",
             "name": "status",
             "type": "uint8"
           },
@@ -2577,7 +2857,7 @@
                 "type": "bytes32"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.ExecutionType",
+                "internalType": "enum StateAbstraction.ExecutionType",
                 "name": "executionType",
                 "type": "uint8"
               },
@@ -2587,7 +2867,7 @@
                 "type": "bytes"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.TxParams",
+            "internalType": "struct StateAbstraction.TxParams",
             "name": "params",
             "type": "tuple"
           },
@@ -2624,12 +2904,12 @@
                 "type": "uint256"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.PaymentDetails",
+            "internalType": "struct StateAbstraction.PaymentDetails",
             "name": "payment",
             "type": "tuple"
           }
         ],
-        "internalType": "struct MultiPhaseSecureOperation.TxRecord",
+        "internalType": "struct StateAbstraction.TxRecord",
         "name": "",
         "type": "tuple"
       }
@@ -2654,7 +2934,7 @@
                 "type": "uint256"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.TxStatus",
+                "internalType": "enum StateAbstraction.TxStatus",
                 "name": "status",
                 "type": "uint8"
               },
@@ -2686,7 +2966,7 @@
                     "type": "bytes32"
                   },
                   {
-                    "internalType": "enum MultiPhaseSecureOperation.ExecutionType",
+                    "internalType": "enum StateAbstraction.ExecutionType",
                     "name": "executionType",
                     "type": "uint8"
                   },
@@ -2696,7 +2976,7 @@
                     "type": "bytes"
                   }
                 ],
-                "internalType": "struct MultiPhaseSecureOperation.TxParams",
+                "internalType": "struct StateAbstraction.TxParams",
                 "name": "params",
                 "type": "tuple"
               },
@@ -2733,12 +3013,12 @@
                     "type": "uint256"
                   }
                 ],
-                "internalType": "struct MultiPhaseSecureOperation.PaymentDetails",
+                "internalType": "struct StateAbstraction.PaymentDetails",
                 "name": "payment",
                 "type": "tuple"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.TxRecord",
+            "internalType": "struct StateAbstraction.TxRecord",
             "name": "txRecord",
             "type": "tuple"
           },
@@ -2765,7 +3045,7 @@
                 "type": "bytes4"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.TxAction",
+                "internalType": "enum StateAbstraction.TxAction",
                 "name": "action",
                 "type": "uint8"
               },
@@ -2785,7 +3065,7 @@
                 "type": "address"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.MetaTxParams",
+            "internalType": "struct StateAbstraction.MetaTxParams",
             "name": "params",
             "type": "tuple"
           },
@@ -2805,7 +3085,7 @@
             "type": "bytes"
           }
         ],
-        "internalType": "struct MultiPhaseSecureOperation.MetaTransaction",
+        "internalType": "struct StateAbstraction.MetaTransaction",
         "name": "metaTx",
         "type": "tuple"
       }
@@ -2825,7 +3105,7 @@
             "type": "uint256"
           },
           {
-            "internalType": "enum MultiPhaseSecureOperation.TxStatus",
+            "internalType": "enum StateAbstraction.TxStatus",
             "name": "status",
             "type": "uint8"
           },
@@ -2857,7 +3137,7 @@
                 "type": "bytes32"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.ExecutionType",
+                "internalType": "enum StateAbstraction.ExecutionType",
                 "name": "executionType",
                 "type": "uint8"
               },
@@ -2867,7 +3147,7 @@
                 "type": "bytes"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.TxParams",
+            "internalType": "struct StateAbstraction.TxParams",
             "name": "params",
             "type": "tuple"
           },
@@ -2904,12 +3184,12 @@
                 "type": "uint256"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.PaymentDetails",
+            "internalType": "struct StateAbstraction.PaymentDetails",
             "name": "payment",
             "type": "tuple"
           }
         ],
-        "internalType": "struct MultiPhaseSecureOperation.TxRecord",
+        "internalType": "struct StateAbstraction.TxRecord",
         "name": "",
         "type": "tuple"
       }
@@ -2940,7 +3220,7 @@
             "type": "uint256"
           },
           {
-            "internalType": "enum MultiPhaseSecureOperation.TxStatus",
+            "internalType": "enum StateAbstraction.TxStatus",
             "name": "status",
             "type": "uint8"
           },
@@ -2972,7 +3252,7 @@
                 "type": "bytes32"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.ExecutionType",
+                "internalType": "enum StateAbstraction.ExecutionType",
                 "name": "executionType",
                 "type": "uint8"
               },
@@ -2982,7 +3262,7 @@
                 "type": "bytes"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.TxParams",
+            "internalType": "struct StateAbstraction.TxParams",
             "name": "params",
             "type": "tuple"
           },
@@ -3019,12 +3299,12 @@
                 "type": "uint256"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.PaymentDetails",
+            "internalType": "struct StateAbstraction.PaymentDetails",
             "name": "payment",
             "type": "tuple"
           }
         ],
-        "internalType": "struct MultiPhaseSecureOperation.TxRecord",
+        "internalType": "struct StateAbstraction.TxRecord",
         "name": "",
         "type": "tuple"
       }
@@ -3049,7 +3329,7 @@
                 "type": "uint256"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.TxStatus",
+                "internalType": "enum StateAbstraction.TxStatus",
                 "name": "status",
                 "type": "uint8"
               },
@@ -3081,7 +3361,7 @@
                     "type": "bytes32"
                   },
                   {
-                    "internalType": "enum MultiPhaseSecureOperation.ExecutionType",
+                    "internalType": "enum StateAbstraction.ExecutionType",
                     "name": "executionType",
                     "type": "uint8"
                   },
@@ -3091,7 +3371,7 @@
                     "type": "bytes"
                   }
                 ],
-                "internalType": "struct MultiPhaseSecureOperation.TxParams",
+                "internalType": "struct StateAbstraction.TxParams",
                 "name": "params",
                 "type": "tuple"
               },
@@ -3128,12 +3408,12 @@
                     "type": "uint256"
                   }
                 ],
-                "internalType": "struct MultiPhaseSecureOperation.PaymentDetails",
+                "internalType": "struct StateAbstraction.PaymentDetails",
                 "name": "payment",
                 "type": "tuple"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.TxRecord",
+            "internalType": "struct StateAbstraction.TxRecord",
             "name": "txRecord",
             "type": "tuple"
           },
@@ -3160,7 +3440,7 @@
                 "type": "bytes4"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.TxAction",
+                "internalType": "enum StateAbstraction.TxAction",
                 "name": "action",
                 "type": "uint8"
               },
@@ -3180,7 +3460,7 @@
                 "type": "address"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.MetaTxParams",
+            "internalType": "struct StateAbstraction.MetaTxParams",
             "name": "params",
             "type": "tuple"
           },
@@ -3200,7 +3480,7 @@
             "type": "bytes"
           }
         ],
-        "internalType": "struct MultiPhaseSecureOperation.MetaTransaction",
+        "internalType": "struct StateAbstraction.MetaTransaction",
         "name": "metaTx",
         "type": "tuple"
       }
@@ -3220,7 +3500,7 @@
             "type": "uint256"
           },
           {
-            "internalType": "enum MultiPhaseSecureOperation.TxStatus",
+            "internalType": "enum StateAbstraction.TxStatus",
             "name": "status",
             "type": "uint8"
           },
@@ -3252,7 +3532,7 @@
                 "type": "bytes32"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.ExecutionType",
+                "internalType": "enum StateAbstraction.ExecutionType",
                 "name": "executionType",
                 "type": "uint8"
               },
@@ -3262,7 +3542,7 @@
                 "type": "bytes"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.TxParams",
+            "internalType": "struct StateAbstraction.TxParams",
             "name": "params",
             "type": "tuple"
           },
@@ -3299,12 +3579,12 @@
                 "type": "uint256"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.PaymentDetails",
+            "internalType": "struct StateAbstraction.PaymentDetails",
             "name": "payment",
             "type": "tuple"
           }
         ],
-        "internalType": "struct MultiPhaseSecureOperation.TxRecord",
+        "internalType": "struct StateAbstraction.TxRecord",
         "name": "",
         "type": "tuple"
       }
@@ -3335,7 +3615,7 @@
             "type": "uint256"
           },
           {
-            "internalType": "enum MultiPhaseSecureOperation.TxStatus",
+            "internalType": "enum StateAbstraction.TxStatus",
             "name": "status",
             "type": "uint8"
           },
@@ -3367,7 +3647,7 @@
                 "type": "bytes32"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.ExecutionType",
+                "internalType": "enum StateAbstraction.ExecutionType",
                 "name": "executionType",
                 "type": "uint8"
               },
@@ -3377,7 +3657,7 @@
                 "type": "bytes"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.TxParams",
+            "internalType": "struct StateAbstraction.TxParams",
             "name": "params",
             "type": "tuple"
           },
@@ -3414,12 +3694,12 @@
                 "type": "uint256"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.PaymentDetails",
+            "internalType": "struct StateAbstraction.PaymentDetails",
             "name": "payment",
             "type": "tuple"
           }
         ],
-        "internalType": "struct MultiPhaseSecureOperation.TxRecord",
+        "internalType": "struct StateAbstraction.TxRecord",
         "name": "",
         "type": "tuple"
       }
@@ -3450,7 +3730,7 @@
             "type": "uint256"
           },
           {
-            "internalType": "enum MultiPhaseSecureOperation.TxStatus",
+            "internalType": "enum StateAbstraction.TxStatus",
             "name": "status",
             "type": "uint8"
           },
@@ -3482,7 +3762,7 @@
                 "type": "bytes32"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.ExecutionType",
+                "internalType": "enum StateAbstraction.ExecutionType",
                 "name": "executionType",
                 "type": "uint8"
               },
@@ -3492,7 +3772,7 @@
                 "type": "bytes"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.TxParams",
+            "internalType": "struct StateAbstraction.TxParams",
             "name": "params",
             "type": "tuple"
           },
@@ -3529,12 +3809,12 @@
                 "type": "uint256"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.PaymentDetails",
+            "internalType": "struct StateAbstraction.PaymentDetails",
             "name": "payment",
             "type": "tuple"
           }
         ],
-        "internalType": "struct MultiPhaseSecureOperation.TxRecord",
+        "internalType": "struct StateAbstraction.TxRecord",
         "name": "",
         "type": "tuple"
       }
@@ -3559,7 +3839,8 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
+    "type": "function",
+    "constant": true
   },
   {
     "inputs": [
@@ -3578,7 +3859,7 @@
                 "type": "uint256"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.TxStatus",
+                "internalType": "enum StateAbstraction.TxStatus",
                 "name": "status",
                 "type": "uint8"
               },
@@ -3610,7 +3891,7 @@
                     "type": "bytes32"
                   },
                   {
-                    "internalType": "enum MultiPhaseSecureOperation.ExecutionType",
+                    "internalType": "enum StateAbstraction.ExecutionType",
                     "name": "executionType",
                     "type": "uint8"
                   },
@@ -3620,7 +3901,7 @@
                     "type": "bytes"
                   }
                 ],
-                "internalType": "struct MultiPhaseSecureOperation.TxParams",
+                "internalType": "struct StateAbstraction.TxParams",
                 "name": "params",
                 "type": "tuple"
               },
@@ -3657,12 +3938,12 @@
                     "type": "uint256"
                   }
                 ],
-                "internalType": "struct MultiPhaseSecureOperation.PaymentDetails",
+                "internalType": "struct StateAbstraction.PaymentDetails",
                 "name": "payment",
                 "type": "tuple"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.TxRecord",
+            "internalType": "struct StateAbstraction.TxRecord",
             "name": "txRecord",
             "type": "tuple"
           },
@@ -3689,7 +3970,7 @@
                 "type": "bytes4"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.TxAction",
+                "internalType": "enum StateAbstraction.TxAction",
                 "name": "action",
                 "type": "uint8"
               },
@@ -3709,7 +3990,7 @@
                 "type": "address"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.MetaTxParams",
+            "internalType": "struct StateAbstraction.MetaTxParams",
             "name": "params",
             "type": "tuple"
           },
@@ -3729,7 +4010,7 @@
             "type": "bytes"
           }
         ],
-        "internalType": "struct MultiPhaseSecureOperation.MetaTransaction",
+        "internalType": "struct StateAbstraction.MetaTransaction",
         "name": "metaTx",
         "type": "tuple"
       }
@@ -3749,7 +4030,7 @@
             "type": "uint256"
           },
           {
-            "internalType": "enum MultiPhaseSecureOperation.TxStatus",
+            "internalType": "enum StateAbstraction.TxStatus",
             "name": "status",
             "type": "uint8"
           },
@@ -3781,7 +4062,7 @@
                 "type": "bytes32"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.ExecutionType",
+                "internalType": "enum StateAbstraction.ExecutionType",
                 "name": "executionType",
                 "type": "uint8"
               },
@@ -3791,7 +4072,7 @@
                 "type": "bytes"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.TxParams",
+            "internalType": "struct StateAbstraction.TxParams",
             "name": "params",
             "type": "tuple"
           },
@@ -3828,12 +4109,12 @@
                 "type": "uint256"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.PaymentDetails",
+            "internalType": "struct StateAbstraction.PaymentDetails",
             "name": "payment",
             "type": "tuple"
           }
         ],
-        "internalType": "struct MultiPhaseSecureOperation.TxRecord",
+        "internalType": "struct StateAbstraction.TxRecord",
         "name": "",
         "type": "tuple"
       }
@@ -3845,7 +4126,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "newTimeLockPeriodInMinutes",
+        "name": "newTimeLockPeriodSec",
         "type": "uint256"
       }
     ],
@@ -3858,7 +4139,8 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
+    "type": "function",
+    "constant": true
   },
   {
     "inputs": [
@@ -3877,7 +4159,7 @@
                 "type": "uint256"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.TxStatus",
+                "internalType": "enum StateAbstraction.TxStatus",
                 "name": "status",
                 "type": "uint8"
               },
@@ -3909,7 +4191,7 @@
                     "type": "bytes32"
                   },
                   {
-                    "internalType": "enum MultiPhaseSecureOperation.ExecutionType",
+                    "internalType": "enum StateAbstraction.ExecutionType",
                     "name": "executionType",
                     "type": "uint8"
                   },
@@ -3919,7 +4201,7 @@
                     "type": "bytes"
                   }
                 ],
-                "internalType": "struct MultiPhaseSecureOperation.TxParams",
+                "internalType": "struct StateAbstraction.TxParams",
                 "name": "params",
                 "type": "tuple"
               },
@@ -3956,12 +4238,12 @@
                     "type": "uint256"
                   }
                 ],
-                "internalType": "struct MultiPhaseSecureOperation.PaymentDetails",
+                "internalType": "struct StateAbstraction.PaymentDetails",
                 "name": "payment",
                 "type": "tuple"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.TxRecord",
+            "internalType": "struct StateAbstraction.TxRecord",
             "name": "txRecord",
             "type": "tuple"
           },
@@ -3988,7 +4270,7 @@
                 "type": "bytes4"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.TxAction",
+                "internalType": "enum StateAbstraction.TxAction",
                 "name": "action",
                 "type": "uint8"
               },
@@ -4008,7 +4290,7 @@
                 "type": "address"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.MetaTxParams",
+            "internalType": "struct StateAbstraction.MetaTxParams",
             "name": "params",
             "type": "tuple"
           },
@@ -4028,7 +4310,7 @@
             "type": "bytes"
           }
         ],
-        "internalType": "struct MultiPhaseSecureOperation.MetaTransaction",
+        "internalType": "struct StateAbstraction.MetaTransaction",
         "name": "metaTx",
         "type": "tuple"
       }
@@ -4048,7 +4330,7 @@
             "type": "uint256"
           },
           {
-            "internalType": "enum MultiPhaseSecureOperation.TxStatus",
+            "internalType": "enum StateAbstraction.TxStatus",
             "name": "status",
             "type": "uint8"
           },
@@ -4080,7 +4362,7 @@
                 "type": "bytes32"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.ExecutionType",
+                "internalType": "enum StateAbstraction.ExecutionType",
                 "name": "executionType",
                 "type": "uint8"
               },
@@ -4090,7 +4372,7 @@
                 "type": "bytes"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.TxParams",
+            "internalType": "struct StateAbstraction.TxParams",
             "name": "params",
             "type": "tuple"
           },
@@ -4127,12 +4409,12 @@
                 "type": "uint256"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.PaymentDetails",
+            "internalType": "struct StateAbstraction.PaymentDetails",
             "name": "payment",
             "type": "tuple"
           }
         ],
-        "internalType": "struct MultiPhaseSecureOperation.TxRecord",
+        "internalType": "struct StateAbstraction.TxRecord",
         "name": "",
         "type": "tuple"
       }
@@ -4159,7 +4441,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "timeLockPeriodInMinutes",
+        "name": "timeLockPeriodSec",
         "type": "uint256"
       },
       {
@@ -4202,7 +4484,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "timeLockPeriodInMinutes",
+        "name": "timeLockPeriodSec",
         "type": "uint256"
       },
       {
@@ -4233,7 +4515,7 @@
                 "type": "uint256"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.TxStatus",
+                "internalType": "enum StateAbstraction.TxStatus",
                 "name": "status",
                 "type": "uint8"
               },
@@ -4265,7 +4547,7 @@
                     "type": "bytes32"
                   },
                   {
-                    "internalType": "enum MultiPhaseSecureOperation.ExecutionType",
+                    "internalType": "enum StateAbstraction.ExecutionType",
                     "name": "executionType",
                     "type": "uint8"
                   },
@@ -4275,7 +4557,7 @@
                     "type": "bytes"
                   }
                 ],
-                "internalType": "struct MultiPhaseSecureOperation.TxParams",
+                "internalType": "struct StateAbstraction.TxParams",
                 "name": "params",
                 "type": "tuple"
               },
@@ -4312,12 +4594,12 @@
                     "type": "uint256"
                   }
                 ],
-                "internalType": "struct MultiPhaseSecureOperation.PaymentDetails",
+                "internalType": "struct StateAbstraction.PaymentDetails",
                 "name": "payment",
                 "type": "tuple"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.TxRecord",
+            "internalType": "struct StateAbstraction.TxRecord",
             "name": "txRecord",
             "type": "tuple"
           },
@@ -4344,7 +4626,7 @@
                 "type": "bytes4"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.TxAction",
+                "internalType": "enum StateAbstraction.TxAction",
                 "name": "action",
                 "type": "uint8"
               },
@@ -4364,7 +4646,7 @@
                 "type": "address"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.MetaTxParams",
+            "internalType": "struct StateAbstraction.MetaTxParams",
             "name": "params",
             "type": "tuple"
           },
@@ -4384,7 +4666,7 @@
             "type": "bytes"
           }
         ],
-        "internalType": "struct MultiPhaseSecureOperation.MetaTransaction",
+        "internalType": "struct StateAbstraction.MetaTransaction",
         "name": "metaTx",
         "type": "tuple"
       }
@@ -4404,7 +4686,7 @@
             "type": "uint256"
           },
           {
-            "internalType": "enum MultiPhaseSecureOperation.TxStatus",
+            "internalType": "enum StateAbstraction.TxStatus",
             "name": "status",
             "type": "uint8"
           },
@@ -4436,7 +4718,7 @@
                 "type": "bytes32"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.ExecutionType",
+                "internalType": "enum StateAbstraction.ExecutionType",
                 "name": "executionType",
                 "type": "uint8"
               },
@@ -4446,7 +4728,7 @@
                 "type": "bytes"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.TxParams",
+            "internalType": "struct StateAbstraction.TxParams",
             "name": "params",
             "type": "tuple"
           },
@@ -4483,12 +4765,12 @@
                 "type": "uint256"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.PaymentDetails",
+            "internalType": "struct StateAbstraction.PaymentDetails",
             "name": "payment",
             "type": "tuple"
           }
         ],
-        "internalType": "struct MultiPhaseSecureOperation.TxRecord",
+        "internalType": "struct StateAbstraction.TxRecord",
         "name": "",
         "type": "tuple"
       }
@@ -4513,7 +4795,7 @@
                 "type": "uint256"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.TxStatus",
+                "internalType": "enum StateAbstraction.TxStatus",
                 "name": "status",
                 "type": "uint8"
               },
@@ -4545,7 +4827,7 @@
                     "type": "bytes32"
                   },
                   {
-                    "internalType": "enum MultiPhaseSecureOperation.ExecutionType",
+                    "internalType": "enum StateAbstraction.ExecutionType",
                     "name": "executionType",
                     "type": "uint8"
                   },
@@ -4555,7 +4837,7 @@
                     "type": "bytes"
                   }
                 ],
-                "internalType": "struct MultiPhaseSecureOperation.TxParams",
+                "internalType": "struct StateAbstraction.TxParams",
                 "name": "params",
                 "type": "tuple"
               },
@@ -4592,12 +4874,12 @@
                     "type": "uint256"
                   }
                 ],
-                "internalType": "struct MultiPhaseSecureOperation.PaymentDetails",
+                "internalType": "struct StateAbstraction.PaymentDetails",
                 "name": "payment",
                 "type": "tuple"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.TxRecord",
+            "internalType": "struct StateAbstraction.TxRecord",
             "name": "txRecord",
             "type": "tuple"
           },
@@ -4624,7 +4906,7 @@
                 "type": "bytes4"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.TxAction",
+                "internalType": "enum StateAbstraction.TxAction",
                 "name": "action",
                 "type": "uint8"
               },
@@ -4644,7 +4926,7 @@
                 "type": "address"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.MetaTxParams",
+            "internalType": "struct StateAbstraction.MetaTxParams",
             "name": "params",
             "type": "tuple"
           },
@@ -4664,7 +4946,7 @@
             "type": "bytes"
           }
         ],
-        "internalType": "struct MultiPhaseSecureOperation.MetaTransaction",
+        "internalType": "struct StateAbstraction.MetaTransaction",
         "name": "metaTx",
         "type": "tuple"
       }
@@ -4684,7 +4966,7 @@
             "type": "uint256"
           },
           {
-            "internalType": "enum MultiPhaseSecureOperation.TxStatus",
+            "internalType": "enum StateAbstraction.TxStatus",
             "name": "status",
             "type": "uint8"
           },
@@ -4716,7 +4998,7 @@
                 "type": "bytes32"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.ExecutionType",
+                "internalType": "enum StateAbstraction.ExecutionType",
                 "name": "executionType",
                 "type": "uint8"
               },
@@ -4726,7 +5008,7 @@
                 "type": "bytes"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.TxParams",
+            "internalType": "struct StateAbstraction.TxParams",
             "name": "params",
             "type": "tuple"
           },
@@ -4763,12 +5045,12 @@
                 "type": "uint256"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.PaymentDetails",
+            "internalType": "struct StateAbstraction.PaymentDetails",
             "name": "payment",
             "type": "tuple"
           }
         ],
-        "internalType": "struct MultiPhaseSecureOperation.TxRecord",
+        "internalType": "struct StateAbstraction.TxRecord",
         "name": "",
         "type": "tuple"
       }
@@ -4823,7 +5105,7 @@
                 "type": "uint256"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.TxStatus",
+                "internalType": "enum StateAbstraction.TxStatus",
                 "name": "status",
                 "type": "uint8"
               },
@@ -4855,7 +5137,7 @@
                     "type": "bytes32"
                   },
                   {
-                    "internalType": "enum MultiPhaseSecureOperation.ExecutionType",
+                    "internalType": "enum StateAbstraction.ExecutionType",
                     "name": "executionType",
                     "type": "uint8"
                   },
@@ -4865,7 +5147,7 @@
                     "type": "bytes"
                   }
                 ],
-                "internalType": "struct MultiPhaseSecureOperation.TxParams",
+                "internalType": "struct StateAbstraction.TxParams",
                 "name": "params",
                 "type": "tuple"
               },
@@ -4902,12 +5184,12 @@
                     "type": "uint256"
                   }
                 ],
-                "internalType": "struct MultiPhaseSecureOperation.PaymentDetails",
+                "internalType": "struct StateAbstraction.PaymentDetails",
                 "name": "payment",
                 "type": "tuple"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.TxRecord",
+            "internalType": "struct StateAbstraction.TxRecord",
             "name": "txRecord",
             "type": "tuple"
           },
@@ -4934,7 +5216,7 @@
                 "type": "bytes4"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.TxAction",
+                "internalType": "enum StateAbstraction.TxAction",
                 "name": "action",
                 "type": "uint8"
               },
@@ -4954,7 +5236,7 @@
                 "type": "address"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.MetaTxParams",
+            "internalType": "struct StateAbstraction.MetaTxParams",
             "name": "params",
             "type": "tuple"
           },
@@ -4974,13 +5256,14 @@
             "type": "bytes"
           }
         ],
-        "internalType": "struct MultiPhaseSecureOperation.MetaTransaction",
+        "internalType": "struct StateAbstraction.MetaTransaction",
         "name": "",
         "type": "tuple"
       }
     ],
     "stateMutability": "view",
-    "type": "function"
+    "type": "function",
+    "constant": true
   },
   {
     "inputs": [
@@ -5029,7 +5312,7 @@
                 "type": "uint256"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.TxStatus",
+                "internalType": "enum StateAbstraction.TxStatus",
                 "name": "status",
                 "type": "uint8"
               },
@@ -5061,7 +5344,7 @@
                     "type": "bytes32"
                   },
                   {
-                    "internalType": "enum MultiPhaseSecureOperation.ExecutionType",
+                    "internalType": "enum StateAbstraction.ExecutionType",
                     "name": "executionType",
                     "type": "uint8"
                   },
@@ -5071,7 +5354,7 @@
                     "type": "bytes"
                   }
                 ],
-                "internalType": "struct MultiPhaseSecureOperation.TxParams",
+                "internalType": "struct StateAbstraction.TxParams",
                 "name": "params",
                 "type": "tuple"
               },
@@ -5108,12 +5391,12 @@
                     "type": "uint256"
                   }
                 ],
-                "internalType": "struct MultiPhaseSecureOperation.PaymentDetails",
+                "internalType": "struct StateAbstraction.PaymentDetails",
                 "name": "payment",
                 "type": "tuple"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.TxRecord",
+            "internalType": "struct StateAbstraction.TxRecord",
             "name": "txRecord",
             "type": "tuple"
           },
@@ -5140,7 +5423,7 @@
                 "type": "bytes4"
               },
               {
-                "internalType": "enum MultiPhaseSecureOperation.TxAction",
+                "internalType": "enum StateAbstraction.TxAction",
                 "name": "action",
                 "type": "uint8"
               },
@@ -5160,7 +5443,7 @@
                 "type": "address"
               }
             ],
-            "internalType": "struct MultiPhaseSecureOperation.MetaTxParams",
+            "internalType": "struct StateAbstraction.MetaTxParams",
             "name": "params",
             "type": "tuple"
           },
@@ -5180,13 +5463,14 @@
             "type": "bytes"
           }
         ],
-        "internalType": "struct MultiPhaseSecureOperation.MetaTransaction",
+        "internalType": "struct StateAbstraction.MetaTransaction",
         "name": "",
         "type": "tuple"
       }
     ],
     "stateMutability": "view",
-    "type": "function"
+    "type": "function",
+    "constant": true
   },
   {
     "inputs": [

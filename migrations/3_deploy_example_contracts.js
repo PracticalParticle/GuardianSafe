@@ -5,33 +5,51 @@ const SimpleVault = artifacts.require("SimpleVault");
 const SimpleRWA20 = artifacts.require("SimpleRWA20");
 
 // Import the deployed library artifacts to get their addresses
-const MultiPhaseSecureOperation = artifacts.require("MultiPhaseSecureOperation");
-const MultiPhaseSecureOperationDefinitions = artifacts.require("MultiPhaseSecureOperationDefinitions");
+const StateAbstraction = artifacts.require("StateAbstraction");
+const StateAbstractionDefinitions = artifacts.require("StateAbstractionDefinitions");
 const SecureOwnableDefinitions = artifacts.require("SecureOwnableDefinitions");
 const DynamicRBACDefinitions = artifacts.require("DynamicRBACDefinitions");
+
+// Import the example-specific definitions
+const SimpleVaultDefinitions = artifacts.require("SimpleVaultDefinitions");
+const SimpleRWA20Definitions = artifacts.require("SimpleRWA20Definitions");
 
 module.exports = async function(deployer, network, accounts) {
   console.log(`🚀 Migration 3: Deploying Example Contracts on ${network}`);
   console.log(`📋 Using account: ${accounts[0]}`);
 
   try {
-    // Retrieve deployed library instances
-    const mps = await MultiPhaseSecureOperation.deployed();
-    const mpsd = await MultiPhaseSecureOperationDefinitions.deployed();
+    // Step 1: Deploy Example-Specific Definitions Libraries
+    console.log("\n📦 Step 1: Deploying Example-Specific Definitions Libraries...");
+    
+    // Deploy SimpleVaultDefinitions
+    await deployer.deploy(SimpleVaultDefinitions);
+    const simpleVaultDefinitions = await SimpleVaultDefinitions.deployed();
+    console.log(`✅ SimpleVaultDefinitions deployed at: ${simpleVaultDefinitions.address}`);
+    
+    // Deploy SimpleRWA20Definitions
+    await deployer.deploy(SimpleRWA20Definitions);
+    const simpleRWA20Definitions = await SimpleRWA20Definitions.deployed();
+    console.log(`✅ SimpleRWA20Definitions deployed at: ${simpleRWA20Definitions.address}`);
+
+    // Retrieve deployed foundation library instances
+    const sa = await StateAbstraction.deployed();
+    const sad = await StateAbstractionDefinitions.deployed();
     const sod = await SecureOwnableDefinitions.deployed();
     const drbd = await DynamicRBACDefinitions.deployed();
 
-    console.log("\n📦 Step 1: Linking Foundation Libraries...");
-    console.log(`✅ Using MultiPhaseSecureOperation at: ${mps.address}`);
-    console.log(`✅ Using MultiPhaseSecureOperationDefinitions at: ${mpsd.address}`);
+    console.log("\n📦 Step 2: Linking Foundation Libraries...");
+    console.log(`✅ Using StateAbstraction at: ${sa.address}`);
+    console.log(`✅ Using StateAbstractionDefinitions at: ${sad.address}`);
     console.log(`✅ Using SecureOwnableDefinitions at: ${sod.address}`);
     console.log(`✅ Using DynamicRBACDefinitions at: ${drbd.address}`);
 
-    // Step 2: Deploy SimpleVault
-    console.log("\n📦 Step 2: Deploying SimpleVault...");
-    await deployer.link(mps, SimpleVault);
-    await deployer.link(mpsd, SimpleVault);
+    // Step 3: Deploy SimpleVault
+    console.log("\n📦 Step 3: Deploying SimpleVault...");
+    await deployer.link(sa, SimpleVault);
+    await deployer.link(sad, SimpleVault);
     await deployer.link(sod, SimpleVault);
+    await deployer.link(simpleVaultDefinitions, SimpleVault);
     await deployer.deploy(SimpleVault);
     const simpleVault = await SimpleVault.deployed();
     console.log(`✅ SimpleVault deployed at: ${simpleVault.address}`);
@@ -41,9 +59,9 @@ module.exports = async function(deployer, network, accounts) {
     try {
         const tx = await simpleVault.initialize(
             accounts[0],  // initialOwner
-            accounts[0],  // broadcaster
-            accounts[0],  // recovery
-            1,           // timeLockPeriodInMinutes (1 minute)
+            accounts[1],  // broadcaster
+            accounts[2],  // recovery
+            1,          // timeLockPeriodInSeconds (1 second for fast testing)
             "0x0000000000000000000000000000000000000000"  // eventForwarder (none)
         );
         console.log("✅ SimpleVault initialized successfully");
@@ -71,11 +89,12 @@ module.exports = async function(deployer, network, accounts) {
         console.log("⚠️  Contract deployed but not initialized. This may be expected for upgradeable contracts.");
     }
 
-    // Step 3: Deploy SimpleRWA20
-    console.log("\n📦 Step 3: Deploying SimpleRWA20...");
-    await deployer.link(mps, SimpleRWA20);
-    await deployer.link(mpsd, SimpleRWA20);
+    // Step 4: Deploy SimpleRWA20
+    console.log("\n📦 Step 4: Deploying SimpleRWA20...");
+    await deployer.link(sa, SimpleRWA20);
+    await deployer.link(sad, SimpleRWA20);
     await deployer.link(sod, SimpleRWA20);
+    await deployer.link(simpleRWA20Definitions, SimpleRWA20);
     await deployer.deploy(SimpleRWA20);
     const simpleRWA20 = await SimpleRWA20.deployed();
     console.log(`✅ SimpleRWA20 deployed at: ${simpleRWA20.address}`);
@@ -87,9 +106,9 @@ module.exports = async function(deployer, network, accounts) {
             "SimpleRWA20",  // name
             "SRWA",          // symbol
             accounts[0],     // initialOwner
-            accounts[0],     // broadcaster
-            accounts[0],     // recovery
-            1,              // timeLockPeriodInMinutes (1 minute)
+            accounts[1],     // broadcaster
+            accounts[2],     // recovery
+            1,          // timeLockPeriodInSeconds (1 second for fast testing)
             "0x0000000000000000000000000000000000000000"  // eventForwarder (none)
         );
         console.log("✅ SimpleRWA20 initialized successfully");
@@ -124,10 +143,13 @@ module.exports = async function(deployer, network, accounts) {
 
     console.log("\n🎯 Complete Deployment Summary:");
     console.log("📚 Foundation Libraries:");
-    console.log(`   MultiPhaseSecureOperation: ${mps.address}`);
-    console.log(`   MultiPhaseSecureOperationDefinitions: ${mpsd.address}`);
+    console.log(`   StateAbstraction: ${sa.address}`);
+    console.log(`   StateAbstractionDefinitions: ${sad.address}`);
     console.log(`   SecureOwnableDefinitions: ${sod.address}`);
     console.log(`   DynamicRBACDefinitions: ${drbd.address}`);
+    console.log("📋 Example-Specific Definitions:");
+    console.log(`   SimpleVaultDefinitions: ${simpleVaultDefinitions.address}`);
+    console.log(`   SimpleRWA20Definitions: ${simpleRWA20Definitions.address}`);
     console.log("🛡️ Guardian Contracts (Deployed & Initialized):");
     console.log(`   GuardianAccountAbstraction: 0xf759A0e8F2fFBb5F5a9DD50f1106668FBE29bC93`);
     console.log(`   GuardianAccountAbstractionWithRoles: 0xA5682DF1987D214Fe4dfC3a262179eBDc205b525`);
@@ -138,9 +160,9 @@ module.exports = async function(deployer, network, accounts) {
     console.log("🎯 Ready for comprehensive analyzer testing with fully functional contracts!");
     console.log("🔧 Initialization Parameters:");
     console.log(`   Owner: ${accounts[0]}`);
-    console.log(`   Broadcaster: ${accounts[0]}`);
-    console.log(`   Recovery: ${accounts[0]}`);
-    console.log(`   Time Lock Period: 1 minute`);
+    console.log(`   Broadcaster: ${accounts[1]}`);
+    console.log(`   Recovery: ${accounts[2]}`);
+    console.log(`   Time Lock Period: 60 seconds (1 minute)`);
     console.log(`   Event Forwarder: None`);
     console.log(`   Token Name: SimpleRWA20`);
     console.log(`   Token Symbol: SRWA`);
