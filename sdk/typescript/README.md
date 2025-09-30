@@ -1,6 +1,6 @@
 # Guardian Framework TypeScript SDK
 
-A comprehensive TypeScript SDK for interacting with the Guardian Framework smart contracts, providing type-safe interfaces for secure multi-phase operations, dynamic role-based access control, and account abstraction.
+A comprehensive TypeScript SDK for interacting with the Guardian Framework smart contracts, providing type-safe interfaces for secure multi-phase operations, dynamic role-based access control, and state abstraction.
 
 ## 🏗️ **Unique Architecture**
 
@@ -17,7 +17,7 @@ Guardian Framework implements a **state machine architecture** with `SecureOpera
 - **SecureOwnable**: Multi-phase ownership management with time-locked operations
 - **DynamicRBAC**: Dynamic role-based access control system
 - **Definitions**: Dynamic interaction with any definition library implementing IDefinition
-- **Guardian**: Account abstraction with secure operations
+- **Guardian**: State abstraction with secure operations
 - **Type Safety**: Full TypeScript support with comprehensive type definitions
 - **Viem Integration**: Built on top of Viem for modern Ethereum development
 

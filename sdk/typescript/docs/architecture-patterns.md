@@ -90,7 +90,7 @@ contract DynamicRBAC is SecureOwnable {
 
 // Application-specific contracts
 contract Guardian is SecureOwnable {
-    // Account abstraction functionality
+    // State abstraction functionality
 }
 ```
 

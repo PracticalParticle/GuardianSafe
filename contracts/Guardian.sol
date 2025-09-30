@@ -5,7 +5,7 @@ import "./core/access/SecureOwnable.sol";
 
 /**
  * @title Guardian
- * @dev A basic implementation of account abstraction using SecureOwnable for secure ownership management
+ * @dev A basic implementation of state abstraction using SecureOwnable for secure ownership management
  */
 contract Guardian is SecureOwnable {
     /**

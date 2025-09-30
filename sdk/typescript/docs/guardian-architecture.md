@@ -108,8 +108,8 @@ struct SecureOperationState {
 
 - **`SecureOwnable.sol`**: Basic ownership with Guardian security
 - **`DynamicRBAC.sol`**: Role-based access control with Guardian security
-- **`Guardian.sol`**: Account abstraction with Guardian security
-- **`GuardianWithRoles.sol`**: Account abstraction with RBAC
+- **`Guardian.sol`**: State abstraction with Guardian security
+- **`GuardianWithRoles.sol`**: State abstraction with RBAC
 
 ### Layer 4: Application Contracts
 **Purpose**: DApp-specific implementations using Guardian security

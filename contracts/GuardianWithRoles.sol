@@ -5,7 +5,7 @@ import "./core/access/DynamicRBAC.sol";
 
 /**
  * @title GuardianWithRoles
- * @dev A basic implementation of account abstraction with dynamic role-based access control using DynamicRBAC
+ * @dev A basic implementation of state abstraction with dynamic role-based access control using DynamicRBAC
  */
 contract GuardianWithRoles is DynamicRBAC {
     /**

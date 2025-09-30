@@ -7,7 +7,7 @@ import "./core/base/BaseStateMachine.sol";
  * @title GuardianBare
  * @dev A minimal implementation using only BaseStateMachine for core state machine functionality
  * 
- * This contract provides the most basic account abstraction implementation using only
+ * This contract provides the most basic state abstraction implementation using only
  * the core state machine capabilities from BaseStateMachine. It includes:
  * - Basic initialization with core roles (owner, broadcaster, recovery)
  * - Time-lock period configuration
