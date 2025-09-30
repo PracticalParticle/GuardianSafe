@@ -1,20 +1,20 @@
-﻿> ⚠️ **WARNING: EXPERIMENTAL SOFTWARE** ⚠️
+> ?? **WARNING: EXPERIMENTAL SOFTWARE** ??
 > 
 > This repository contains experimental, untested smart contract code. It is not ready for production use and may contain security vulnerabilities. Use at your own risk. Do not use with real assets or in production environments.
 
-# Particle Guardian Account Abstraction Contracts
+# Particle Guardian State Abstraction Contracts
 
-A secure smart contract framework implementing advanced account abstraction with multi-phase security operations, powered by Particle Crypto Security's innovative approach.
+A secure smart contract framework implementing advanced state abstraction with multi-phase security operations, powered by Particle Crypto Security's innovative approach.
 
 ## Overview
 
-Particle's Guardian Account Abstraction provides a sophisticated security framework that decouples user assets from user authority while maintaining the benefits of decentralization. This implementation replaces the single-key vulnerability model with a multi-phase security architecture that distributes authority across specialized roles and introduces time-based security gates for critical operations.
+Particle's Guardian State Abstraction provides a sophisticated security framework that decouples user assets from user authority while maintaining the benefits of decentralization. This implementation replaces the single-key vulnerability model with a multi-phase security architecture that distributes authority across specialized roles and introduces time-based security gates for critical operations.
 
 The implementation centers around three core components:
 
 - **SecureOwnable**: A base contract providing secure ownership management with timelock and recovery features
-- **MultiPhaseSecureOperation**: A library implementing core security logic for multi-phase operations
-- **GuardianAccountAbstraction**: The main implementation contract that extends SecureOwnable
+- **StateAbstraction**: A library implementing core security logic for multi-phase operations
+- **Guardian**: The main implementation contract that extends SecureOwnable
 
 ## Key Features
 
@@ -61,7 +61,7 @@ npm install -g truffle
 
 1. Clone the repository
 ```bash
-git clone https://github.com/PracticalParticle/particle-core.git
+git clone https://github.com/PracticalParticle/Guardian.git
 ```
 
 2. Install dependencies
@@ -85,22 +85,22 @@ truffle migrate --network development
 ### 1. Smart Contract Components
 
 #### SecureOwnable Contract
-- Base implementation for account abstraction with enhanced security features
+- Base implementation for state abstraction with enhanced security features
 - Time-locked ownership management with multi-phase transfers
 - Role-based access control with owner, broadcaster, and recovery roles
 - Meta-transaction support for delegated operations
 - Comprehensive event emission for monitoring and auditing
 
-#### MultiPhaseSecureOperation Library
+#### StateAbstraction Library
 - Core security logic for multi-phase operations
 - Transaction state management with strict lifecycle enforcement
 - Sophisticated time delay enforcement with release time calculations
 - Cryptographic signature verification for meta-transactions
 - Extensive type safety with well-defined data structures
 
-#### GuardianAccountAbstraction Contract
+#### Guardian Contract
 - Main implementation contract extending SecureOwnable
-- Ready-to-use account abstraction solution
+- Ready-to-use state abstraction solution
 - Customizable for specific application needs
 - Full implementation of all security features
 
@@ -227,12 +227,12 @@ This project is licensed under the MPL-2.0 License - see the [LICENSE](LICENSE) 
 
 ## Acknowledgments
 
-- Particle Crypto Security for the innovative account abstraction implementation
+- Particle Crypto Security for the innovative state abstraction implementation
 - OpenZeppelin for secure smart contract components
 - Viem for TypeScript blockchain interactions
 
 ---
 
 Created by Particle Crypto Security  
-Copyright © 2025 Particle Crypto Security. All rights reserved.
+Copyright � 2025 Particle Crypto Security. All rights reserved.
 

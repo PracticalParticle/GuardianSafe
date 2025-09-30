@@ -1,0 +1,79 @@
+[
+  {
+    "inputs": [],
+    "name": "getFunctionSchemas",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "string",
+            "name": "functionName",
+            "type": "string"
+          },
+          {
+            "internalType": "bytes4",
+            "name": "functionSelector",
+            "type": "bytes4"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "operationType",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "string",
+            "name": "operationName",
+            "type": "string"
+          },
+          {
+            "internalType": "enum StateAbstraction.TxAction[]",
+            "name": "supportedActions",
+            "type": "uint8[]"
+          }
+        ],
+        "internalType": "struct StateAbstraction.FunctionSchema[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getRolePermissions",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "bytes32[]",
+            "name": "roleHashes",
+            "type": "bytes32[]"
+          },
+          {
+            "components": [
+              {
+                "internalType": "bytes4",
+                "name": "functionSelector",
+                "type": "bytes4"
+              },
+              {
+                "internalType": "enum StateAbstraction.TxAction[]",
+                "name": "grantedActions",
+                "type": "uint8[]"
+              }
+            ],
+            "internalType": "struct StateAbstraction.FunctionPermission[]",
+            "name": "functionPermissions",
+            "type": "tuple[]"
+          }
+        ],
+        "internalType": "struct IDefinition.RolePermission",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+  }
+]

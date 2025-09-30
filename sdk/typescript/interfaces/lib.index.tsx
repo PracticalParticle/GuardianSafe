@@ -1,5 +1,6 @@
 import { Address, Hex } from 'viem';
-import { TxStatus, ExecutionType } from '../types/lib.index';
+import { TxStatus, ExecutionType, TxAction } from '../types/lib.index';
+import { ReadableOperationType } from '../types/definition.index';
 
 /**
  * Interfaces for execution options
@@ -38,6 +39,7 @@ export interface MetaTxParams {
   nonce: bigint;
   handlerContract: Address;
   handlerSelector: Hex;
+  action: TxAction;
   deadline: bigint;
   maxGasPrice: bigint;
   signer: Address;
@@ -64,10 +66,6 @@ export interface MetaTransaction {
 /**
  * State management interfaces
  */
-export interface ReadableOperationType {
-  operationType: Hex;
-  name: string;
-}
 
 export interface SecureOperationState {
   txRecords: Map<bigint, TxRecord>;
@@ -78,7 +76,7 @@ export interface SecureOperationState {
   operationTypeNames: Map<Hex, string>;
   txCounter: bigint;
   metaTxNonce: bigint;
-  timeLockPeriodInMinutes: bigint;
+  timeLockPeriodSec: bigint;
   supportedOperationTypesList: Hex[];
 }
 

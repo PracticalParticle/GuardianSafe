@@ -18,6 +18,9 @@
  *
  */
 
+// Load environment variables from .env file
+require('dotenv').config();
+
 // const HDWalletProvider = require('@truffle/hdwallet-provider');
 // const infuraKey = "fj4jll3k.....";
 //
@@ -36,10 +39,20 @@ module.exports = {
    */
 
   networks: {
+    // Dynamic development network - automatically adapts based on environment variables
+    // Local development: No environment variables set (defaults to localhost)
+    // Remote development: Set REMOTE_HOST environment variable
     development: {
-      host: "127.0.0.1",
-      port: 8545,
-      network_id: "*"
+      host: process.env.REMOTE_HOST || "127.0.0.1",
+      port: parseInt(process.env.REMOTE_PORT) || 8545,
+      network_id: process.env.REMOTE_NETWORK_ID || "*",
+      gas: process.env.REMOTE_GAS ? parseInt(process.env.REMOTE_GAS) : undefined,
+      gasPrice: process.env.REMOTE_GAS_PRICE ? parseInt(process.env.REMOTE_GAS_PRICE) : undefined,
+      from: process.env.REMOTE_FROM || undefined,
+      // Enable detailed error reporting
+      verbose: false,
+      // Enable debug mode
+      debug: true
     },
     
 
@@ -89,14 +102,14 @@ module.exports = {
   // Configure your compilers
   compilers: {
     solc: {
-      version: "0.8.20",    // Fetch exact version from solc-bin (default: truffle's version)
+      version: "0.8.25",
       // docker: true,        // Use "0.5.1" you've installed locally with docker (default: false)
       settings: {          // See the solidity docs for advice about optimization and evmVersion
        optimizer: {
          enabled: true,
-         runs: 200
+         runs: 1
        },
-      //  evmVersion: "byzantium"
+       evmVersion: "shanghai"  // Minimum version that supports chainid and OpenZeppelin
       }
     }
   },

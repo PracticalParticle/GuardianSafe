@@ -7,7 +7,16 @@
 ### Dev Tools ###
 node_modules/
 build/
+artifacts/
+cache/
+experimental/
 
 ### VS Code ###
 .vscode/
+
+### Environment Variables ###
+*.env
+
+### Test Reports ###
+scripts/sanity/reports/
 

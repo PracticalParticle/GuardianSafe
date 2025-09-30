@@ -1,24 +1,22 @@
 // SPDX-License-Identifier: MPL-2.0
 pragma solidity ^0.8.2;
 
-// OpenZeppelin imports
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-
 // Contracts imports
-import "../../lib/MultiPhaseSecureOperation.sol";
-import "./ISecureOwnable.sol";
+import "../base/BaseStateMachine.sol";
+import "../../lib/definitions/SecureOwnableDefinitions.sol";
+import "../../interfaces/IDefinition.sol";
+import "../../utils/SharedValidation.sol";
+import "./interface/ISecureOwnable.sol";
 
 /**
  * @title SecureOwnable
- * @dev An enhanced version of OpenZeppelin's Ownable contract with multi-phase security operations
+ * @dev Security-focused contract extending BaseStateMachine with ownership management
  *
- * SecureOwnable extends the standard ownership model with advanced security mechanisms:
- * - Time-locked operations that require a waiting period before execution
+ * SecureOwnable provides security-specific functionality built on top of the base state machine:
  * - Multi-role security model with Owner, Broadcaster, and Recovery roles
- * - Meta-transaction support for delegated operations
- * - Secure multi-phase operations for critical administrative functions
+ * - Secure ownership transfer with time-locked operations
+ * - Broadcaster and recovery address management
+ * - Time-lock period configuration
  *
  * The contract implements four primary secure operation types:
  * 1. OWNERSHIP_TRANSFER - For securely transferring contract ownership
@@ -29,37 +27,12 @@ import "./ISecureOwnable.sol";
  * Each operation follows a request -> approval workflow with appropriate time locks
  * and authorization checks. Operations can be cancelled within specific time windows.
  *
- * This contract is designed for high-security systems where immediate administrative
- * changes would pose security risks.
+ * This contract focuses purely on security logic while leveraging the BaseStateMachine
+ * for transaction management, meta-transactions, and state machine operations.
  */
-abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
-    using MultiPhaseSecureOperation for MultiPhaseSecureOperation.SecureOperationState;
+abstract contract SecureOwnable is BaseStateMachine, ISecureOwnable {
+    using SharedValidation for *;
 
-    // Define operation type constants
-    bytes32 public constant OWNERSHIP_TRANSFER = keccak256("OWNERSHIP_TRANSFER");
-    bytes32 public constant BROADCASTER_UPDATE = keccak256("BROADCASTER_UPDATE");
-    bytes32 public constant RECOVERY_UPDATE = keccak256("RECOVERY_UPDATE");
-    bytes32 public constant TIMELOCK_UPDATE = keccak256("TIMELOCK_UPDATE");
-
-    uint256 private _timeLockPeriodInMinutes;
-    address private _recoveryAddress;
-    address private _broadcaster;  
-
-    MultiPhaseSecureOperation.SecureOperationState private _secureState;
-
-    // Function selector constants
-    bytes4 private constant TRANSFER_OWNERSHIP_SELECTOR = bytes4(keccak256("executeTransferOwnership(address)"));
-    bytes4 private constant UPDATE_BROADCASTER_SELECTOR = bytes4(keccak256("executeBroadcasterUpdate(address)"));
-    bytes4 private constant UPDATE_RECOVERY_SELECTOR = bytes4(keccak256("executeRecoveryUpdate(address)"));
-    bytes4 private constant UPDATE_TIMELOCK_SELECTOR = bytes4(keccak256("executeTimeLockUpdate(uint256)"));
-
-    // Meta-transaction function selectors
-    bytes4 private constant TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR = bytes4(keccak256("transferOwnershipApprovalWithMetaTx((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes32,bytes,(address,uint256,address,uint256),(uint256,uint256,address,bytes4,uint256,uint256,address),bytes,bytes))"));
-    bytes4 private constant TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR = bytes4(keccak256("transferOwnershipCancellationWithMetaTx((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes32,bytes,(address,uint256,address,uint256),(uint256,uint256,address,bytes4,uint256,uint256,address),bytes,bytes))"));
-    bytes4 private constant UPDATE_BROADCASTER_APPROVE_META_SELECTOR = bytes4(keccak256("updateBroadcasterApprovalWithMetaTx((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes32,bytes,(address,uint256,address,uint256),(uint256,uint256,address,bytes4,uint256,uint256,address),bytes,bytes))"));
-    bytes4 private constant UPDATE_BROADCASTER_CANCEL_META_SELECTOR = bytes4(keccak256("updateBroadcasterCancellationWithMetaTx((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes32,bytes,(address,uint256,address,uint256),(uint256,uint256,address,bytes4,uint256,uint256,address),bytes,bytes))"));
-    bytes4 private constant UPDATE_RECOVERY_META_SELECTOR = bytes4(keccak256("updateRecoveryRequestAndApprove((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes32,bytes,(address,uint256,address,uint256),(uint256,uint256,address,bytes4,uint256,uint256,address),bytes,bytes))"));
-    bytes4 private constant UPDATE_TIMELOCK_META_SELECTOR = bytes4(keccak256("updateTimeLockRequestAndApprove((uint256,uint256,uint8,(address,address,uint256,uint256,bytes32,uint8,bytes),bytes32,bytes,(address,uint256,address,uint256),(uint256,uint256,address,bytes4,uint256,uint256,address),bytes,bytes))"));
 
     // Request flags
     bool private _hasOpenOwnershipRequest;
@@ -74,69 +47,52 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
     event RecoveryAddressUpdated(address oldRecovery, address newRecovery);
     event TimeLockPeriodUpdated(uint256 oldPeriod, uint256 newPeriod);
 
+    modifier onlyOwner() {
+        SharedValidation.validateOwner(owner());
+        _;
+    }
+
     modifier onlyOwnerOrRecovery() {
-        require(msg.sender == owner() || msg.sender == _recoveryAddress, "Restricted to owner or recovery");
+        SharedValidation.validateOwnerOrRecovery(owner(), getRecovery());
         _;
     }
     
     modifier onlyRecovery() {
-        require(msg.sender == _recoveryAddress, "Restricted to recovery");
+        SharedValidation.validateRecovery(getRecovery());
         _;
     }
 
     modifier onlyBroadcaster() {
-        require(msg.sender == _broadcaster, "Restricted to Broadcaster");
+        SharedValidation.validateBroadcaster(getBroadcaster());
         _;
     }
 
     /**
-     * @notice Constructor to initialize SecureOwnable state
+     * @notice Initializer to initialize SecureOwnable state
      * @param initialOwner The initial owner address
      * @param broadcaster The broadcaster address
      * @param recovery The recovery address
-     * @param timeLockPeriodInMinutes The timelock period in minutes
+     * @param timeLockPeriodSec The timelock period in seconds
+     * @param eventForwarder The event forwarder address 
      */
-    constructor(
+    function initialize(
         address initialOwner,
         address broadcaster,
         address recovery,
-        uint256 timeLockPeriodInMinutes    
-    ) Ownable(initialOwner) {       
-        _timeLockPeriodInMinutes = timeLockPeriodInMinutes;
-        _recoveryAddress = recovery;
-        _broadcaster = broadcaster;
-
-        _secureState.initialize( initialOwner, broadcaster, recovery, timeLockPeriodInMinutes);
-            
-        // Initialize operation types and their names
-        _secureState.addOperationType(MultiPhaseSecureOperation.ReadableOperationType({
-            operationType: OWNERSHIP_TRANSFER,
-            name: "OWNERSHIP_TRANSFER"
-        }));
+        uint256 timeLockPeriodSec,    
+        address eventForwarder
+    ) public virtual onlyInitializing {
+        // Initialize base state machine
+        _initializeBaseStateMachine(initialOwner, broadcaster, recovery, timeLockPeriodSec, eventForwarder);
         
-        _secureState.addOperationType(MultiPhaseSecureOperation.ReadableOperationType({
-            operationType: BROADCASTER_UPDATE,
-            name: "BROADCASTER_UPDATE"
-        }));
-        
-        _secureState.addOperationType(MultiPhaseSecureOperation.ReadableOperationType({
-            operationType: RECOVERY_UPDATE,
-            name: "RECOVERY_UPDATE"
-        }));
-        
-        _secureState.addOperationType(MultiPhaseSecureOperation.ReadableOperationType({
-            operationType: TIMELOCK_UPDATE,
-            name: "TIMELOCK_UPDATE"
-        }));
-        
-        // Add meta-transaction function selector permissions for broadcaster
-        _secureState.addRoleForFunction(TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR, MultiPhaseSecureOperation.BROADCASTER_ROLE);
-        _secureState.addRoleForFunction(TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR, MultiPhaseSecureOperation.BROADCASTER_ROLE);
-        _secureState.addRoleForFunction(UPDATE_BROADCASTER_APPROVE_META_SELECTOR, MultiPhaseSecureOperation.BROADCASTER_ROLE);
-        _secureState.addRoleForFunction(UPDATE_BROADCASTER_CANCEL_META_SELECTOR, MultiPhaseSecureOperation.BROADCASTER_ROLE);
-        _secureState.addRoleForFunction(UPDATE_RECOVERY_META_SELECTOR, MultiPhaseSecureOperation.BROADCASTER_ROLE);
-        _secureState.addRoleForFunction(UPDATE_TIMELOCK_META_SELECTOR, MultiPhaseSecureOperation.BROADCASTER_ROLE);
-
+        // Load SecureOwnable-specific definitions
+        IDefinition.RolePermission memory secureOwnablePermissions = SecureOwnableDefinitions.getRolePermissions();
+        StateAbstraction.loadDefinitions(
+            _getSecureState(),
+            SecureOwnableDefinitions.getFunctionSchemas(),
+            secureOwnablePermissions.roleHashes,
+            secureOwnablePermissions.functionPermissions
+        );
     }
 
     // Ownership Management
@@ -144,83 +100,75 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
      * @dev Requests a transfer of ownership
      * @return The transaction record
      */
-    function transferOwnershipRequest() public onlyRecovery returns (MultiPhaseSecureOperation.TxRecord memory) {
-        require(!_hasOpenOwnershipRequest, "Request is already pending");
-        bytes memory executionOptions = MultiPhaseSecureOperation.createStandardExecutionOptions(
-            TRANSFER_OWNERSHIP_SELECTOR,
-            abi.encode(_recoveryAddress)
-        );
-
-        MultiPhaseSecureOperation.TxRecord memory txRecord = _secureState.txRequest(
+    function transferOwnershipRequest() public onlyRecovery returns (StateAbstraction.TxRecord memory) {
+        if (_hasOpenOwnershipRequest) revert SharedValidation.RequestAlreadyPending(0);
+        
+        StateAbstraction.TxRecord memory txRecord = _requestStandardTransaction(
             msg.sender,
             address(this),
-            0, // no value
             0, // no gas limit
-            OWNERSHIP_TRANSFER,
-            MultiPhaseSecureOperation.ExecutionType.STANDARD,
-            executionOptions
+            SecureOwnableDefinitions.OWNERSHIP_TRANSFER,
+            SecureOwnableDefinitions.TRANSFER_OWNERSHIP_SELECTOR,
+            abi.encode(getRecovery())
         );
 
         _hasOpenOwnershipRequest = true;
-        addOperation(txRecord);
-        emit OwnershipTransferRequest(owner(), _recoveryAddress);
+        emit OwnershipTransferRequest(owner(), getRecovery());
         return txRecord;
     }
 
     /**
-     * @dev Updates the broadcaster address
+     * @dev Approves a pending ownership transfer transaction after the release time
      * @param txId The transaction ID
      * @return The updated transaction record
      */
-    function transferOwnershipDelayedApproval(uint256 txId) public onlyOwnerOrRecovery returns (MultiPhaseSecureOperation.TxRecord memory) {
-        MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txDelayedApproval(txId);
-        _validateOperationType(updatedRecord.params.operationType, OWNERSHIP_TRANSFER);
+    function transferOwnershipDelayedApproval(uint256 txId) public onlyOwnerOrRecovery returns (StateAbstraction.TxRecord memory) {
+        StateAbstraction.TxRecord memory updatedRecord = _approveTransaction(txId, SecureOwnableDefinitions.OWNERSHIP_TRANSFER);
         _hasOpenOwnershipRequest = false;
-        finalizeOperation(updatedRecord);
         return updatedRecord;
     }
 
     /**
-     * @dev Updates the broadcaster address
+     * @dev Approves a pending ownership transfer transaction using a meta-transaction
      * @param metaTx The meta-transaction
      * @return The updated transaction record
      */
-    function transferOwnershipApprovalWithMetaTx(MultiPhaseSecureOperation.MetaTransaction memory metaTx) public onlyBroadcaster returns (MultiPhaseSecureOperation.TxRecord memory) {
-        _secureState.checkPermission(TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR);
-        _validateHandlerSelector(metaTx.params.handlerSelector, TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR);
-        MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txApprovalWithMetaTx(metaTx);
-        _validateOperationType(updatedRecord.params.operationType, OWNERSHIP_TRANSFER);
+    function transferOwnershipApprovalWithMetaTx(StateAbstraction.MetaTransaction memory metaTx) public onlyBroadcaster returns (StateAbstraction.TxRecord memory) {
+        StateAbstraction.TxRecord memory updatedRecord = _approveTransactionWithMetaTx(
+            metaTx,
+            SecureOwnableDefinitions.OWNERSHIP_TRANSFER,
+            SecureOwnableDefinitions.TRANSFER_OWNERSHIP_APPROVE_META_SELECTOR,
+            StateAbstraction.TxAction.EXECUTE_META_APPROVE
+        );
         _hasOpenOwnershipRequest = false;
-        finalizeOperation(updatedRecord);
         return updatedRecord;
     }
 
     /**
-     * @dev Updates the broadcaster address
+     * @dev Cancels a pending ownership transfer transaction
      * @param txId The transaction ID
      * @return The updated transaction record
      */
-    function transferOwnershipCancellation(uint256 txId) public onlyRecovery returns (MultiPhaseSecureOperation.TxRecord memory) {
-        MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txCancellation(txId);
-        _validateOperationType(updatedRecord.params.operationType, OWNERSHIP_TRANSFER);
+    function transferOwnershipCancellation(uint256 txId) public onlyRecovery returns (StateAbstraction.TxRecord memory) {
+        StateAbstraction.TxRecord memory updatedRecord = _cancelTransaction(txId, SecureOwnableDefinitions.OWNERSHIP_TRANSFER);
         _hasOpenOwnershipRequest = false;
-        finalizeOperation(updatedRecord);
         emit OwnershipTransferCancelled(txId);
         return updatedRecord;
     }
 
     /**
-     * @dev Updates the broadcaster address
+     * @dev Cancels a pending ownership transfer transaction using a meta-transaction
      * @param metaTx The meta-transaction
      * @return The updated transaction record
      */
-    function transferOwnershipCancellationWithMetaTx(MultiPhaseSecureOperation.MetaTransaction memory metaTx) public onlyBroadcaster returns (MultiPhaseSecureOperation.TxRecord memory) {
-        _secureState.checkPermission(TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR);
-        _validateHandlerSelector(metaTx.params.handlerSelector, TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR);
-        MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txCancellationWithMetaTx(metaTx);
-        _validateOperationType(updatedRecord.params.operationType, OWNERSHIP_TRANSFER);
+    function transferOwnershipCancellationWithMetaTx(StateAbstraction.MetaTransaction memory metaTx) public onlyBroadcaster returns (StateAbstraction.TxRecord memory) {
+        StateAbstraction.TxRecord memory updatedRecord = _cancelTransactionWithMetaTx(
+            metaTx,
+            SecureOwnableDefinitions.OWNERSHIP_TRANSFER,
+            SecureOwnableDefinitions.TRANSFER_OWNERSHIP_CANCEL_META_SELECTOR,
+            StateAbstraction.TxAction.EXECUTE_META_CANCEL
+        );
         _hasOpenOwnershipRequest = false;
-        finalizeOperation(updatedRecord);
         emit OwnershipTransferCancelled(updatedRecord.txId);
         return updatedRecord;
     }
@@ -231,311 +179,149 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
      * @param newBroadcaster The new broadcaster address
      * @return The execution options
      */
-    function updateBroadcasterRequest(address newBroadcaster) public onlyOwner returns (MultiPhaseSecureOperation.TxRecord memory) {
-        require(!_hasOpenBroadcasterRequest, "Request is already pending");
-        _validateNotZeroAddress(newBroadcaster);
-        _validateNewAddress(newBroadcaster, _broadcaster);
+    function updateBroadcasterRequest(address newBroadcaster) public onlyOwner returns (StateAbstraction.TxRecord memory) {
+        if (_hasOpenBroadcasterRequest) revert SharedValidation.RequestAlreadyPending(0);
+        SharedValidation.validateAddressUpdate(newBroadcaster, getBroadcaster());
         
-        bytes memory executionOptions = MultiPhaseSecureOperation.createStandardExecutionOptions(
-            UPDATE_BROADCASTER_SELECTOR,
+        StateAbstraction.TxRecord memory txRecord = _requestStandardTransaction(
+            msg.sender,
+            address(this),
+            0,
+            SecureOwnableDefinitions.BROADCASTER_UPDATE,
+            SecureOwnableDefinitions.UPDATE_BROADCASTER_SELECTOR,
             abi.encode(newBroadcaster)
         );
 
-        MultiPhaseSecureOperation.TxRecord memory txRecord = _secureState.txRequest(
-            msg.sender,
-            address(this),
-            0, // no value
-            0, // no gas limit
-            BROADCASTER_UPDATE,
-            MultiPhaseSecureOperation.ExecutionType.STANDARD,
-            executionOptions
-        );
-
         _hasOpenBroadcasterRequest = true;
-        addOperation(txRecord);
-        emit BroadcasterUpdateRequest(_broadcaster, newBroadcaster);
+        emit BroadcasterUpdateRequest(getBroadcaster(), newBroadcaster);
         return txRecord;
     }
 
     /**
-     * @dev Updates the broadcaster address
+     * @dev Approves a pending broadcaster update transaction after the release time
      * @param txId The transaction ID
      * @return The updated transaction record
      */
-    function updateBroadcasterDelayedApproval(uint256 txId) public onlyOwner returns (MultiPhaseSecureOperation.TxRecord memory) {
-        MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txDelayedApproval(txId);
-        _validateOperationType(updatedRecord.params.operationType, BROADCASTER_UPDATE);
+    function updateBroadcasterDelayedApproval(uint256 txId) public onlyOwner returns (StateAbstraction.TxRecord memory) {
+        StateAbstraction.TxRecord memory updatedRecord = _approveTransaction(txId, SecureOwnableDefinitions.BROADCASTER_UPDATE);
         _hasOpenBroadcasterRequest = false;
-        finalizeOperation(updatedRecord);
         return updatedRecord;
     }
 
     /**
-     * @dev Updates the broadcaster address
+     * @dev Approves a pending broadcaster update transaction using a meta-transaction
      * @param metaTx The meta-transaction
      * @return The updated transaction record
      */
-    function updateBroadcasterApprovalWithMetaTx(MultiPhaseSecureOperation.MetaTransaction memory metaTx) public onlyBroadcaster returns (MultiPhaseSecureOperation.TxRecord memory) {
-        _secureState.checkPermission(UPDATE_BROADCASTER_APPROVE_META_SELECTOR);
-        _validateHandlerSelector(metaTx.params.handlerSelector, UPDATE_BROADCASTER_APPROVE_META_SELECTOR);
-        MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txApprovalWithMetaTx(metaTx);
-        _validateOperationType(updatedRecord.params.operationType, BROADCASTER_UPDATE);
+    function updateBroadcasterApprovalWithMetaTx(StateAbstraction.MetaTransaction memory metaTx) public onlyBroadcaster returns (StateAbstraction.TxRecord memory) {
+        StateAbstraction.TxRecord memory updatedRecord = _approveTransactionWithMetaTx(
+            metaTx,
+            SecureOwnableDefinitions.BROADCASTER_UPDATE,
+            SecureOwnableDefinitions.UPDATE_BROADCASTER_APPROVE_META_SELECTOR,
+            StateAbstraction.TxAction.EXECUTE_META_APPROVE
+        );
         _hasOpenBroadcasterRequest = false;
-        finalizeOperation(updatedRecord);
         return updatedRecord;
     }
 
     /**
-     * @dev Updates the broadcaster address
+     * @dev Cancels a pending broadcaster update transaction
      * @param txId The transaction ID
      * @return The updated transaction record
      */
-    function updateBroadcasterCancellation(uint256 txId) public onlyOwner returns (MultiPhaseSecureOperation.TxRecord memory) {
-        MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txCancellation(txId);
-        _validateOperationType(updatedRecord.params.operationType, BROADCASTER_UPDATE);
+    function updateBroadcasterCancellation(uint256 txId) public onlyOwner returns (StateAbstraction.TxRecord memory) {
+        StateAbstraction.TxRecord memory updatedRecord = _cancelTransaction(txId, SecureOwnableDefinitions.BROADCASTER_UPDATE);
         _hasOpenBroadcasterRequest = false;
-        finalizeOperation(updatedRecord);
         emit BroadcasterUpdateCancelled(txId);
         return updatedRecord;
     }
 
     /**
-     * @dev Updates the broadcaster address
+     * @dev Cancels a pending broadcaster update transaction using a meta-transaction
      * @param metaTx The meta-transaction
      * @return The updated transaction record
      */
-    function updateBroadcasterCancellationWithMetaTx(MultiPhaseSecureOperation.MetaTransaction memory metaTx) public onlyBroadcaster returns (MultiPhaseSecureOperation.TxRecord memory) {
-        _secureState.checkPermission(UPDATE_BROADCASTER_CANCEL_META_SELECTOR);
-        _validateHandlerSelector(metaTx.params.handlerSelector, UPDATE_BROADCASTER_CANCEL_META_SELECTOR);
-        MultiPhaseSecureOperation.TxRecord memory updatedRecord = _secureState.txCancellationWithMetaTx(metaTx);
-        _validateOperationType(updatedRecord.params.operationType, BROADCASTER_UPDATE);
+    function updateBroadcasterCancellationWithMetaTx(StateAbstraction.MetaTransaction memory metaTx) public onlyBroadcaster returns (StateAbstraction.TxRecord memory) {
+        StateAbstraction.TxRecord memory updatedRecord = _cancelTransactionWithMetaTx(
+            metaTx,
+            SecureOwnableDefinitions.BROADCASTER_UPDATE,
+            SecureOwnableDefinitions.UPDATE_BROADCASTER_CANCEL_META_SELECTOR,
+            StateAbstraction.TxAction.EXECUTE_META_CANCEL
+        );
         _hasOpenBroadcasterRequest = false;
-        finalizeOperation(updatedRecord);
         emit BroadcasterUpdateCancelled(updatedRecord.txId);
         return updatedRecord;
     }
 
     // Recovery Management
     /**
-     * @dev Updates the recovery address
+     * @dev Creates execution options for updating the recovery address
      * @param newRecoveryAddress The new recovery address
      * @return The execution options
      */
     function updateRecoveryExecutionOptions(
         address newRecoveryAddress
     ) public view returns (bytes memory) {
-        _validateNotZeroAddress(newRecoveryAddress);
-        _validateNewAddress(newRecoveryAddress, _recoveryAddress);
-
-        return MultiPhaseSecureOperation.createStandardExecutionOptions(
-            UPDATE_RECOVERY_SELECTOR,
+        SharedValidation.validateAddressUpdate(newRecoveryAddress, getRecovery());
+        return _createStandardExecutionOptions(
+            SecureOwnableDefinitions.UPDATE_RECOVERY_SELECTOR,
             abi.encode(newRecoveryAddress)
         );
     }
 
     /**
-     * @dev Updates the recovery address
+     * @dev Requests and approves a recovery address update using a meta-transaction
      * @param metaTx The meta-transaction
-     * @return The execution options
+     * @return The transaction record
      */
     function updateRecoveryRequestAndApprove(
-        MultiPhaseSecureOperation.MetaTransaction memory metaTx
-    ) public onlyBroadcaster returns (MultiPhaseSecureOperation.TxRecord memory) {
-        _secureState.checkPermission(UPDATE_RECOVERY_META_SELECTOR);
-
-        return _requestAndApprove(metaTx);
+        StateAbstraction.MetaTransaction memory metaTx
+    ) public onlyBroadcaster returns (StateAbstraction.TxRecord memory) {
+        return _requestAndApproveTransaction(
+            metaTx,
+            SecureOwnableDefinitions.UPDATE_RECOVERY_META_SELECTOR,
+            StateAbstraction.TxAction.EXECUTE_META_REQUEST_AND_APPROVE
+        );
     }
 
     // TimeLock Management
     /**
-     * @dev Updates the time lock period
-     * @param newTimeLockPeriodInMinutes The new time lock period in minutes
+     * @dev Creates execution options for updating the time lock period
+     * @param newTimeLockPeriodSec The new time lock period in seconds
      * @return The execution options
      */
     function updateTimeLockExecutionOptions(
-        uint256 newTimeLockPeriodInMinutes
+        uint256 newTimeLockPeriodSec
     ) public view returns (bytes memory) {
-        require(newTimeLockPeriodInMinutes > 0, "Invalid timelock period");
-        require(newTimeLockPeriodInMinutes != _timeLockPeriodInMinutes, "New timelock must be different");
-
-        return MultiPhaseSecureOperation.createStandardExecutionOptions(
-            UPDATE_TIMELOCK_SELECTOR,
-            abi.encode(newTimeLockPeriodInMinutes)
+        SharedValidation.validateTimeLockUpdate(newTimeLockPeriodSec, getTimeLockPeriodSec());
+        return _createStandardExecutionOptions(
+            SecureOwnableDefinitions.UPDATE_TIMELOCK_SELECTOR,
+            abi.encode(newTimeLockPeriodSec)
         );
     }
 
     /**
-     * @dev Updates the time lock period
+     * @dev Requests and approves a time lock period update using a meta-transaction
      * @param metaTx The meta-transaction
-     * @return The execution options
+     * @return The transaction record
      */
     function updateTimeLockRequestAndApprove(
-        MultiPhaseSecureOperation.MetaTransaction memory metaTx
-    ) public onlyBroadcaster returns (MultiPhaseSecureOperation.TxRecord memory) {
-        _secureState.checkPermission(UPDATE_TIMELOCK_META_SELECTOR);
-
-        return _requestAndApprove(metaTx);
-    }
-
-    // Getters
-    /**
-     * @dev Gets the complete operation history with no filters
-     * @return The complete operation history
-     */
-    function getOperationHistory() public view override returns (MultiPhaseSecureOperation.TxRecord[] memory) {
-        uint256 totalTransactions = _secureState.getCurrentTxId();
-        MultiPhaseSecureOperation.TxRecord[] memory history = new MultiPhaseSecureOperation.TxRecord[](totalTransactions);
-        
-        for (uint256 i = 0; i < totalTransactions; i++) {
-            history[i] = _secureState.getTxRecord(i+1);
-        }
-        
-        return history;
-    }
-
-    /**
-     * @dev Gets an operation
-     * @param txId The transaction ID
-     * @return The operation
-     */
-    function getOperation(uint256 txId) public view override returns (MultiPhaseSecureOperation.TxRecord memory) {
-        return _secureState.getTxRecord(txId);
-    }
-
-    /**
-     * @dev Adds an operation
-     * @param txRecord The transaction record
-     */
-    function addOperation(MultiPhaseSecureOperation.TxRecord memory txRecord) internal virtual {
-    }
-
-    /**
-     * @dev Finalizes an operation
-     * @param opData The operation data
-     */
-    function finalizeOperation(MultiPhaseSecureOperation.TxRecord memory opData) internal virtual {
-    }
-
-    /**
-     * @dev Creates meta-transaction parameters with specified values
-     * @param handlerContract The contract that will handle the meta-transaction
-     * @param handlerSelector The function selector for the handler
-     * @param deadline The timestamp after which the meta-transaction expires
-     * @param maxGasPrice The maximum gas price allowed for execution
-     * @param signer The address that will sign the meta-transaction
-     * @return The formatted meta-transaction parameters
-     */
-    function createMetaTxParams(
-        address handlerContract,
-        bytes4 handlerSelector,
-        uint256 deadline,
-        uint256 maxGasPrice,
-        address signer
-    ) public view returns (MultiPhaseSecureOperation.MetaTxParams memory) {
-        return _secureState.createMetaTxParams(
-            handlerContract,
-            handlerSelector,
-            block.timestamp + (deadline * 1 hours),
-            maxGasPrice,
-            signer
+        StateAbstraction.MetaTransaction memory metaTx
+    ) public onlyBroadcaster returns (StateAbstraction.TxRecord memory) {
+        return _requestAndApproveTransaction(
+            metaTx,
+            SecureOwnableDefinitions.UPDATE_TIMELOCK_META_SELECTOR,
+            StateAbstraction.TxAction.EXECUTE_META_REQUEST_AND_APPROVE
         );
     }
 
-    /**
-     * @dev Generates an unsigned meta-transaction for a new operation
-     * @param requester The address requesting the operation
-     * @param target The target contract address
-     * @param value The ETH value to send
-     * @param gasLimit The gas limit for execution
-     * @param operationType The type of operation
-     * @param executionType The type of execution (STANDARD or RAW)
-     * @param executionOptions The encoded execution options
-     * @param metaTxParams The meta-transaction parameters
-     * @return The unsigned meta-transaction
-     */
-    function generateUnsignedMetaTransactionForNew(
-        address requester,
-        address target,
-        uint256 value,
-        uint256 gasLimit,
-        bytes32 operationType,
-        MultiPhaseSecureOperation.ExecutionType executionType,
-        bytes memory executionOptions,
-        MultiPhaseSecureOperation.MetaTxParams memory metaTxParams
-    ) public view returns (MultiPhaseSecureOperation.MetaTransaction memory) {
-        MultiPhaseSecureOperation.TxParams memory txParams = MultiPhaseSecureOperation.TxParams({
-            requester: requester,
-            target: target,
-            value: value,
-            gasLimit: gasLimit,
-            operationType: operationType,
-            executionType: executionType,
-            executionOptions: executionOptions
-        });
-
-        return _secureState.generateUnsignedForNewMetaTx(txParams, metaTxParams);
-    }
-
-    /**
-     * @dev Generates an unsigned meta-transaction for an existing transaction
-     * @param txId The ID of the existing transaction
-     * @param metaTxParams The meta-transaction parameters
-     * @return The unsigned meta-transaction
-     */
-    function generateUnsignedMetaTransactionForExisting(
-        uint256 txId,
-        MultiPhaseSecureOperation.MetaTxParams memory metaTxParams
-    ) public view returns (MultiPhaseSecureOperation.MetaTransaction memory) {
-        return _secureState.generateUnsignedForExistingMetaTx(txId, metaTxParams);
-    }
-
-    /**
-     * @dev Returns the broadcaster address
-     * @return The broadcaster address
-     */
-    function getBroadcaster() public view virtual override returns (address) {
-        return _broadcaster;
-    }
-
-    /**
-     * @dev Returns the recovery address
-     * @return The recovery address
-     */
-    function getRecoveryAddress() public view virtual override returns (address) {
-        return _recoveryAddress;
-    }
-
-    /**
-     * @dev Returns the time lock period
-     * @return The time lock period in minutes
-     */
-    function getTimeLockPeriodInMinutes() public view virtual override returns (uint256) {
-        return _timeLockPeriodInMinutes;
-    }
-
-    /**
-     * @dev Returns the supported operation types
-     * @return The supported operation types
-     */
-    function getSupportedOperationTypes() public view override returns (MultiPhaseSecureOperation.ReadableOperationType[] memory) {
-        return _secureState.getSupportedOperationTypes();
-    }
-
-    /**
-     * @dev Checks if an operation type is supported
-     * @param operationType The operation type to check
-     * @return bool True if the operation type is supported
-     */
-    function isOperationTypeSupported(bytes32 operationType) public view override returns (bool) {
-        return _secureState.isOperationTypeSupported(operationType);
-    }
-
+    // Execution Functions
     /**
      * @dev External function that can only be called by the contract itself to execute ownership transfer
      * @param newOwner The new owner address
      */
     function executeTransferOwnership(address newOwner) external {
-        _validateInternal();
+        SharedValidation.validateInternalCallInternal(address(this));
         _transferOwnership(newOwner);
     }
 
@@ -544,7 +330,7 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
      * @param newBroadcaster The new broadcaster address
      */
     function executeBroadcasterUpdate(address newBroadcaster) external {
-        _validateInternal();
+        SharedValidation.validateInternalCallInternal(address(this));
         _updateBroadcaster(newBroadcaster);
     }
 
@@ -553,84 +339,52 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
      * @param newRecoveryAddress The new recovery address
      */
     function executeRecoveryUpdate(address newRecoveryAddress) external {
-        _validateInternal();
+        SharedValidation.validateInternalCallInternal(address(this));
         _updateRecoveryAddress(newRecoveryAddress);
     }
 
     /**
      * @dev External function that can only be called by the contract itself to execute timelock update
-     * @param newTimeLockPeriodInMinutes The new timelock period in minutes
+     * @param newTimeLockPeriodSec The new timelock period in seconds
      */
-    function executeTimeLockUpdate(uint256 newTimeLockPeriodInMinutes) external {
-        _validateInternal();
-        _updateTimeLockPeriod(newTimeLockPeriodInMinutes);
+    function executeTimeLockUpdate(uint256 newTimeLockPeriodSec) external {
+        SharedValidation.validateInternalCallInternal(address(this));
+        _updateTimeLockPeriod(newTimeLockPeriodSec);
     }
 
-    // Internal functions
-    /**
-     * @dev Requests and approves a meta-transaction
-     * @param metaTx The meta-transaction
-     * @return The transaction record
-     */
-    function _requestAndApprove(
-        MultiPhaseSecureOperation.MetaTransaction memory metaTx
-    ) internal returns (MultiPhaseSecureOperation.TxRecord memory) {
-        MultiPhaseSecureOperation.TxRecord memory txRecord = _secureState.requestAndApprove(metaTx);
-        addOperation(txRecord);
-        finalizeOperation(txRecord);
-        return txRecord;
-    }
-
-    // Ownership overrides
+    // Ownership management
     /**
      * @dev Returns the owner of the contract
      * @return The owner of the contract
      */
-    function owner() public view virtual override(Ownable, ISecureOwnable) returns (address) {
-        return super.owner();
+    function owner() public view virtual override returns (address) {
+        return _getAuthorizedWalletAt(StateAbstraction.OWNER_ROLE, 0);
     }
 
     /**
-     * @dev Checks if the owner is valid
+     * @dev Returns the broadcaster address
+     * @return The broadcaster address
      */
-    function _checkOwner() internal view virtual override {
-        super._checkOwner();
+    function getBroadcaster() public view virtual override returns (address) {
+        return _getAuthorizedWalletAt(StateAbstraction.BROADCASTER_ROLE, 0);
     }
 
     /**
-     * @dev Renounces ownership of the contract
+     * @dev Returns the recovery address
+     * @return The recovery address
      */
-    function renounceOwnership() public virtual override onlyOwner {
-        revert("Ownership renouncement disabled");
-    }
-
-    /**
-     * @dev Transfers ownership of the contract
-     * @param newOwner The new owner of the contract
-     */
-    function transferOwnership(address newOwner) public virtual override onlyOwner {
-        revert("Direct ownership transfer disabled");
-    }
-
-    /**
-     * @dev Internal function to get the secure state
-     * @return secureState The secure state
-     */
-    function _getSecureState() internal view returns (MultiPhaseSecureOperation.SecureOperationState storage) {
-        return _secureState;
+    function getRecovery() public view virtual override returns (address) {
+        return _getAuthorizedWalletAt(StateAbstraction.RECOVERY_ROLE, 0);
     }
 
     /**
      * @dev Transfers ownership of the contract
      * @param newOwner The new owner of the contract
      */
-    function _transferOwnership(address newOwner) internal virtual override {
+    function _transferOwnership(address newOwner) internal virtual {
         address oldOwner = owner();
-        super._transferOwnership(newOwner);
-        if (_secureState.isRoleExist(MultiPhaseSecureOperation.OWNER_ROLE)) {
-            _secureState.updateRole(MultiPhaseSecureOperation.OWNER_ROLE, newOwner);
-        } 
-        emit OwnershipTransferUpdated(oldOwner, owner());
+        _updateAssignedWallet(StateAbstraction.OWNER_ROLE, newOwner, oldOwner);
+        emit OwnershipTransferUpdated(oldOwner, newOwner);
     }
 
     /**
@@ -638,9 +392,8 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
      * @param newBroadcaster The new broadcaster address
      */
     function _updateBroadcaster(address newBroadcaster) internal virtual {
-        address oldBroadcaster = _broadcaster;
-        _broadcaster = newBroadcaster;
-        _secureState.updateRole(MultiPhaseSecureOperation.BROADCASTER_ROLE, newBroadcaster);
+        address oldBroadcaster = getBroadcaster();
+        _updateAssignedWallet(StateAbstraction.BROADCASTER_ROLE, newBroadcaster, oldBroadcaster);
         emit BroadcasterUpdated(oldBroadcaster, newBroadcaster);
     }
 
@@ -649,69 +402,25 @@ abstract contract SecureOwnable is Ownable, ERC165, ISecureOwnable {
      * @param newRecoveryAddress The new recovery address
      */
     function _updateRecoveryAddress(address newRecoveryAddress) internal virtual {
-        address oldRecovery = _recoveryAddress;
-        _recoveryAddress = newRecoveryAddress;
-        _secureState.updateRole(MultiPhaseSecureOperation.RECOVERY_ROLE, newRecoveryAddress);
+        address oldRecovery = getRecovery();
+        _updateAssignedWallet(StateAbstraction.RECOVERY_ROLE, newRecoveryAddress, oldRecovery);
         emit RecoveryAddressUpdated(oldRecovery, newRecoveryAddress);
     }
 
     /**
      * @dev Updates the time lock period
-     * @param newTimeLockPeriodInMinutes The new time lock period in minutes
+     * @param newTimeLockPeriodSec The new time lock period in seconds
      */
-    function _updateTimeLockPeriod(uint256 newTimeLockPeriodInMinutes) internal virtual {
-        uint256 oldPeriod = _timeLockPeriodInMinutes;
-        _timeLockPeriodInMinutes = newTimeLockPeriodInMinutes;
-        _secureState.updateTimeLockPeriod(newTimeLockPeriodInMinutes);
-        emit TimeLockPeriodUpdated(oldPeriod, newTimeLockPeriodInMinutes);
-    }
-
-    /**
-     * @dev Validates that the function is being called internally by the contract itself
-     */
-    function _validateInternal() internal view {
-        require(msg.sender == address(this), "Only callable by contract itself");
-    }
-
-    /**
-     * @dev Validates that an address is not the zero address
-     * @param addr The address to validate
-     */
-    function _validateNotZeroAddress(address addr) internal pure {
-        require(addr != address(0), "Invalid address");
-    }
-
-    /**
-     * @dev Validates that the operation type matches the expected type
-     * @param actualType The actual operation type from the record
-     * @param expectedType The expected operation type to validate against
-     */
-    function _validateOperationType(bytes32 actualType, bytes32 expectedType) internal pure {
-        require(actualType == expectedType, "Invalid operation type");
-    }
-
-    /**
-     * @dev Validates that the handler selector matches the expected selector
-     * @param actualSelector The actual handler selector from the meta transaction
-     * @param expectedSelector The expected handler selector to validate against
-     */
-    function _validateHandlerSelector(bytes4 actualSelector, bytes4 expectedSelector) internal pure {
-        require(actualSelector == expectedSelector, "Invalid handler selector");
-    }
-
-    /**
-     * @dev Validates that the new address is different from the current address
-     * @param newAddress The proposed new address
-     * @param currentAddress The current address to compare against
-     */
-    function _validateNewAddress(address newAddress, address currentAddress) internal pure {
-        require(newAddress != currentAddress, "Not new address");
+    function _updateTimeLockPeriod(uint256 newTimeLockPeriodSec) internal virtual override {
+        uint256 oldPeriod = getTimeLockPeriodSec();
+        StateAbstraction.updateTimeLockPeriod(_getSecureState(), newTimeLockPeriodSec);
+        emit TimeLockPeriodUpdated(oldPeriod, newTimeLockPeriodSec);
     }
 
     /**
      * @dev See {IERC165-supportsInterface}.
      */
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return
             interfaceId == type(ISecureOwnable).interfaceId ||
             super.supportsInterface(interfaceId);

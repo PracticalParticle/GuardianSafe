@@ -7,7 +7,24 @@ const fs = require('fs');
 const path = require('path');
 
 // List of contract names to process
-const contractsToProcess = ['MultiPhaseSecureOperation', 'SecureOwnable'];
+const contractsToProcess = [
+  'StateAbstraction',
+  'BaseStateMachine',
+  'SecureOwnable',
+  'SecureOwnableDefinitions',
+  'SecureOwnableWorkflows',
+  'DynamicRBAC',
+  'IDefinition',
+  'IWorkflow',
+  'Guardian',
+  'GuardianBare',
+  'GuardianWithRoles',
+  'SimpleVault',
+  'SimpleRWA20',
+  'SimpleRWA20Definitions',
+  'SimpleVaultDefinitions'
+  
+];
 
 // Define the source and destination folders
 const sourceFolder = path.join(__dirname, '..', 'build', 'contracts');
