@@ -12,6 +12,7 @@
     "deploy:truffle": "npx truffle migrate --network development --reset && node scripts/extract-abi.js",
     "deploy:hardhat": "hardhat run scripts/deploy.js",
     "test:sanity:secure-ownable": "node scripts/sanity/secure-ownable/run-tests.js --all",
+    "test:sanity:simple-vault": "node scripts/sanity/simple-vault/run-tests.js --all",
     "test:e2e": "npm run deploy:truffle && npm run test:sanity:secure-ownable",
     "docgen": "hardhat docgen",
     "format": "prettier --config .prettierrc --write \"contracts/**/*.sol\""

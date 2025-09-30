@@ -6,24 +6,20 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 // Particle imports
-import "../../GuardianAccountAbstraction.sol";
-import "../../lib/SharedValidationLibrary.sol";
+import "../../core/access/SecureOwnable.sol";
+import "../../utils/SharedValidation.sol";
+import "../../interfaces/IDefinition.sol";
+import "./SimpleVaultDefinitions.sol";
 
 
-contract SimpleVault is GuardianAccountAbstraction {
+contract SimpleVault is SecureOwnable {
     using SafeERC20 for IERC20;
 
-    // Constants for operation types
-    bytes32 public constant WITHDRAW_ETH = keccak256("WITHDRAW_ETH");
-    bytes32 public constant WITHDRAW_TOKEN = keccak256("WITHDRAW_TOKEN");
+    // Constants are now defined in SimpleVaultDefinitions.sol
 
-    // Function selector constants
-    bytes4 private constant WITHDRAW_ETH_SELECTOR = bytes4(keccak256("executeWithdrawEth(address,uint256)"));
-    bytes4 private constant WITHDRAW_TOKEN_SELECTOR = bytes4(keccak256("executeWithdrawToken(address,address,uint256)"));
-
-    // Timelock period constants (in minutes)
-    uint256 private constant MIN_TIMELOCK_PERIOD = 1 * 1 * 1; // 1 minute
-    uint256 private constant MAX_TIMELOCK_PERIOD = 90 * 24 * 60; // 90 days
+    // Timelock period constants (in seconds)
+    uint256 private constant MIN_TIMELOCK_PERIOD = 1; // 1 second
+    uint256 private constant MAX_TIMELOCK_PERIOD = 90 * 24 * 60 * 60; // 90 days
 
     // Struct for meta-transaction parameters
     struct VaultMetaTxParams {
@@ -41,32 +37,29 @@ contract SimpleVault is GuardianAccountAbstraction {
      * @param initialOwner The initial owner address
      * @param broadcaster The broadcaster address
      * @param recovery The recovery address
-     * @param timeLockPeriodInMinutes The timelock period in minutes
+     * @param timeLockPeriodSec The timelock period in seconds
      */
     function initialize(
         address initialOwner,
         address broadcaster,
         address recovery,
-        uint256 timeLockPeriodInMinutes,
+        uint256 timeLockPeriodSec,
         address eventForwarder
     ) public override initializer {
-        // Initialize GuardianAccountAbstraction
-        super.initialize(initialOwner, broadcaster, recovery, timeLockPeriodInMinutes, eventForwarder);
-        if (timeLockPeriodInMinutes < MIN_TIMELOCK_PERIOD) revert SharedValidationLibrary.InvalidTimeLockPeriod(timeLockPeriodInMinutes);
-        if (timeLockPeriodInMinutes > MAX_TIMELOCK_PERIOD) revert SharedValidationLibrary.InvalidTimeLockPeriod(timeLockPeriodInMinutes);
+        // Initialize SecureOwnable directly
+        SecureOwnable.initialize(initialOwner, broadcaster, recovery, timeLockPeriodSec, eventForwarder);
+        if (timeLockPeriodSec < MIN_TIMELOCK_PERIOD) revert SharedValidation.InvalidTimeLockPeriod(timeLockPeriodSec);
+        if (timeLockPeriodSec > MAX_TIMELOCK_PERIOD) revert SharedValidation.InvalidTimeLockPeriod(timeLockPeriodSec);
         
-        // Add operation types with human-readable names
-        MultiPhaseSecureOperation.ReadableOperationType memory ethWithdraw = MultiPhaseSecureOperation.ReadableOperationType({
-            operationType: WITHDRAW_ETH,
-            name: "WITHDRAW_ETH"
-        });
-        MultiPhaseSecureOperation.ReadableOperationType memory tokenWithdraw = MultiPhaseSecureOperation.ReadableOperationType({
-            operationType: WITHDRAW_TOKEN,
-            name: "WITHDRAW_TOKEN"
-        });
-        
-        MultiPhaseSecureOperation.addOperationType(_getSecureState(), ethWithdraw);
-        MultiPhaseSecureOperation.addOperationType(_getSecureState(), tokenWithdraw);
+        // Load SimpleVault-specific definitions
+        IDefinition.RolePermission memory permissions = 
+            SimpleVaultDefinitions.getRolePermissions();
+        StateAbstraction.loadDefinitions(
+            _getSecureState(),
+            SimpleVaultDefinitions.getFunctionSchemas(),
+            permissions.roleHashes,
+            permissions.functionPermissions
+        );
     }
 
     /**
@@ -96,27 +89,18 @@ contract SimpleVault is GuardianAccountAbstraction {
      * @param to Recipient address
      * @param amount Amount of ETH to withdraw
      */
-    function withdrawEthRequest(address to, uint256 amount) public onlyOwner returns (MultiPhaseSecureOperation.TxRecord memory) {
-        SharedValidationLibrary.validateNotZeroAddress(to);
-        if (amount > getEthBalance()) revert SharedValidationLibrary.OperationNotSupported("Insufficient balance");
+    function withdrawEthRequest(address to, uint256 amount) public onlyOwner returns (StateAbstraction.TxRecord memory) {
+        SharedValidation.validateNotZeroAddress(to);
+        if (amount > getEthBalance()) revert SharedValidation.OperationNotSupported();
 
-        bytes memory executionOptions = MultiPhaseSecureOperation.createStandardExecutionOptions(
-            WITHDRAW_ETH_SELECTOR,
-            abi.encode(to, amount)
-        );
-
-        MultiPhaseSecureOperation.TxRecord memory txRecord = MultiPhaseSecureOperation.txRequest(
-            _getSecureState(),
+        StateAbstraction.TxRecord memory txRecord = _requestStandardTransaction(
             msg.sender,
             address(this),
-            0, // No ETH should be sent with withdrawal request
-            gasleft(),
-            WITHDRAW_ETH,
-            MultiPhaseSecureOperation.ExecutionType.STANDARD,
-            executionOptions     
+            0,
+            SimpleVaultDefinitions.WITHDRAW_ETH,
+            SimpleVaultDefinitions.WITHDRAW_ETH_SELECTOR,
+            abi.encode(to, amount)
         );
-
-        // Operation is automatically handled by MultiPhaseSecureOperation
         return txRecord;
     }
 
@@ -126,28 +110,19 @@ contract SimpleVault is GuardianAccountAbstraction {
      * @param to Recipient address
      * @param amount Amount of tokens to withdraw
      */
-    function withdrawTokenRequest(address token, address to, uint256 amount) public onlyOwner returns (MultiPhaseSecureOperation.TxRecord memory) {
-        SharedValidationLibrary.validateNotZeroAddress(token);
-        SharedValidationLibrary.validateNotZeroAddress(to);
-        if (amount > getTokenBalance(token)) revert SharedValidationLibrary.OperationNotSupported("Insufficient balance");
+    function withdrawTokenRequest(address token, address to, uint256 amount) public onlyOwner returns (StateAbstraction.TxRecord memory) {
+        SharedValidation.validateNotZeroAddress(token);
+        SharedValidation.validateNotZeroAddress(to);
+        if (amount > getTokenBalance(token)) revert SharedValidation.OperationNotSupported();
 
-        bytes memory executionOptions = MultiPhaseSecureOperation.createStandardExecutionOptions(
-            WITHDRAW_TOKEN_SELECTOR,
-            abi.encode(token, to, amount)
-        );
-
-        MultiPhaseSecureOperation.TxRecord memory txRecord = MultiPhaseSecureOperation.txRequest(
-            _getSecureState(),
+        StateAbstraction.TxRecord memory txRecord = _requestStandardTransaction(
             msg.sender,
             address(this),
             0,
-            gasleft(),
-            WITHDRAW_TOKEN,
-            MultiPhaseSecureOperation.ExecutionType.STANDARD,
-            executionOptions
+            SimpleVaultDefinitions.WITHDRAW_TOKEN,
+            SimpleVaultDefinitions.WITHDRAW_TOKEN_SELECTOR,
+            abi.encode(token, to, amount)
         );
-
-        // Operation is automatically handled by MultiPhaseSecureOperation
         return txRecord;
     }
 
@@ -155,36 +130,33 @@ contract SimpleVault is GuardianAccountAbstraction {
      * @notice Approve a withdrawal after the time delay has passed
      * @param txId The ID of the withdrawal transaction to approve
      */
-    function approveWithdrawalAfterDelay(uint256 txId) public onlyOwner returns (MultiPhaseSecureOperation.TxRecord memory) {
-        MultiPhaseSecureOperation.TxRecord memory txRecord = MultiPhaseSecureOperation.txDelayedApproval(
-            _getSecureState(),
-            txId
-        );
-        return txRecord;
+    function approveWithdrawalAfterDelay(uint256 txId) public onlyOwner returns (StateAbstraction.TxRecord memory) {
+        StateAbstraction.TxRecord memory existing = getTransaction(txId);
+        StateAbstraction.TxRecord memory updated = _approveTransaction(txId, existing.params.operationType);
+        return updated;
     }
 
     /**
      * @notice Approve withdrawal with meta transaction
      * @param metaTx Meta transaction data
      */
-    function approveWithdrawalWithMetaTx(MultiPhaseSecureOperation.MetaTransaction memory metaTx) public onlyBroadcaster returns (MultiPhaseSecureOperation.TxRecord memory) {
-        MultiPhaseSecureOperation.TxRecord memory txRecord = MultiPhaseSecureOperation.txApprovalWithMetaTx(
-            _getSecureState(),
-            metaTx
-        ); 
-        return txRecord;
+    function approveWithdrawalWithMetaTx(StateAbstraction.MetaTransaction memory metaTx) public onlyBroadcaster returns (StateAbstraction.TxRecord memory) {
+        return _approveTransactionWithMetaTx(
+            metaTx,
+            metaTx.txRecord.params.operationType,
+            SimpleVaultDefinitions.APPROVE_WITHDRAWAL_META_SELECTOR,
+            StateAbstraction.TxAction.EXECUTE_META_APPROVE
+        );
     }
 
     /**
      * @notice Cancel a pending withdrawal request
      * @param txId The ID of the withdrawal transaction to cancel
      */
-    function cancelWithdrawal(uint256 txId) public onlyOwner returns (MultiPhaseSecureOperation.TxRecord memory) {
-        MultiPhaseSecureOperation.TxRecord memory txRecord = MultiPhaseSecureOperation.txCancellation(
-            _getSecureState(),
-            txId
-        );
-        return txRecord;
+    function cancelWithdrawal(uint256 txId) public onlyOwner returns (StateAbstraction.TxRecord memory) {
+        StateAbstraction.TxRecord memory existing = getTransaction(txId);
+        StateAbstraction.TxRecord memory updated = _cancelTransaction(txId, existing.params.operationType);
+        return updated;
     }
 
     /**
@@ -193,7 +165,7 @@ contract SimpleVault is GuardianAccountAbstraction {
      * @param amount Amount to withdraw
      */
     function executeWithdrawEth(address payable to, uint256 amount) external {
-        SharedValidationLibrary.validateInternalCall(address(this));
+        SharedValidation.validateInternalCallInternal(address(this));
         _withdrawEth(to, amount);
     }
 
@@ -204,7 +176,7 @@ contract SimpleVault is GuardianAccountAbstraction {
      * @param amount Amount to withdraw
      */
     function executeWithdrawToken(address token, address to, uint256 amount) external {
-        SharedValidationLibrary.validateInternalCall(address(this));
+        SharedValidation.validateInternalCallInternal(address(this));
         _withdrawToken(token, to, amount);
     }
 
@@ -236,12 +208,12 @@ contract SimpleVault is GuardianAccountAbstraction {
      * @param metaTxParams Parameters for the meta-transaction
      * @return MetaTransaction The unsigned meta-transaction ready for signing
      */
-    function generateUnsignedWithdrawalMetaTxApproval(uint256 txId, VaultMetaTxParams memory metaTxParams) public view returns (MultiPhaseSecureOperation.MetaTransaction memory) {
-        // Create meta-transaction parameters using the parent contract's function
-        MultiPhaseSecureOperation.MetaTxParams memory params = createMetaTxParams(
+    function generateUnsignedWithdrawalMetaTxApproval(uint256 txId, VaultMetaTxParams memory metaTxParams) public view returns (StateAbstraction.MetaTransaction memory) {
+        // Create meta-transaction parameters using the correct selector from definitions
+        StateAbstraction.MetaTxParams memory params = createMetaTxParams(
             address(this),
-            this.approveWithdrawalWithMetaTx.selector,
-            MultiPhaseSecureOperation.TxAction.EXECUTE_META_APPROVE,
+            SimpleVaultDefinitions.APPROVE_WITHDRAWAL_META_SELECTOR,
+            StateAbstraction.TxAction.SIGN_META_APPROVE,
             metaTxParams.deadline,
             metaTxParams.maxGasPrice,
             owner()
@@ -254,11 +226,11 @@ contract SimpleVault is GuardianAccountAbstraction {
 
     /**
      * @dev Internal function to update the timelock period with validation
-     * @param newTimeLockPeriodInMinutes The new timelock period in minutes
+     * @param newTimeLockPeriodSec The new timelock period in seconds
      */
-    function _updateTimeLockPeriod(uint256 newTimeLockPeriodInMinutes) internal virtual override {
-        if (newTimeLockPeriodInMinutes < MIN_TIMELOCK_PERIOD) revert SharedValidationLibrary.InvalidTimeLockPeriod(newTimeLockPeriodInMinutes);
-        if (newTimeLockPeriodInMinutes > MAX_TIMELOCK_PERIOD) revert SharedValidationLibrary.InvalidTimeLockPeriod(newTimeLockPeriodInMinutes);
-        super._updateTimeLockPeriod(newTimeLockPeriodInMinutes);
+    function _updateTimeLockPeriod(uint256 newTimeLockPeriodSec) internal virtual override {
+        if (newTimeLockPeriodSec < MIN_TIMELOCK_PERIOD) revert SharedValidation.InvalidTimeLockPeriod(newTimeLockPeriodSec);
+        if (newTimeLockPeriodSec > MAX_TIMELOCK_PERIOD) revert SharedValidation.InvalidTimeLockPeriod(newTimeLockPeriodSec);
+        super._updateTimeLockPeriod(newTimeLockPeriodSec);
     }
 }
