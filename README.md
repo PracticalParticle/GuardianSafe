@@ -1,143 +1,118 @@
-> ?? **WARNING: EXPERIMENTAL SOFTWARE** ??
-> 
-> This repository contains experimental, untested smart contract code. It is not ready for production use and may contain security vulnerabilities. Use at your own risk. Do not use with real assets or in production environments.
+# Guardian Framework: State Abstraction for Blockchain Security
 
-# Particle Guardian State Abstraction Contracts
+[![License: MPL-2.0](https://img.shields.io/badge/License-MPL--2.0-blue.svg)](https://opensource.org/licenses/MPL-2.0)
+[![Solidity](https://img.shields.io/badge/Solidity-^0.8.2-blue.svg)](https://soliditylang.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-SDK-green.svg)](./sdk/typescript/)
 
-A secure smart contract framework implementing advanced state abstraction with multi-phase security operations, powered by Particle Crypto Security's innovative approach.
+> **⚠️ EXPERIMENTAL SOFTWARE WARNING**  
+> This repository contains experimental smart contract code. While the framework is feature-complete and tested, it is not yet audited for production use. Use at your own risk and do not deploy with real assets without proper security review.
 
-## Overview
+## 🚀 What is Guardian Framework?
 
-Particle's Guardian State Abstraction provides a sophisticated security framework that decouples user assets from user authority while maintaining the benefits of decentralization. This implementation replaces the single-key vulnerability model with a multi-phase security architecture that distributes authority across specialized roles and introduces time-based security gates for critical operations.
+Guardian Framework is a **revolutionary blockchain security architecture** that eliminates single-point failures through **mandatory multi-signature workflows** and **atomic transaction breakdown**. Unlike traditional smart contracts that execute immediately, Guardian implements **time-locked operations** and **meta-transactions** with **role separation** to provide enterprise-grade security.
 
-The implementation centers around three core components:
+### 🎯 Core Innovation: State Abstraction
 
-- **SecureOwnable**: A base contract providing secure ownership management with timelock and recovery features
-- **StateAbstraction**: A library implementing core security logic for multi-phase operations
-- **Guardian**: The main implementation contract that extends SecureOwnable
+**State Abstraction** breaks traditional atomic blockchain transactions into **multi-phase workflows** where:
 
-## Key Features
+- **Smart contracts control storage access** (not individual wallets)
+- **Every transaction requires minimum 2 signatures** from different roles
+- **Time-locked operations** provide intervention windows
+- **Meta-transactions** enable gasless, delegated execution
+- **Dynamic role-based access control** adapts without code changes
 
-### 1. Multi-Phase Security Model
-- Two-Phase Workflow for critical operations
-  - Request and approval as separate transactions
-  - Enforced time delay between phases
-  - Maximum security through time-delayed verification
-  - Enables proactive security intervention
-- Single-Phase Meta-Transaction support
-  - Combines request and approval into one transaction
-  - Optimizes gas efficiency and user experience
-  - Maintains security through cryptographic signature verification
+## 🏗️ Architecture Overview
 
-### 2. Core Security Components
-- Asset-Authority Decoupling: Smart contracts hold funds while user wallets retain signing authority
-- Time-Locked Security Operations: Mandatory waiting periods for critical actions
-- Role-Based Access Control: Distinct owner, broadcaster, and recovery roles with specific permissions
-- Meta-Transaction Support: delegated transactions with full security guarantees
-- Recovery Mechanisms: Dedicated recovery features with secure role-based processes
-- Flexible Approval Methods: Multiple workflows balancing security and convenience
+### Core Components
 
-### 3. Operation Types
-- Ownership Updates: Secure transfer of contract ownership with timelock and recovery options
-- Broadcaster Updates: Changing the meta-transaction broadcaster with proper permissions
-- Recovery Updates: Modifying recovery parameters with owner verification
-- Timelock Updates: Adjusting security timeframes with appropriate authorization
-- Custom Updates: Extendable framework for application-specific operations
-
-## Getting Started
-
-### Prerequisites
-1. Install Ganache for local blockchain development
-```bash
-# Visit https://trufflesuite.com/ganache/ and download the appropriate version
+```mermaid
+graph TB
+    A[StateAbstraction Library] --> B[BaseStateMachine]
+    B --> C[SecureOwnable]
+    B --> D[DynamicRBAC]
+    C --> E[Guardian]
+    C --> F[GuardianBare]
+    D --> G[GuardianWithRoles]
+    
+    H[TypeScript SDK] --> I[SecureOwnable Client]
+    H --> J[DynamicRBAC Client]
+    H --> K[Definitions Client]
+    
+    L[Examples] --> M[SimpleVault]
+    L --> N[SimpleRWA20]
 ```
 
-2. Install Truffle globally for smart contract compilation and deployment
+### 🔧 Three Guardian Implementations
+
+| Contract | Features | Use Case |
+|----------|----------|----------|
+| **Guardian** | Basic SecureOwnable functionality | Simple ownership management |
+| **GuardianBare** | Minimal BaseStateMachine only | Core state machine operations |
+| **GuardianWithRoles** | Full DynamicRBAC capabilities | Enterprise role management |
+
+### 🛡️ Security Model
+
+**Mandatory Multi-Signature Architecture:**
+- **Time-Delay Workflow**: Request → Wait → Approve (2 signatures)
+- **Meta-Transaction Workflow**: Sign → Execute (2 signatures, role separation)
+- **No Single-Point Failures**: Contract controls storage, not wallets
+- **Temporal Security**: Time-locks provide intervention windows
+
+## 🚀 Quick Start
+
+### Prerequisites
+
 ```bash
+# Install Truffle globally
 npm install -g truffle
+
+# Install Ganache for local development
+# Download from: https://trufflesuite.com/ganache/
 ```
 
 ### Installation
 
-1. Clone the repository
 ```bash
+# Clone the repository
 git clone https://github.com/PracticalParticle/Guardian.git
-```
+cd Guardian
 
-2. Install dependencies
-```bash
+# Install dependencies
 npm install
-```
 
-3. Run Ganache with appropriate settings
-```bash
+# Start local blockchain
 ganache --deterministic --networkId 1337
+
+# Compile contracts
+npm run compile:truffle
+
+# Deploy contracts
+npm run deploy:truffle
 ```
 
-4. Compile and deploy contracts
+### TypeScript SDK
+
 ```bash
-truffle compile
-truffle migrate --network development
+# Install Viem (required dependency)
+npm install viem
+
+# Import Guardian SDK
+import { 
+  SecureOwnable, 
+  DynamicRBAC,
+  Definitions,
+  type Address,
+  type PublicClient,
+  type WalletClient 
+} from './sdk/typescript';
 ```
 
-## Architecture
+## 📖 Usage Examples
 
-### 1. Smart Contract Components
-
-#### SecureOwnable Contract
-- Base implementation for state abstraction with enhanced security features
-- Time-locked ownership management with multi-phase transfers
-- Role-based access control with owner, broadcaster, and recovery roles
-- Meta-transaction support for delegated operations
-- Comprehensive event emission for monitoring and auditing
-
-#### StateAbstraction Library
-- Core security logic for multi-phase operations
-- Transaction state management with strict lifecycle enforcement
-- Sophisticated time delay enforcement with release time calculations
-- Cryptographic signature verification for meta-transactions
-- Extensive type safety with well-defined data structures
-
-#### Guardian Contract
-- Main implementation contract extending SecureOwnable
-- Ready-to-use state abstraction solution
-- Customizable for specific application needs
-- Full implementation of all security features
-
-### 2. TypeScript SDK
-
-The project includes a comprehensive TypeScript SDK that provides:
-- Type-safe contract interfaces aligned with Viem
-- Full contract interaction capabilities with proper typing
-- Meta-transaction generation and signing utilities
-- Event monitoring with typed event parsing
-- Comprehensive operation management with lifecycle tracking
-
-## Security Model
-
-### 1. Role Management
-- Owner: Primary control of the contract, can approve operations after timelock, cannot bypass security measures
-- Broadcaster: Handles meta-transactions, enables delegated operations, verifies signatures before execution
-- Recovery: Backup access for emergencies, can initiate ownership transfers, subject to same timelock constraints
-
-### 2. Time-Lock Security
-- Mandatory waiting periods configurable in minutes
-- Cancellation windows with specific timing rules
-- Release time calculations based on contract configuration
-- Security monitoring period between request and execution
-
-### 3. Transaction Security
-- Multi-phase execution model with strict state transitions
-- EIP-712 compliant signature verification
-- Comprehensive transaction record keeping
-- Detailed event emission for external monitoring
-
-## Usage Examples
-
-### Basic Operations
+### Basic Ownership Management
 
 ```typescript
-// Initialize the contract
+// Initialize SecureOwnable client
 const secureOwnable = new SecureOwnable(
   publicClient,
   walletClient,
@@ -145,28 +120,22 @@ const secureOwnable = new SecureOwnable(
   chain
 );
 
-// Request ownership transfer (only callable by recovery address)
-await secureOwnable.transferOwnershipRequest({
-  from: recoveryAddress
+// Request ownership transfer (time-locked)
+const txResult = await secureOwnable.transferOwnershipRequest({
+  from: ownerAddress
 });
 
-// Approve delayed ownership transfer (after timelock period)
-await secureOwnable.transferOwnershipDelayedApproval(
+// Approve after time-lock period
+const approvalResult = await secureOwnable.transferOwnershipDelayedApproval(
   txId,
-  { from: ownerAddress }
-);
-
-// Request broadcaster update (only callable by owner)
-await secureOwnable.updateBroadcasterRequest(
-  newBroadcasterAddress,
   { from: ownerAddress }
 );
 ```
 
-### Meta-Transactions
+### Meta-Transactions (Gasless)
 
 ```typescript
-// Generate meta-transaction parameters
+// Create meta-transaction parameters
 const metaTxParams = await secureOwnable.createMetaTxParams(
   contractAddress,
   '0x12345678', // function selector
@@ -189,47 +158,280 @@ const signature = await walletClient.signMessage({
 
 // Execute with meta-transaction
 await secureOwnable.transferOwnershipApprovalWithMetaTx(
-  {
-    ...metaTx,
-    signature
-  },
+  { ...metaTx, signature },
   { from: broadcasterAddress }
 );
 ```
 
-## Benefits and Use Cases
+### Dynamic Role-Based Access Control
 
-### Enhanced Security
-- Multiple security layers through phase separation and role separation
-- Time-delayed operations for critical actions with intervention opportunities
-- Cryptographic verification for all operations
-- Defense-in-depth approach to securing digital assets
+```typescript
+// Initialize DynamicRBAC client
+const dynamicRBAC = new DynamicRBAC(
+  publicClient,
+  walletClient,
+  contractAddress,
+  chain
+);
 
-### Improved User Experience
-- delegated transactions through meta-transaction support
-- Transaction status monitoring and comprehensive history
-- Flexible workflows balancing security and convenience
-- Robust recovery options for account access
+// Create custom role
+await dynamicRBAC.createRole(
+  "TreasuryManager",
+  5, // max wallets
+  { from: ownerAddress }
+);
 
-### Common Use Cases
-1. **Smart Contract Wallets**: Secure multi-party asset management with recovery options
-2. **DApp Integration**: Enhanced security layer for critical operations with delegated transactions
-3. **Enterprise Solutions**: Multi-party approval workflows with comprehensive audit trails
-4. **Custody Solutions**: Institutional-grade security with proper access controls
+// Add wallet to role
+await dynamicRBAC.addWalletToRole(
+  roleHash,
+  treasuryWallet,
+  { from: ownerAddress }
+);
 
-## Contributing
+// Grant function permissions
+await dynamicRBAC.grantFunctionPermission(
+  roleHash,
+  functionSelector,
+  [TxAction.EXECUTE_TIME_DELAY_REQUEST],
+  { from: ownerAddress }
+);
+```
 
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+## 🏭 Real-World Examples
 
-## License
+### SimpleVault: Secure Asset Management
 
-This project is licensed under the MPL-2.0 License - see the [LICENSE](LICENSE) file for details.
+```solidity
+contract SimpleVault is SecureOwnable {
+    // Time-locked ETH withdrawal
+    function withdrawEthRequest(address to, uint256 amount) external {
+        // Creates time-locked withdrawal request
+        // Requires approval after time-lock period
+    }
+    
+    // Meta-transaction token withdrawal
+    function withdrawTokenWithMetaTx(MetaTransaction memory metaTx) external {
+        // Gasless token withdrawal via meta-transaction
+        // Requires role separation (signer + executor)
+    }
+}
+```
 
-## Acknowledgments
+### SimpleRWA20: Tokenized Real-World Assets
 
-- Particle Crypto Security for the innovative state abstraction implementation
-- OpenZeppelin for secure smart contract components
-- Viem for TypeScript blockchain interactions
+```solidity
+contract SimpleRWA20 is ERC20Upgradeable, SecureOwnable {
+    // Secure token minting with meta-transactions
+    function mintWithMetaTx(MetaTransaction memory metaTx) external {
+        // Only broadcaster can execute
+        // Requires off-chain signature from authorized role
+    }
+    
+    // Time-locked token burning
+    function burnWithDelay(address from, uint256 amount) external {
+        // Creates time-locked burn request
+        // Prevents immediate token destruction
+    }
+}
+```
+
+## 🔧 Development Tools
+
+### Contract Compilation & Size Monitoring
+
+```bash
+# Compile with size checking
+npm run compile:truffle:size
+
+# Verify contracts are under 24KB limit
+# Output shows contract sizes and optimization status
+```
+
+### Testing Infrastructure
+
+```bash
+# Run Truffle tests
+npm run test:truffle
+
+# Run Hardhat tests
+npm run test:hardhat
+
+# Run sanity checks
+npm run test:sanity:secure-ownable
+npm run test:sanity:simple-vault
+
+# End-to-end testing
+npm run test:e2e
+```
+
+### Documentation Generation
+
+```bash
+# Generate contract documentation
+npm run docgen
+
+# Format Solidity code
+npm run format
+```
+
+## 📚 Comprehensive Documentation
+
+### 🏗️ Architecture & Design
+- **[Framework Architecture](./sdk/typescript/docs/guardian-architecture.md)** - Core design principles
+- **[State Machine Engine](./sdk/typescript/docs/state-machine-engine.md)** - SecureOperationState engine
+- **[Architecture Patterns](./sdk/typescript/docs/architecture-patterns.md)** - Design patterns
+
+### 🚀 Developer Guides
+- **[Getting Started](./sdk/typescript/docs/getting-started.md)** - Quick setup guide
+- **[API Reference](./sdk/typescript/docs/api-reference.md)** - Complete API docs
+- **[SecureOwnable Guide](./sdk/typescript/docs/secure-ownable.md)** - Ownership management
+- **[DynamicRBAC Guide](./sdk/typescript/docs/dynamic-rbac.md)** - Role-based access control
+
+### 🔍 Advanced Topics
+- **[Best Practices](./sdk/typescript/docs/best-practices.md)** - Development guidelines
+- **[Examples](./sdk/typescript/docs/examples-basic.md)** - Code samples
+- **[Types & Interfaces](./sdk/typescript/docs/types-interfaces.md)** - Type definitions
+
+## 🛡️ Security Features
+
+### Multi-Phase Security Model
+
+**Time-Delay Workflow:**
+```
+Request Phase: Role A → Creates time-locked transaction
+↓ (Mandatory time delay)
+Approval Phase: Role A or B → Reviews and approves
+↓
+Execution Phase: Contract → Validates and executes
+```
+
+**Meta-Transaction Workflow:**
+```
+Signing Phase: Signer Role → Creates cryptographic approval
+↓
+Execution Phase: Executor Role → Submits signed transaction
+↓
+Validation Phase: Contract → Verifies signatures and executes
+```
+
+### Role-Based Access Control
+
+- **Owner Role**: Administrative control, can approve operations after timelock
+- **Broadcaster Role**: Meta-transaction execution, gas sponsorship
+- **Recovery Role**: Emergency operations, limited scope
+- **Dynamic Roles**: Custom roles with function-level permissions
+
+### Cryptographic Security
+
+- **EIP-712 Compliant**: Structured data signing for meta-transactions
+- **Per-Signer Nonces**: Replay attack prevention
+- **Role Separation**: Mandatory separation between signing and execution
+- **Time-Lock Enforcement**: Mathematical guarantees for temporal security
+
+## 🌟 Key Benefits
+
+### For Developers
+- **Eliminates Single-Point Failures**: Mandatory multi-signature architecture
+- **Gasless Transactions**: Meta-transaction support with role separation
+- **Dynamic Security**: Runtime role configuration without upgrades
+- **Type Safety**: Comprehensive TypeScript SDK with full type definitions
+
+### For Enterprises
+- **Enterprise-Grade Security**: Time-locked operations with intervention windows
+- **Regulatory Compliance**: Built-in audit trails and role management
+- **Operational Flexibility**: Dynamic role configuration and workflow adaptation
+- **Cost Efficiency**: Gasless transactions and optimized contract size
+
+### For Users
+- **Enhanced Security**: Multi-layer validation with temporal separation
+- **Better UX**: Gasless transactions and delegated execution
+- **Recovery Options**: Built-in recovery mechanisms with time-locked access
+- **Transparency**: Complete audit trails and event monitoring
+
+## 🔬 Technical Specifications
+
+### Smart Contract Architecture
+- **Solidity Version**: ^0.8.25
+- **OpenZeppelin**: ^5.4.0 (with upgradeable contracts)
+- **Contract Size**: < 24KB (optimized for mainnet deployment)
+- **Gas Optimization**: Library-based architecture with modular definitions
+
+### TypeScript SDK
+- **Viem Integration**: Modern Ethereum development with type safety
+- **Comprehensive Interfaces**: Full contract interaction capabilities
+- **Meta-Transaction Utilities**: Complete meta-transaction generation and signing
+- **Event Monitoring**: Real-time event parsing and monitoring
+
+### Testing & Quality
+- **Truffle Testing**: Comprehensive test suite with Ganache integration
+- **Hardhat Support**: Alternative testing framework support
+- **Sanity Checks**: Production-ready validation scripts
+- **Contract Size Monitoring**: Automated size optimization verification
+
+## 🚧 Current Status
+
+### ✅ Implemented Features
+- **Core StateAbstraction Library**: Complete implementation with all security features
+- **Three Guardian Variants**: Guardian, GuardianBare, GuardianWithRoles
+- **Complete TypeScript SDK**: Full client library with comprehensive documentation
+- **Real Examples**: SimpleVault and SimpleRWA20 production implementations
+- **Testing Infrastructure**: Truffle tests, Hardhat support, sanity checks
+- **Meta-Transactions**: EIP-712 compliant with role separation
+- **Dynamic RBAC**: Runtime role configuration and function-level permissions
+- **Time-Lock Operations**: Request/approval workflows with temporal security
+
+### 🔮 Roadmap Features
+- **Formal Verification**: Automated security property verification
+
+## 🤝 Contributing
+
+We welcome contributions to the Guardian Framework! Please see our contributing guidelines:
+
+1. **Fork the repository**
+2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
+3. **Follow our coding standards**: Use `npm run format` for Solidity formatting
+4. **Add tests**: Ensure comprehensive test coverage
+5. **Submit a pull request**: Include detailed description of changes
+
+### Development Setup
+
+```bash
+# Install dependencies
+npm install
+
+# Start local blockchain
+ganache --deterministic --networkId 1337
+
+# Run tests
+npm run test:truffle
+
+# Check contract sizes
+npm run compile:truffle:size
+```
+
+## 📄 License
+
+This project is licensed under the **Mozilla Public License 2.0 (MPL-2.0)** - see the [LICENSE](LICENSE) file for details.
+
+**Key Benefits of MPL-2.0:**
+- **Open Source**: Free to use, modify, and distribute
+- **Commercial Use**: Clear commercial use permissions
+- **Patent Protection**: Protects contributors from patent litigation
+- **No Vendor Lock-in**: Freedom to modify without proprietary restrictions
+
+## 🙏 Acknowledgments
+
+- **Particle Crypto Security** for the innovative State Abstraction implementation
+- **OpenZeppelin** for secure smart contract components and upgradeable patterns
+- **Viem** for modern TypeScript blockchain interactions
+- **Truffle Suite** for comprehensive development and testing tools
+
+## 📞 Support & Community
+
+- **Documentation**: Comprehensive guides in [`sdk/typescript/docs/`](./sdk/typescript/docs/)
+- **Examples**: Real-world implementations in [`contracts/examples/`](./contracts/examples/)
+- **Issues**: Report bugs and request features via GitHub Issues
+- **Discussions**: Join community discussions for questions and collaboration
 
 ---
 
