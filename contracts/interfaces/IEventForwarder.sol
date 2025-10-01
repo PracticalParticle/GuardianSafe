@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-pragma solidity ^0.8.2;
+pragma solidity ^0.8.25;
 
 // Import TxRecord struct from StateAbstraction
 import "../lib/StateAbstraction.sol";
