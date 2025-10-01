@@ -9,8 +9,8 @@ module.exports = async function(deployer, network, accounts) {
     console.log(`📋 Using account: ${accounts[0]}`);
     
     // Configuration flags - set to true/false to control which contracts to deploy
-    const deployGuardian = process.env.DEPLOY_GUARDIAN !== 'false'; // Default: true
-    const deployGuardianWithRoles = process.env.DEPLOY_GUARDIAN_WITH_ROLES !== 'false'; // Default: true
+    const deployGuardian = process.env.DEPLOY_GUARDIAN === 'true'; // Default: false
+    const deployGuardianWithRoles = process.env.DEPLOY_GUARDIAN_WITH_ROLES === 'true'; // Default: false
     const deployGuardianBare = process.env.DEPLOY_GUARDIAN_BARE === 'true'; // Default: false
     
     console.log("\n🎯 Deployment Configuration:");
