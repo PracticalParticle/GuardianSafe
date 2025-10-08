@@ -277,7 +277,7 @@ npm run format
 ## 📚 Comprehensive Documentation
 
 ### 🏗️ Architecture & Design
-- **[Protocol Architecture](./sdk/typescript/docs/guardian-architecture.md)** - Core design principles
+- **[Protocol Architecture](./sdk/typescript/docs/bloxchain-architecture.md)** - Core design principles
 - **[State Machine Engine](./sdk/typescript/docs/state-machine-engine.md)** - SecureOperationState engine
 - **[Architecture Patterns](./sdk/typescript/docs/architecture-patterns.md)** - Design patterns
 

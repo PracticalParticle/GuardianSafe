@@ -26,7 +26,7 @@ Bloxchain Protocol implements a **state machine architecture** with `SecureOpera
 Comprehensive documentation is available in the [`docs/`](./docs/) directory:
 
 ### **🏗️ Architecture & Design**
-- **[Protocol Architecture](./docs/guardian-architecture.md)** - Bloxchain protocol overview and design principles
+- **[Protocol Architecture](./docs/bloxchain-architecture.md)** - Bloxchain protocol overview and design principles
 - **[State Machine Engine](./docs/state-machine-engine.md)** - SecureOperationState engine and state management
 - **[Architecture Patterns](./docs/architecture-patterns.md)** - Design patterns and best practices
 

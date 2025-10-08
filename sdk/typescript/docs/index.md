@@ -10,7 +10,7 @@ Welcome to the comprehensive documentation for the Bloxchain TypeScript SDK. Thi
 - [**API Reference**](./api-reference.md) - Complete API documentation
 
 ### **🏗️ Bloxchain Architecture**
-- [**Protocol Architecture**](./guardian-architecture.md) - Bloxchain protocol overview and design principles
+- [**Protocol Architecture**](./bloxchain-architecture.md) - Bloxchain protocol overview and design principles
 - [**State Machine Engine**](./state-machine-engine.md) - SecureOperationState engine and state management
 - [**Architecture Patterns**](./architecture-patterns.md) - Design patterns and best practices
 
@@ -43,7 +43,7 @@ Welcome to the comprehensive documentation for the Bloxchain TypeScript SDK. Thi
 
 **I want to...**
 - **Get started quickly** → [Getting Started](./getting-started.md)
-- **Understand Bloxchain architecture** → [Protocol Architecture](./guardian-architecture.md)
+- **Understand Bloxchain architecture** → [Protocol Architecture](./bloxchain-architecture.md)
 - **Learn about the state machine** → [State Machine Engine](./state-machine-engine.md)
 - **Understand the API** → [API Reference](./api-reference.md)
 - **Use SecureOwnable** → [SecureOwnable Guide](./secure-ownable.md)
