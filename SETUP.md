@@ -1,14 +1,14 @@
-# Guardian Setup Guide
+# Bloxchain Setup Guide
 
-This guide will help you set up the Guardian Workflow Analyzer for your own development environment.
+This guide will help you set up the Bloxchain Workflow Analyzer for your own development environment.
 
 ## Quick Start
 
 ### 1. Clone and Install
 
 ```bash
-git clone https://github.com/your-org/guardian.git
-cd guardian
+git clone https://github.com/your-org/bloxchain-protocol.git
+cd bloxchain
 npm install
 ```
 
@@ -24,7 +24,7 @@ Edit `.env` with your configuration:
 
 ```bash
 # Network Configuration
-GUARDIAN_NETWORK=development
+BLOXCHAIN_NETWORK=development
 
 # Development Network Configuration
 # Leave REMOTE_HOST unset for local development (localhost)
@@ -78,7 +78,7 @@ For local development with Ganache:
 
 ```bash
 # .env
-GUARDIAN_NETWORK=development
+BLOXCHAIN_NETWORK=development
 # REMOTE_HOST not set - defaults to localhost
 REMOTE_PORT=8545
 REMOTE_NETWORK_ID=1337
@@ -90,7 +90,7 @@ For remote development (recommended for open source):
 
 ```bash
 # .env
-GUARDIAN_NETWORK=development
+BLOXCHAIN_NETWORK=development
 REMOTE_HOST=your-remote-host.com
 REMOTE_PORT=8545
 REMOTE_NETWORK_ID=1337
@@ -114,7 +114,7 @@ CUSTOM_NETWORK_NAME=custom_network
 
 | Variable | Description | Default | Required |
 |----------|-------------|---------|----------|
-| `GUARDIAN_NETWORK` | Network name (localhost, remote_development, custom) | remote_development | No |
+| `BLOXCHAIN_NETWORK` | Network name (localhost, remote_development, custom) | remote_development | No |
 | `REMOTE_HOST` | Remote host address | 127.0.0.1 | No |
 | `REMOTE_PORT` | Remote port | 8545 | No |
 | `REMOTE_NETWORK_ID` | Network ID | 1337 | No |

@@ -1,4 +1,4 @@
-# Guardian Framework: State Abstraction for Blockchain Security
+# Bloxchain Protocol: State Abstraction for Blockchain Security
 
 [![License: MPL-2.0](https://img.shields.io/badge/License-MPL--2.0-blue.svg)](https://opensource.org/licenses/MPL-2.0)
 [![Solidity](https://img.shields.io/badge/Solidity-^0.8.2-blue.svg)](https://soliditylang.org/)
@@ -7,9 +7,9 @@
 > **⚠️ EXPERIMENTAL SOFTWARE WARNING**  
 > This repository contains experimental smart contract code. While the framework is feature-complete and tested, it is not yet audited for production use. Use at your own risk and do not deploy with real assets without proper security review.
 
-## 🚀 What is Guardian Framework?
+## 🚀 What is Bloxchain Protocol?
 
-Guardian Framework is a **revolutionary blockchain security architecture** that eliminates single-point failures through **mandatory multi-signature workflows** and **atomic transaction breakdown**. Unlike traditional smart contracts that execute immediately, Guardian implements **time-locked operations** and **meta-transactions** with **role separation** to provide enterprise-grade security.
+Bloxchain Protocol is a **revolutionary blockchain security architecture** that eliminates single-point failures through **mandatory multi-signature workflows** and **atomic transaction breakdown**. Unlike traditional smart contracts that execute immediately, Bloxchain implements **time-locked operations** and **meta-transactions** with **role separation** to provide enterprise-grade security.
 
 ### 🎯 Core Innovation: State Abstraction
 
@@ -277,7 +277,7 @@ npm run format
 ## 📚 Comprehensive Documentation
 
 ### 🏗️ Architecture & Design
-- **[Framework Architecture](./sdk/typescript/docs/guardian-architecture.md)** - Core design principles
+- **[Protocol Architecture](./sdk/typescript/docs/bloxchain-architecture.md)** - Core design principles
 - **[State Machine Engine](./sdk/typescript/docs/state-machine-engine.md)** - SecureOperationState engine
 - **[Architecture Patterns](./sdk/typescript/docs/architecture-patterns.md)** - Design patterns
 
@@ -385,7 +385,7 @@ Validation Phase: Contract → Verifies signatures and executes
 
 ## 🤝 Contributing
 
-We welcome contributions to the Guardian Framework! Please see our contributing guidelines:
+We welcome contributions to the Bloxchain Protocol! Please see our contributing guidelines:
 
 1. **Fork the repository**
 2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
