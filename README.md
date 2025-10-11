@@ -448,8 +448,7 @@ abstract contract DynamicRBAC is SecureOwnable {
 
 ## 🚧 Implementation Status
 
-### ✅ Availible Features
-
+### ✅ Available Features
 **Core Components**:
 - ✅ **StateAbstraction Library v1.0.0**: Centralized state management with multi-phase workflows
 - ✅ **Guardian Contracts**: Basic, Bare, and WithRoles implementations
