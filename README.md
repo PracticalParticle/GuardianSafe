@@ -35,9 +35,9 @@ Bloxchain Protocol is a **revolutionary blockchain security architecture** that 
 graph TB
     A[StateAbstraction Library] --> B[BaseStateMachine]
     B --> C[SecureOwnable]
-    B --> D[DynamicRBAC]
+    C --> D[DynamicRBAC]
     C --> E[Guardian]
-    C --> F[GuardianBare]
+    B --> F[GuardianBare]
     D --> G[GuardianWithRoles]
     
     H[TypeScript SDK] --> I[SecureOwnable Client]
