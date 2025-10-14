@@ -209,7 +209,7 @@ async requestOperation(
 ## Testing Requirements
 
 ### Test Coverage
-- **Minimum 95% test coverage** required
+- **100% test coverage** required (immutable contracts require complete coverage)
 - **All new features** must include comprehensive tests
 - **Edge cases** must be tested
 - **Integration tests** for complex workflows
