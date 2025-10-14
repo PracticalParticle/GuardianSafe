@@ -35,9 +35,9 @@ Bloxchain Protocol is a **revolutionary blockchain security architecture** that 
 graph TB
     A[StateAbstraction Library] --> B[BaseStateMachine]
     B --> C[SecureOwnable]
-    B --> D[DynamicRBAC]
+    C --> D[DynamicRBAC]
     C --> E[Guardian]
-    C --> F[GuardianBare]
+    B --> F[GuardianBare]
     D --> G[GuardianWithRoles]
     
     H[TypeScript SDK] --> I[SecureOwnable Client]
@@ -231,16 +231,22 @@ await dynamicRBAC.grantFunctionPermission(
 **Time-Locked Withdrawal System**:
 ```solidity
 contract SimpleVault is SecureOwnable {
-    // Time-locked ETH withdrawal
-    function withdrawEthRequest(address to, uint256 amount) external {
+    // Time-locked ETH withdrawal request
+    function withdrawEthRequest(address to, uint256 amount) public onlyOwner returns (StateAbstraction.TxRecord memory) {
         // Creates time-locked withdrawal request
         // Requires approval after time-lock period
     }
     
-    // Meta-transaction token withdrawal
-    function withdrawTokenWithMetaTx(MetaTransaction memory metaTx) external {
-        // Gasless token withdrawal via meta-transaction
-        // Requires role separation (signer + executor)
+    // Standard approval workflow (after time delay)
+    function approveWithdrawalAfterDelay(uint256 txId) public onlyOwner returns (StateAbstraction.TxRecord memory) {
+        // Approves withdrawal after mandatory time-lock period
+        // Requires owner role permission
+    }
+    
+    // Meta-transaction approval workflow (gasless)
+    function approveWithdrawalWithMetaTx(StateAbstraction.MetaTransaction memory metaTx) public onlyBroadcaster returns (StateAbstraction.TxRecord memory) {
+        // Approves withdrawal using meta-transaction
+        // Requires broadcaster role execution with off-chain signature
     }
 }
 ```
@@ -254,12 +260,6 @@ contract SimpleRWA20 is ERC20Upgradeable, ERC20BurnableUpgradeable, SecureOwnabl
     function mintWithMetaTx(MetaTransaction memory metaTx) external {
         // Only broadcaster can execute
         // Requires off-chain signature from authorized role
-    }
-    
-    // Time-locked token burning
-    function burnWithDelay(address from, uint256 amount) external {
-        // Creates time-locked burn request
-        // Prevents immediate token destruction
     }
 }
 ```
@@ -474,13 +474,21 @@ abstract contract DynamicRBAC is SecureOwnable {
 
 ## 🤝 Contributing
 
-We welcome contributions to the Bloxchain Protocol! Please see our contributing guidelines:
+We welcome contributions to the Bloxchain Protocol! Please see our comprehensive [Contributing Guidelines](CONTRIBUTING.md) for detailed information on:
 
-1. **Fork the repository**
-2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
-3. **Follow our coding standards**: Use `npm run format` for Solidity formatting
-4. **Add tests**: Ensure comprehensive test coverage
-5. **Submit a pull request**: Include detailed description of changes
+- **Development Setup** - Complete environment configuration
+- **Code Standards** - Solidity and TypeScript guidelines
+- **Testing Requirements** - 100% coverage and comprehensive test suites
+- **Security Considerations** - Security review process and best practices
+- **Pull Request Process** - Detailed submission and review workflow
+- **Applications Development** - Fork-first approach for community applications
+
+**Key Requirements:**
+- Follow our [Code of Conduct](CODE_OF_CONDUCT.md)
+- Maintain 100% test coverage
+- Keep contracts under 24KB size limit
+- Use `npm run format` for Solidity formatting
+- Include comprehensive documentation updates
 
 ### Development Workflow
 
