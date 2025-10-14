@@ -526,11 +526,30 @@ npm run deploy:truffle
 
 This project is licensed under the **Mozilla Public License 2.0 (MPL-2.0)** - see the [LICENSE](LICENSE) file for details.
 
+### Core Framework License
 **Key Benefits of MPL-2.0:**
 - **Open Source**: Free to use, modify, and distribute
 - **Commercial Use**: Clear commercial use permissions
 - **Patent Protection**: Protects contributors from patent litigation
 - **No Vendor Lock-in**: Freedom to modify without proprietary restrictions
+
+### Applications Directory License Structure
+
+**Important**: The `applications/` directory is **EXCLUDED** from MPL-2.0 licensing:
+
+- **Core Framework**: Licensed under MPL-2.0 (contracts, SDK, documentation)
+- **Applications**: Each application has its own separate license
+- **Community Applications** (`applications/community/`): Various open-source licenses (MIT, Apache 2.0, GPL v3, etc.)
+- **Proprietary Applications** (`applications/proprietary/`): Commercial/proprietary licenses
+
+**Applications are:**
+- ❌ **NOT covered by MPL-2.0**
+- ❌ **NOT officially supported** by Bloxchain Protocol
+- ❌ **NOT part of the core framework**
+- ✅ **Licensed separately** with their own terms
+- ✅ **Used at your own risk**
+
+See individual LICENSE files in each application directory for specific terms.
 
 ## 🙏 Acknowledgments
 
