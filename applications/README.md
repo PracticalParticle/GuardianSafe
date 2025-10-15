@@ -117,9 +117,10 @@ mkdir applications/proprietary/your-app
 # 3. Develop your application
 # ... your development work ...
 
-# 4. Compile and test
-npm run compile:truffle
-npm run test:truffle
+# 4. Compile and test using shared configuration
+cd applications
+truffle compile
+truffle test
 
 # 5. Commit to your fork
 git add .
@@ -127,6 +128,30 @@ git commit -m "feat: add your-application v1.0"
 git push origin main
 
 # 6. When ready, submit PR to official repo
+```
+
+#### Using the Shared Truffle Configuration
+
+All applications use a standardized Truffle configuration at `applications/truffle-config.js` with Guardian Protocol import remapping:
+
+```bash
+# Compile from applications directory
+cd applications
+truffle compile
+
+# Compile from individual app directory
+cd applications/community/your-app
+truffle compile --config ../truffle-config.js
+```
+
+#### Import Guardian Contracts
+
+```solidity
+// Import Guardian core contracts
+import "@core/access/SecureOwnable.sol";
+import "@lib/StateAbstraction.sol";
+import "@interfaces/IDefinition.sol";
+import "@utils/SharedValidation.sol";
 ```
 
 #### Using Existing Applications
