@@ -8,6 +8,8 @@ For the underlying Bloxchain Protocol documentation, see [README-PROTOCOL.md](./
 
 GuardianSafe is a secure wrapper for Safe (Gnosis Safe) wallets that adds multi-phase, time-locked operations, meta-transaction support, role-based access control, and a transaction guard to enforce safer execution paths. It combines multisig security with the Guardian state abstraction framework for defense-in-depth.
 
+![Guardian Safe Interface](images/sandblox-screenshot.png)
+
 - Dual-layer security: Safe multisig + time-locked, role-gated execution
 - Transaction Guard: Restricts execution paths and blocks dangerous delegatecall by default
 - Role separation: Owner, Broadcaster, Recovery roles
@@ -19,8 +21,8 @@ Authoritative documentation is maintained alongside the Sandblox project and UI.
 
 Active work on the GuardianSafe module, UI, and docs is in the Sandblox environment:
 
-- Product page and docs: `https://sandblox.app/contracts/guardian-safe`  
-- Source tree (Sandblox workspace): `https://github.com/PracticalParticle/Sandblox/tree/main/src/blox/GuardianSafe`
+- Product page and docs: [https://sandblox.app/contracts/guardian-safe](https://sandblox.app/contracts/guardian-safe)
+- Source tree (Sandblox workspace): [Sandblox GuardianSafe](https://github.com/PracticalParticle/Sandblox/tree/main/src/blox/GuardianSafe)
 
 This forked repository does not need the GuardianSafe contract or UI code copied into it. Keep this repo focused on the underlying engine (libraries, contracts, and SDKs) used by GuardianSafe.
 
@@ -34,8 +36,8 @@ For detailed technical documentation, workflows, and integration examples, refer
 
 Links:
 
-- GuardianSafe docs/product page: `https://sandblox.app/contracts/guardian-safe`
-- Sandblox repo folder: `https://github.com/PracticalParticle/Sandblox/tree/main/src/blox/GuardianSafe`
+- GuardianSafe docs/product page: [https://sandblox.app/contracts/guardian-safe](https://sandblox.app/contracts/guardian-safe)
+- Sandblox repo folder: [https://github.com/PracticalParticle/Sandblox/tree/main/src/blox/GuardianSafe](https://github.com/PracticalParticle/Sandblox/tree/main/src/blox/GuardianSafe)
 
 ## Scope of This Fork
 
@@ -73,7 +75,7 @@ This fork continues to use the MPL-2.0 for the core framework. GuardianSafe appl
 
 ## Support and Links
 
-- GuardianSafe page (product/docs): `https://sandblox.app/contracts/guardian-safe`
-- GuardianSafe sources in Sandblox: `https://github.com/PracticalParticle/Sandblox/tree/main/src/blox/GuardianSafe`
+- GuardianSafe page (product/docs): [https://sandblox.app/contracts/guardian-safe](https://sandblox.app/contracts/guardian-safe)
+- GuardianSafe sources in Sandblox: [https://github.com/PracticalParticle/Sandblox/tree/main/src/blox/GuardianSafe](https://github.com/PracticalParticle/Sandblox/tree/main/src/blox/GuardianSafe)
 
 
